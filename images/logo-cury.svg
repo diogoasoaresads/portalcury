@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110" role="img" aria-label="Cury">
+  <g fill="#0d3b5a">
+    <!-- Shield chevron bars (bottom to top, tapering left side) -->
+    <rect x="2"  y="90" width="76" height="14" rx="7"/>
+    <rect x="0"  y="72" width="82" height="14" rx="7"/>
+    <rect x="2"  y="54" width="78" height="14" rx="7"/>
+    <rect x="8"  y="36" width="66" height="14" rx="7"/>
+    <rect x="18" y="18" width="52" height="14" rx="7"/>
+    <rect x="32" y="0"  width="36" height="14" rx="7"/>
+    <!-- CURY text -->
+    <text x="105" y="88" font-family="'Arial Black', 'Arial Bold', Arial, sans-serif" font-weight="900" font-size="82" letter-spacing="1">CURY</text>
+  </g>
+</svg>
