@@ -441,7 +441,15 @@
         Leads
         <span id="newLeadsBadge" style="margin-left:auto;background:var(--red);color:#fff;border-radius:100px;font-size:.7rem;padding:2px 8px;display:none"></span>
       </div>
-      <div class="nav-item" data-page="config">
+      <div class="nav-item admin-only" data-page="attendants">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Atendentes
+      </div>
+      <div class="nav-item admin-only" data-page="users">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        Usuários
+      </div>
+      <div class="nav-item admin-only" data-page="config">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
         Configurações
       </div>
@@ -550,11 +558,11 @@
             <thead>
               <tr>
                 <th>#</th><th>Nome</th><th>Telefone</th><th>E-mail</th>
-                <th>Empreendimento</th><th>Status</th><th>Data</th><th>Ações</th>
+                <th>Empreendimento</th><th>Atendente</th><th>Status</th><th>Data</th><th>Ações</th>
               </tr>
             </thead>
             <tbody id="leadsTable">
-              <tr><td colspan="8"><div class="empty-state"><p>Carregando...</p></div></td></tr>
+              <tr><td colspan="9"><div class="empty-state"><p>Carregando...</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -784,8 +792,105 @@
 
     </section>
 
+    <!-- ===== ATENDENTES ===== -->
+    <section class="page" id="attendantsPage">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1>Atendentes</h1>
+          <p>Gerencie as duas filas de rotação: formulário e WhatsApp</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAttendantModal()" style="padding:10px 20px">+ Novo Atendente</button>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div style="padding:14px 20px;background:#f8fafc;border-bottom:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0">
+          <strong style="font-size:.9rem">ℹ️ Como funciona a rotação</strong>
+          <p style="font-size:.82rem;color:var(--gray);margin-top:4px">Os leads do <b>formulário</b> e do <b>WhatsApp</b> são distribuídos em filas separadas, alternando entre os atendentes ativos em ordem.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Nome</th><th>WhatsApp</th><th>Status</th><th>Cadastrado em</th><th>Ações</th></tr></thead>
+            <tbody id="attendantsTable"><tr><td colspan="6"><div class="empty-state"><p>Carregando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== USUÁRIOS ===== -->
+    <section class="page" id="usersPage">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1>Usuários do CRM</h1>
+          <p>Crie logins para cada atendente — cada um verá apenas seus próprios leads</p>
+        </div>
+        <button class="btn btn-primary" onclick="openUserModal()" style="padding:10px 20px">+ Novo Usuário</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Usuário</th><th>Perfil</th><th>Atendente vinculado</th><th>Cadastrado em</th><th>Ações</th></tr></thead>
+            <tbody id="usersTable"><tr><td colspan="6"><div class="empty-state"><p>Carregando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
+</div>
+
+<!-- Attendant Modal -->
+<div class="modal-overlay" id="attendantModal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <h3 id="attendantModalTitle">Novo Atendente</h3>
+      <button class="modal-close" onclick="closeAttendantModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="padding:20px">
+      <div class="field"><label>Nome do Atendente *</label><input type="text" id="att-name" placeholder="Ex: Maria Silva" /></div>
+      <div class="field"><label>WhatsApp (com DDI) *</label><input type="tel" id="att-phone" placeholder="5521988887777" /><p class="hint">Apenas números, com DDI. Ex: 5521988887777</p></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="att-active"><option value="1">Ativo</option><option value="0">Inativo</option></select>
+      </div>
+      <div id="attModalMsg" style="display:none;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAttendantModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAttendant()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <h3 id="userModalTitle">Novo Usuário</h3>
+      <button class="modal-close" onclick="closeUserModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="padding:20px">
+      <div class="field"><label>Nome de usuário *</label><input type="text" id="usr-username" placeholder="maria.silva" autocomplete="off" /></div>
+      <div class="field"><label>Senha *</label><input type="password" id="usr-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" /><p class="hint" id="usr-pass-hint">Deixe em branco para manter a senha atual</p></div>
+      <div class="field">
+        <label>Perfil</label>
+        <select id="usr-role"><option value="agent">Agente (vê só seus leads)</option><option value="admin">Admin (vê tudo)</option></select>
+      </div>
+      <div class="field">
+        <label>Atendente vinculado</label>
+        <select id="usr-attendant"><option value="">— Nenhum —</option></select>
+        <p class="hint">Vincule ao atendente para receber os leads da fila</p>
+      </div>
+      <div id="usrModalMsg" style="display:none;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUser()">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Lead Detail Modal -->
@@ -814,7 +919,10 @@
    STATE
 ============================================================ */
 let token = localStorage.getItem('crm_token') || '';
+let userRole = 'admin';
 let currentLead = null;
+let currentAttendant = null;
+let currentUser = null;
 let leadsPage = 1;
 let leadsTotal = 0;
 const LIMIT = 25;
@@ -898,7 +1006,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     if (data.error) throw new Error(data.error);
     token = data.token;
     localStorage.setItem('crm_token', token);
-    initApp(data.username);
+    initApp(data.username, data.role || 'admin');
   } catch (err) {
     errEl.textContent = err.message;
     errEl.style.display = 'block';
@@ -918,18 +1026,23 @@ async function checkAuth() {
   if (!token) return;
   try {
     const data = await api('GET', '/api/auth/check');
-    if (data.ok) initApp(data.username);
+    if (data.ok) initApp(data.username, data.role || 'admin');
   } catch {
     token = '';
     localStorage.removeItem('crm_token');
   }
 }
 
-function initApp(username) {
+function initApp(username, role) {
+  userRole = role || 'admin';
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('appPage').style.display = 'block';
   document.getElementById('userNameDisplay').textContent = username;
   document.getElementById('userAvatar').textContent = username[0].toUpperCase();
+  // Mostrar/ocultar itens admin-only
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = userRole === 'admin' ? '' : 'none';
+  });
   loadDashboard();
 }
 
@@ -943,9 +1056,11 @@ document.querySelectorAll('.nav-item').forEach(item => {
 function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === page + 'Page'));
-  if (page === 'dashboard') loadDashboard();
-  if (page === 'leads')     { leadsPage = 1; loadLeads(); }
-  if (page === 'config')    loadConfig();
+  if (page === 'dashboard')  loadDashboard();
+  if (page === 'leads')      { leadsPage = 1; loadLeads(); }
+  if (page === 'config')     loadConfig();
+  if (page === 'attendants') loadAttendants();
+  if (page === 'users')      loadUsers();
 }
 
 /* ============================================================
@@ -1025,7 +1140,7 @@ async function loadLeads() {
 
     const tbody = document.getElementById('leadsTable');
     if (!data.leads.length) {
-      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <p>Nenhum lead encontrado.</p>
       </div></td></tr>`;
@@ -1037,6 +1152,7 @@ async function loadLeads() {
           <td><a href="tel:${l.phone}" style="color:var(--red)">${l.phone}</a></td>
           <td style="color:var(--gray);font-size:.85rem">${l.email || '—'}</td>
           <td style="font-size:.85rem">${INTEREST_LABELS[l.interest] || l.interest || '—'}</td>
+          <td style="font-size:.82rem;color:var(--gray)">${l.attendant_name || '—'}</td>
           <td>${badgeHtml(l.status)}</td>
           <td style="color:var(--gray);font-size:.82rem;white-space:nowrap">${formatDate(l.created_at)}</td>
           <td><div class="actions">
@@ -1309,6 +1425,169 @@ async function changePassword() {
     toast('Senha alterada!');
   } catch (e) { showMsg('securityMsg', e.message, 'error'); }
 }
+
+/* ============================================================
+   ATENDENTES
+============================================================ */
+async function loadAttendants() {
+  try {
+    const list = await api('GET', '/api/attendants');
+    const tbody = document.getElementById('attendantsTable');
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum atendente cadastrado.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(a => `
+      <tr>
+        <td style="color:var(--gray);font-size:.8rem">#${a.id}</td>
+        <td><strong>${a.name}</strong></td>
+        <td><a href="https://wa.me/${a.phone.replace(/\D/g,'')}" target="_blank" style="color:var(--green)">${a.phone}</a></td>
+        <td><span class="badge ${a.active ? 'badge-conv' : 'badge-perdido'}">${a.active ? 'Ativo' : 'Inativo'}</span></td>
+        <td style="color:var(--gray);font-size:.82rem">${formatDate(a.created_at)}</td>
+        <td><div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openAttendantModal(${JSON.stringify(a).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAttendant(${a.id})">Excluir</button>
+        </div></td>
+      </tr>
+    `).join('');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openAttendantModal(att) {
+  currentAttendant = att || null;
+  document.getElementById('attendantModalTitle').textContent = att ? 'Editar Atendente' : 'Novo Atendente';
+  document.getElementById('att-name').value   = att?.name  || '';
+  document.getElementById('att-phone').value  = att?.phone || '';
+  document.getElementById('att-active').value = att ? String(att.active) : '1';
+  document.getElementById('attModalMsg').style.display = 'none';
+  document.getElementById('attendantModal').classList.add('open');
+}
+
+function closeAttendantModal() {
+  document.getElementById('attendantModal').classList.remove('open');
+  currentAttendant = null;
+}
+
+async function saveAttendant() {
+  const name   = document.getElementById('att-name').value.trim();
+  const phone  = document.getElementById('att-phone').value.trim();
+  const active = document.getElementById('att-active').value;
+  if (!name || !phone) return showMsg('attModalMsg', 'Nome e telefone são obrigatórios.', 'error');
+  try {
+    if (currentAttendant) {
+      await api('PUT', `/api/attendants/${currentAttendant.id}`, { name, phone, active: parseInt(active) });
+    } else {
+      await api('POST', '/api/attendants', { name, phone, active: parseInt(active) });
+    }
+    closeAttendantModal();
+    toast(currentAttendant ? 'Atendente atualizado!' : 'Atendente criado!');
+    loadAttendants();
+  } catch(e) { showMsg('attModalMsg', e.message, 'error'); }
+}
+
+async function deleteAttendant(id) {
+  if (!confirm('Excluir este atendente? Os leads vinculados a ele não serão excluídos.')) return;
+  try {
+    await api('DELETE', `/api/attendants/${id}`);
+    toast('Atendente excluído.');
+    loadAttendants();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+document.getElementById('attendantModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('attendantModal')) closeAttendantModal();
+});
+
+/* ============================================================
+   USUÁRIOS
+============================================================ */
+async function loadUsers() {
+  try {
+    const [users, attendants] = await Promise.all([
+      api('GET', '/api/users'),
+      api('GET', '/api/attendants'),
+    ]);
+    const tbody = document.getElementById('usersTable');
+    if (!users.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum usuário cadastrado.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td style="color:var(--gray);font-size:.8rem">#${u.id}</td>
+        <td><strong>${u.username}</strong></td>
+        <td><span class="badge ${u.role === 'admin' ? 'badge-atend' : 'badge-novo'}">${u.role === 'admin' ? 'Admin' : 'Agente'}</span></td>
+        <td style="font-size:.85rem">${u.attendant_name || '—'}</td>
+        <td style="color:var(--gray);font-size:.82rem">${formatDate(u.created_at)}</td>
+        <td><div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')}, ${JSON.stringify(attendants).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Excluir</button>
+        </div></td>
+      </tr>
+    `).join('');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function openUserModal(usr, preloadedAttendants) {
+  currentUser = usr || null;
+  document.getElementById('userModalTitle').textContent = usr ? 'Editar Usuário' : 'Novo Usuário';
+  document.getElementById('usr-username').value  = usr?.username || '';
+  document.getElementById('usr-password').value  = '';
+  document.getElementById('usr-role').value      = usr?.role || 'agent';
+  document.getElementById('usr-pass-hint').style.display = usr ? 'block' : 'none';
+  document.getElementById('usrModalMsg').style.display = 'none';
+
+  // Preenche select de atendentes
+  const attendants = preloadedAttendants || await api('GET', '/api/attendants').catch(() => []);
+  const sel = document.getElementById('usr-attendant');
+  sel.innerHTML = '<option value="">— Nenhum —</option>' +
+    attendants.map(a => `<option value="${a.id}" ${usr?.attendant_id == a.id ? 'selected' : ''}>${a.name}</option>`).join('');
+
+  document.getElementById('userModal').classList.add('open');
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').classList.remove('open');
+  currentUser = null;
+}
+
+async function saveUser() {
+  const username    = document.getElementById('usr-username').value.trim();
+  const password    = document.getElementById('usr-password').value;
+  const role        = document.getElementById('usr-role').value;
+  const attendant_id = document.getElementById('usr-attendant').value || null;
+
+  if (!username) return showMsg('usrModalMsg', 'Nome de usuário é obrigatório.', 'error');
+  if (!currentUser && password.length < 6) return showMsg('usrModalMsg', 'Senha deve ter ao menos 6 caracteres.', 'error');
+
+  try {
+    const body = { role, attendant_id };
+    if (!currentUser) { body.username = username; body.password = password; }
+    if (currentUser && password) body.password = password;
+
+    if (currentUser) {
+      await api('PUT', `/api/users/${currentUser.id}`, body);
+    } else {
+      await api('POST', '/api/users', body);
+    }
+    closeUserModal();
+    toast(currentUser ? 'Usuário atualizado!' : 'Usuário criado!');
+    loadUsers();
+  } catch(e) { showMsg('usrModalMsg', e.message, 'error'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm('Excluir este usuário?')) return;
+  try {
+    await api('DELETE', `/api/users/${id}`);
+    toast('Usuário excluído.');
+    loadUsers();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+document.getElementById('userModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('userModal')) closeUserModal();
+});
 
 /* ============================================================
    INIT

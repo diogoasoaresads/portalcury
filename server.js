@@ -40,6 +40,14 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS attendants (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    phone      TEXT NOT NULL,
+    active     INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS leads (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     name         TEXT    NOT NULL,
@@ -67,6 +75,12 @@ db.exec(`
   );
 `);
 
+// Migrations — add columns if they don't exist yet
+['ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
+ 'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
+ 'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
+].forEach(sql => { try { db.exec(sql); } catch {} });
+
 // ---- Default config values ----
 const DEFAULT_CONFIG = {
   // Botão WhatsApp da landing page
@@ -87,6 +101,10 @@ const DEFAULT_CONFIG = {
   email_smtp_pass:  '',
   email_from:       'Portal Cury <noreply@portalcury.com.br>',
   email_to:         '',
+
+  // Índices de rotação de filas (interno)
+  wa_queue_idx:   '0',
+  form_queue_idx: '0',
 
   // WhatsApp API para notificação de novo lead
   whatsapp_notify_enabled: 'false',
@@ -139,6 +157,18 @@ function fillTemplate(template, vars) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '');
 }
 
+// ---- Round-robin attendant queue ----
+function nextAttendant(queueKey) {
+  const list = db.prepare('SELECT * FROM attendants WHERE active = 1 ORDER BY id').all();
+  if (!list.length) return null;
+  const row = db.prepare('SELECT value FROM config WHERE key = ?').get(queueKey);
+  let idx = parseInt(row?.value || '0');
+  if (idx >= list.length) idx = 0;
+  const attendant = list[idx];
+  db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)').run(queueKey, String((idx + 1) % list.length));
+  return attendant;
+}
+
 // ---- Auth middleware ----
 function auth(req, res, next) {
   const header = req.headers.authorization || '';
@@ -149,6 +179,11 @@ function auth(req, res, next) {
   } catch {
     res.status(401).json({ error: 'Token inválido ou expirado' });
   }
+}
+
+function adminOnly(req, res, next) {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado.' });
+  next();
 }
 
 // ---- Simple in-memory rate limiter ----
@@ -300,23 +335,46 @@ app.get('/api/public-config', (_req, res) => {
   });
 });
 
-// Receber lead
-app.post('/api/leads', rateLimit(5 * 60 * 1000, 5), (req, res) => {
-  const { name, phone, email = '', interest = '', message = '', source: clientSource = '' } = req.body;
+// Receber lead do formulário (fila form)
+app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
+  const { name, phone, email = '', interest = '', message = '' } = req.body;
   if (!name?.trim() || !phone?.trim()) {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
   }
-  const source = ['whatsapp', 'landing_page'].includes(clientSource) ? clientSource : 'landing_page';
 
-  const stmt = db.prepare(`
-    INSERT INTO leads (name, phone, email, interest, message, source)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  const r = stmt.run(name.trim(), phone.trim(), email.trim(), interest.trim(), message.trim(), source);
+  const attendant = nextAttendant('form_queue_idx');
+
+  const r = db.prepare(`
+    INSERT INTO leads (name, phone, email, interest, message, source, attendant_id)
+    VALUES (?, ?, ?, ?, ?, 'landing_page', ?)
+  `).run(name.trim(), phone.trim(), email.trim(), interest.trim(), message.trim(), attendant?.id || null);
+
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
-
   fireNotifications(lead, getConfig());
   res.json({ success: true, id: lead.id });
+});
+
+// Receber lead do WhatsApp (fila WA) — retorna URL do próximo atendente
+app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
+  const { name, phone } = req.body;
+  if (!name?.trim() || !phone?.trim()) {
+    return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
+  }
+
+  const attendant = nextAttendant('wa_queue_idx');
+  const cfg = getConfig();
+
+  const r = db.prepare(`
+    INSERT INTO leads (name, phone, source, attendant_id)
+    VALUES (?, ?, 'whatsapp', ?)
+  `).run(name.trim(), phone.trim(), attendant?.id || null);
+
+  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
+  fireNotifications(lead, cfg);
+
+  const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
+  const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
+  res.json({ success: true, id: lead.id, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
 });
 
 // ============================================================
@@ -328,39 +386,63 @@ app.post('/api/auth/login', rateLimit(15 * 60 * 1000, 10), (req, res) => {
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({ error: 'Usuário ou senha incorretos.' });
   }
-  const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
-  res.json({ token, username: user.username });
+  const role = user.role || 'admin';
+  const token = jwt.sign(
+    { id: user.id, username: user.username, role, attendant_id: user.attendant_id || null },
+    JWT_SECRET, { expiresIn: '24h' }
+  );
+  res.json({ token, username: user.username, role });
 });
 
 app.get('/api/auth/check', auth, (req, res) => {
-  res.json({ ok: true, username: req.user.username });
+  res.json({ ok: true, username: req.user.username, role: req.user.role || 'admin' });
 });
 
 // ============================================================
 // ROUTES — LEADS (protegidos)
 // ============================================================
 app.get('/api/leads', auth, (req, res) => {
-  const { status = 'all', interest = 'all', search = '', page = '1', limit = '50' } = req.query;
+  const { status = 'all', interest = 'all', search = '', page = '1', limit = '50', attendant = 'all' } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
 
   let where = 'WHERE 1=1';
   const params = [];
 
-  if (status !== 'all') { where += ' AND status = ?'; params.push(status); }
-  if (interest !== 'all') { where += ' AND interest = ?'; params.push(interest); }
+  // Agentes veem apenas seus próprios leads
+  if (req.user.role !== 'admin') {
+    where += ' AND l.attendant_id = ?';
+    params.push(req.user.attendant_id || -1);
+  } else if (attendant !== 'all') {
+    where += ' AND l.attendant_id = ?';
+    params.push(attendant);
+  }
+
+  if (status !== 'all') { where += ' AND l.status = ?'; params.push(status); }
+  if (interest !== 'all') { where += ' AND l.interest = ?'; params.push(interest); }
   if (search.trim()) {
-    where += ' AND (name LIKE ? OR phone LIKE ? OR email LIKE ?)';
+    where += ' AND (l.name LIKE ? OR l.phone LIKE ? OR l.email LIKE ?)';
     const s = `%${search.trim()}%`;
     params.push(s, s, s);
   }
 
-  const total = db.prepare(`SELECT COUNT(*) as n FROM leads ${where}`).get(...params).n;
-  const leads = db.prepare(`SELECT * FROM leads ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...params, parseInt(limit), offset);
+  const total = db.prepare(`SELECT COUNT(*) as n FROM leads l ${where}`).get(...params).n;
+  const leads = db.prepare(`
+    SELECT l.*, a.name as attendant_name
+    FROM leads l LEFT JOIN attendants a ON l.attendant_id = a.id
+    ${where} ORDER BY l.created_at DESC LIMIT ? OFFSET ?
+  `).all(...params, parseInt(limit), offset);
 
   res.json({ leads, total, page: parseInt(page), limit: parseInt(limit) });
 });
 
-app.get('/api/leads/stats', auth, (_req, res) => {
+app.get('/api/leads/stats', auth, (req, res) => {
+  let where = '';
+  const params = [];
+  if (req.user.role !== 'admin') {
+    where = 'WHERE attendant_id = ?';
+    params.push(req.user.attendant_id || -1);
+  }
+
   const stats = db.prepare(`
     SELECT
       COUNT(*) as total,
@@ -368,12 +450,11 @@ app.get('/api/leads/stats', auth, (_req, res) => {
       SUM(CASE WHEN status = 'em_atendimento' THEN 1 ELSE 0 END) as em_atendimento,
       SUM(CASE WHEN status = 'convertido'     THEN 1 ELSE 0 END) as convertido,
       SUM(CASE WHEN status = 'perdido'        THEN 1 ELSE 0 END) as perdido
-    FROM leads
-  `).get();
+    FROM leads ${where}
+  `).get(...params);
 
-  const today = db.prepare(
-    `SELECT COUNT(*) as n FROM leads WHERE date(created_at) = date('now', 'localtime')`
-  ).get().n;
+  const todayWhere = where ? where + ' AND date(created_at) = date(\'now\',\'localtime\')' : 'WHERE date(created_at) = date(\'now\',\'localtime\')';
+  const today = db.prepare(`SELECT COUNT(*) as n FROM leads ${todayWhere}`).get(...params).n;
 
   res.json({ ...stats, today });
 });
@@ -393,6 +474,79 @@ app.put('/api/leads/:id', auth, (req, res) => {
 
 app.delete('/api/leads/:id', auth, (req, res) => {
   db.prepare('DELETE FROM leads WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// ============================================================
+// ROUTES — ATTENDANTS (admin)
+// ============================================================
+app.get('/api/attendants', auth, (_req, res) => {
+  res.json(db.prepare('SELECT * FROM attendants ORDER BY id').all());
+});
+
+app.post('/api/attendants', auth, adminOnly, (req, res) => {
+  const { name, phone, active = 1 } = req.body;
+  if (!name?.trim() || !phone?.trim()) return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
+  const r = db.prepare('INSERT INTO attendants (name, phone, active) VALUES (?, ?, ?)').run(name.trim(), phone.trim(), active ? 1 : 0);
+  res.json({ success: true, id: r.lastInsertRowid });
+});
+
+app.put('/api/attendants/:id', auth, adminOnly, (req, res) => {
+  const { name, phone, active } = req.body;
+  db.prepare('UPDATE attendants SET name = ?, phone = ?, active = ? WHERE id = ?').run(name.trim(), phone.trim(), active ? 1 : 0, req.params.id);
+  res.json({ success: true });
+});
+
+app.delete('/api/attendants/:id', auth, adminOnly, (req, res) => {
+  // Desvincula leads e usuários antes de excluir
+  db.prepare('UPDATE leads SET attendant_id = NULL WHERE attendant_id = ?').run(req.params.id);
+  db.prepare('UPDATE users SET attendant_id = NULL WHERE attendant_id = ?').run(req.params.id);
+  db.prepare('DELETE FROM attendants WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// ============================================================
+// ROUTES — USERS (admin)
+// ============================================================
+app.get('/api/users', auth, adminOnly, (_req, res) => {
+  const users = db.prepare(`
+    SELECT u.id, u.username, u.role, u.attendant_id, u.created_at, a.name as attendant_name
+    FROM users u LEFT JOIN attendants a ON u.attendant_id = a.id ORDER BY u.id
+  `).all();
+  res.json(users);
+});
+
+app.post('/api/users', auth, adminOnly, (req, res) => {
+  const { username, password, role = 'agent', attendant_id } = req.body;
+  if (!username?.trim() || !password || password.length < 6)
+    return res.status(400).json({ error: 'Usuário e senha (mín. 6 caracteres) são obrigatórios.' });
+  try {
+    const r = db.prepare('INSERT INTO users (username, password_hash, role, attendant_id) VALUES (?, ?, ?, ?)').run(
+      username.trim(), bcrypt.hashSync(password, 10), role, attendant_id || null
+    );
+    res.json({ success: true, id: r.lastInsertRowid });
+  } catch (e) {
+    if (e.message.includes('UNIQUE')) return res.status(400).json({ error: 'Usuário já existe.' });
+    throw e;
+  }
+});
+
+app.put('/api/users/:id', auth, adminOnly, (req, res) => {
+  const { role, attendant_id, password } = req.body;
+  if (password) {
+    if (password.length < 6) return res.status(400).json({ error: 'Senha deve ter ao menos 6 caracteres.' });
+    db.prepare('UPDATE users SET role = ?, attendant_id = ?, password_hash = ? WHERE id = ?').run(
+      role, attendant_id || null, bcrypt.hashSync(password, 10), req.params.id
+    );
+  } else {
+    db.prepare('UPDATE users SET role = ?, attendant_id = ? WHERE id = ?').run(role, attendant_id || null, req.params.id);
+  }
+  res.json({ success: true });
+});
+
+app.delete('/api/users/:id', auth, adminOnly, (req, res) => {
+  if (req.user.id === parseInt(req.params.id)) return res.status(400).json({ error: 'Não é possível excluir sua própria conta.' });
+  db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
 
