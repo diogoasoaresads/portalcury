@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const ExcelJS = require('exceljs');
 const empreendimentos = require('./data/empreendimentos');
 
 const app = express();
@@ -449,6 +450,148 @@ app.get('/api/leads', auth, (req, res) => {
   `).all(...params, parseInt(limit), offset);
 
   res.json({ leads, total, page: parseInt(page), limit: parseInt(limit) });
+});
+
+app.get('/api/leads/export-excel', auth, async (req, res) => {
+  const { status = 'all', interest = 'all', search = '', attendant = 'all' } = req.query;
+
+  let where = 'WHERE 1=1';
+  const params = [];
+
+  if (req.user.role !== 'admin') {
+    where += ' AND l.attendant_id = ?';
+    params.push(req.user.attendant_id || -1);
+  } else if (attendant !== 'all') {
+    where += ' AND l.attendant_id = ?';
+    params.push(attendant);
+  }
+  if (status !== 'all') { where += ' AND l.status = ?'; params.push(status); }
+  if (interest !== 'all') { where += ' AND l.interest = ?'; params.push(interest); }
+  if (search.trim()) {
+    where += ' AND (l.name LIKE ? OR l.phone LIKE ? OR l.email LIKE ?)';
+    const s = `%${search.trim()}%`;
+    params.push(s, s, s);
+  }
+
+  const leads = db.prepare(`
+    SELECT l.*, a.name as attendant_name
+    FROM leads l LEFT JOIN attendants a ON l.attendant_id = a.id
+    ${where} ORDER BY l.created_at DESC
+  `).all(...params);
+
+  const INTEREST_LABELS = {
+    'luzes-do-rio':            'Luzes do Rio – São Cristóvão',
+    'residencial-cartola':     'Residencial Cartola – São Cristóvão',
+    'nova-norte-raizes':       'Res. Nova Norte Raízes – Irajá',
+    'caminhos-guanabara':      'Caminhos da Guanabara – Niterói',
+    'farol-guanabara':         'Farol da Guanabara – Porto',
+    'residencial-pixinguinha': 'Res. Pixinguinha – Porto',
+  };
+  const STATUS_LABELS = { novo: 'Novo', em_atendimento: 'Em Atendimento', convertido: 'Convertido', perdido: 'Perdido' };
+  const STATUS_COLORS = { novo: 'FF3B82F6', em_atendimento: 'FFFBBF24', convertido: 'FF22C55E', perdido: 'FFEF4444' };
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Portal Cury CRM';
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet('Leads', { views: [{ state: 'frozen', ySplit: 3 }] });
+
+  // ── Linha 1: título principal ──────────────────────────────────
+  ws.mergeCells('A1:I1');
+  const titleCell = ws.getCell('A1');
+  titleCell.value = `Portal Cury – Relatório de Leads   (${new Date().toLocaleDateString('pt-BR')})`;
+  titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
+  ws.getRow(1).height = 36;
+
+  // ── Linha 2: subtítulo com total ───────────────────────────────
+  ws.mergeCells('A2:I2');
+  const subCell = ws.getCell('A2');
+  subCell.value = `Total de leads: ${leads.length}`;
+  subCell.font = { name: 'Calibri', size: 11, italic: true, color: { argb: 'FFFFFFFF' } };
+  subCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E5090' } };
+  ws.getRow(2).height = 22;
+
+  // ── Linha 3: cabeçalho das colunas ────────────────────────────
+  const headers = [
+    { header: '#',              key: 'id',           width: 7  },
+    { header: 'Nome',           key: 'name',         width: 28 },
+    { header: 'Telefone',       key: 'phone',        width: 18 },
+    { header: 'E-mail',         key: 'email',        width: 32 },
+    { header: 'Empreendimento', key: 'interest',     width: 38 },
+    { header: 'Status',         key: 'status',       width: 18 },
+    { header: 'Atendente',      key: 'attendant',    width: 22 },
+    { header: 'Notas',          key: 'notes',        width: 40 },
+    { header: 'Data',           key: 'created_at',   width: 20 },
+  ];
+  ws.columns = headers.map(h => ({ key: h.key, width: h.width }));
+
+  const headerRow = ws.getRow(3);
+  headers.forEach((h, i) => {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = h.header;
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A5F' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: false };
+    cell.border = {
+      bottom: { style: 'medium', color: { argb: 'FFBFD1E8' } },
+      right:  { style: 'thin',   color: { argb: 'FF2E5090' } },
+    };
+  });
+  headerRow.height = 28;
+
+  // ── Dados ──────────────────────────────────────────────────────
+  leads.forEach((l, idx) => {
+    const row = ws.addRow([
+      l.id,
+      l.name,
+      l.phone,
+      l.email,
+      INTEREST_LABELS[l.interest] || l.interest,
+      STATUS_LABELS[l.status]     || l.status,
+      l.attendant_name            || '—',
+      l.notes                     || '',
+      new Date(l.created_at).toLocaleString('pt-BR'),
+    ]);
+    row.height = 22;
+    const isEven = idx % 2 === 1;
+    const rowBg = isEven ? 'FFEEF3FB' : 'FFFFFFFF';
+
+    row.eachCell({ includeEmpty: true }, (cell, colNum) => {
+      cell.font = { name: 'Calibri', size: 10 };
+      cell.alignment = { vertical: 'middle', wrapText: colNum === 8 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
+      cell.border = {
+        bottom: { style: 'thin', color: { argb: 'FFCBD5E8' } },
+        right:  { style: 'thin', color: { argb: 'FFCBD5E8' } },
+      };
+    });
+
+    // Badge colorido para status (coluna 6)
+    const statusCell = row.getCell(6);
+    const statusColor = STATUS_COLORS[l.status] || 'FF6B7280';
+    statusCell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+    statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: statusColor } };
+    statusCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  });
+
+  // ── Rodapé ─────────────────────────────────────────────────────
+  const footerRowNum = leads.length + 4;
+  ws.mergeCells(`A${footerRowNum}:I${footerRowNum}`);
+  const footerCell = ws.getCell(`A${footerRowNum}`);
+  footerCell.value = 'Portal Cury CRM  •  Relatório gerado automaticamente';
+  footerCell.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF6B7280' } };
+  footerCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  footerCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F4FB' } };
+  ws.getRow(footerRowNum).height = 18;
+
+  const filename = `leads_portalcury_${new Date().toISOString().slice(0,10)}.xlsx`;
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  await wb.xlsx.write(res);
+  res.end();
 });
 
 app.get('/api/leads/stats', auth, (req, res) => {
