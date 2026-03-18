@@ -32,7 +32,9 @@ app.use(express.static(path.join(__dirname), { index: false }));
 // ============================================================
 // DATABASE
 // ============================================================
-const dataDir = path.join(__dirname, 'data');
+// Em produção usa /data (volume persistente no EasyPanel).
+// Em desenvolvimento usa ./data local.
+const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const db = new Database(path.join(dataDir, 'portalcury.db'));
