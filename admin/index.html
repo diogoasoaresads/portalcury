@@ -720,41 +720,49 @@
         </div>
       </div>
 
-      <!-- Tab: Aviso WhatsApp -->
+      <!-- Tab: Aviso WhatsApp (Evolution API) -->
       <div class="config-panel" id="tab-wanotify">
         <div class="config-card">
-          <h4><span class="dot"></span>Aviso de Novo Lead via WhatsApp API</h4>
+          <h4><span class="dot"></span>Aviso de Novo Lead via Evolution API</h4>
           <p class="hint" style="margin-bottom:20px">
-            Envia uma mensagem WhatsApp para o número configurado a cada novo lead. Compatível com Z-API, Evolution API, UltraMsg, WPPConnect e similares.
+            Envia uma mensagem WhatsApp pelo <strong>Evolution API</strong> a cada novo lead recebido.
+            Preencha a URL do seu servidor Evolution, o nome da instância e a API Key.
           </p>
           <div class="toggle-row">
             <div class="info">
-              <strong>Ativar aviso por WhatsApp</strong>
+              <strong>Ativar aviso por Evolution API</strong>
               <span>Enviar mensagem automática ao receber lead</span>
             </div>
-            <label class="toggle"><input type="checkbox" id="cfg-wa-notify-enabled" /><span class="toggle-slider"></span></label>
+            <label class="toggle"><input type="checkbox" id="cfg-evolution-enabled" /><span class="toggle-slider"></span></label>
           </div>
           <div style="margin-top:20px">
             <div class="form-grid">
               <div class="field">
-                <label>Número para receber aviso</label>
-                <input type="text" id="cfg-wa-notify-phone" placeholder="5521999999999" />
-                <p class="hint">Número que receberá o aviso (com DDI)</p>
+                <label>URL do servidor Evolution</label>
+                <input type="url" id="cfg-evolution-url" placeholder="https://evo.seudominio.com" />
+                <p class="hint">URL base da sua instância Evolution (sem barra no final)</p>
               </div>
               <div class="field">
-                <label>URL da API WhatsApp</label>
-                <input type="url" id="cfg-wa-notify-url" placeholder="https://api.z-api.io/instances/xxx/send-text" />
+                <label>Nome da instância</label>
+                <input type="text" id="cfg-evolution-instance" placeholder="minha-instancia" />
+                <p class="hint">Nome exato da instância no painel Evolution</p>
+              </div>
+              <div class="field">
+                <label>API Key</label>
+                <input type="text" id="cfg-evolution-apikey" placeholder="sua-api-key" autocomplete="off" />
+                <p class="hint">Global API Key ou Instance API Key do Evolution</p>
+              </div>
+              <div class="field">
+                <label>Número para receber aviso</label>
+                <input type="text" id="cfg-evolution-phone" placeholder="5521999999999" />
+                <p class="hint">Número de destino com DDI (ex: 5521999999999)</p>
               </div>
               <div class="field form-full">
-                <label>Headers da requisição (JSON)</label>
-                <textarea id="cfg-wa-notify-headers" rows="3" placeholder='{"Content-Type": "application/json", "Client-Token": "SEU_TOKEN"}'></textarea>
-              </div>
-              <div class="field form-full">
-                <label>Body da requisição (JSON com variáveis)</label>
-                <textarea id="cfg-wa-notify-body" rows="5" placeholder='{"phone": "{{notify_phone}}", "message": "Novo lead: {{name}} - {{phone}}"}'></textarea>
+                <label>Mensagem (template)</label>
+                <textarea id="cfg-evolution-message" rows="6" placeholder="🔔 *Novo Lead — Portal Cury*&#10;&#10;👤 *Nome:* {{name}}&#10;📱 *Telefone:* {{phone}}&#10;🏢 *Empreendimento:* {{interest}}&#10;⏰ {{created_at}}"></textarea>
                 <p class="hint">
                   Variáveis: <code>{{name}}</code> <code>{{phone}}</code> <code>{{email}}</code>
-                  <code>{{interest}}</code> <code>{{notify_phone}}</code> <code>{{created_at}}</code>
+                  <code>{{email_line}}</code> <code>{{interest}}</code> <code>{{created_at}}</code>
                 </p>
               </div>
             </div>
@@ -1303,11 +1311,12 @@ async function loadConfig() {
     document.getElementById('cfg-webhook-url').value    = cfg.webhook_url || '';
     document.getElementById('cfg-webhook-secret').value = cfg.webhook_secret || '';
 
-    document.getElementById('cfg-wa-notify-enabled').checked = cfg.whatsapp_notify_enabled === 'true';
-    document.getElementById('cfg-wa-notify-phone').value   = cfg.whatsapp_notify_phone || '';
-    document.getElementById('cfg-wa-notify-url').value     = cfg.whatsapp_notify_url || '';
-    document.getElementById('cfg-wa-notify-headers').value = cfg.whatsapp_notify_headers || '';
-    document.getElementById('cfg-wa-notify-body').value    = cfg.whatsapp_notify_body || '';
+    document.getElementById('cfg-evolution-enabled').checked  = cfg.evolution_enabled === 'true';
+    document.getElementById('cfg-evolution-url').value        = cfg.evolution_url || '';
+    document.getElementById('cfg-evolution-instance').value   = cfg.evolution_instance || '';
+    document.getElementById('cfg-evolution-apikey').value     = cfg.evolution_apikey || '';
+    document.getElementById('cfg-evolution-phone').value      = cfg.evolution_phone || '';
+    document.getElementById('cfg-evolution-message').value    = cfg.evolution_message || '';
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -1363,11 +1372,12 @@ async function saveWebhookConfig() {
 async function saveWaNotifyConfig() {
   try {
     await api('PUT', '/api/config', {
-      whatsapp_notify_enabled: document.getElementById('cfg-wa-notify-enabled').checked ? 'true' : 'false',
-      whatsapp_notify_phone:   document.getElementById('cfg-wa-notify-phone').value.trim(),
-      whatsapp_notify_url:     document.getElementById('cfg-wa-notify-url').value.trim(),
-      whatsapp_notify_headers: document.getElementById('cfg-wa-notify-headers').value.trim(),
-      whatsapp_notify_body:    document.getElementById('cfg-wa-notify-body').value.trim(),
+      evolution_enabled:  document.getElementById('cfg-evolution-enabled').checked ? 'true' : 'false',
+      evolution_url:      document.getElementById('cfg-evolution-url').value.trim(),
+      evolution_instance: document.getElementById('cfg-evolution-instance').value.trim(),
+      evolution_apikey:   document.getElementById('cfg-evolution-apikey').value.trim(),
+      evolution_phone:    document.getElementById('cfg-evolution-phone').value.trim(),
+      evolution_message:  document.getElementById('cfg-evolution-message').value,
     });
     showMsg('waNotifyConfigMsg', '✓ Aviso WhatsApp salvo!', 'success');
     toast('Config WhatsApp salva!');

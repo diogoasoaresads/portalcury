@@ -106,15 +106,13 @@ const DEFAULT_CONFIG = {
   wa_queue_idx:   '0',
   form_queue_idx: '0',
 
-  // WhatsApp API para notificação de novo lead
-  whatsapp_notify_enabled: 'false',
-  whatsapp_notify_phone:   '',
-  whatsapp_notify_url:     '',
-  whatsapp_notify_headers: JSON.stringify({ 'Content-Type': 'application/json' }),
-  whatsapp_notify_body:    JSON.stringify({
-    phone: '{{notify_phone}}',
-    message: '🔔 Novo lead no Portal Cury!\n\n👤 {{name}}\n📱 {{phone}}\n🏢 {{interest}}\n⏰ {{created_at}}'
-  }),
+  // Evolution API — notificação de novo lead
+  evolution_enabled:  'false',
+  evolution_url:      '',       // Ex: https://evo.seudominio.com
+  evolution_instance: '',       // Nome da instância no Evolution
+  evolution_apikey:   '',       // Global API Key ou Instance API Key
+  evolution_phone:    '',       // Número destino com DDI (ex: 5521999999999)
+  evolution_message:  '🔔 *Novo Lead — Portal Cury*\n\n👤 *Nome:* {{name}}\n📱 *Telefone:* {{phone}}{{email_line}}\n🏢 *Empreendimento:* {{interest}}\n⏰ {{created_at}}',
 };
 
 const insertCfg = db.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)');
@@ -260,26 +258,36 @@ async function notifyEmail(lead, cfg) {
   });
 }
 
-async function notifyWhatsApp(lead, cfg) {
-  if (cfg.whatsapp_notify_enabled !== 'true' || !cfg.whatsapp_notify_url) return;
+async function notifyEvolution(lead, cfg) {
+  if (cfg.evolution_enabled !== 'true') return;
+  if (!cfg.evolution_url || !cfg.evolution_instance || !cfg.evolution_apikey || !cfg.evolution_phone) return;
 
   const interestLabel = INTEREST_LABELS[lead.interest] || lead.interest || 'Não informado';
   const dateStr = new Date(lead.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
   const vars = {
-    name: lead.name, phone: lead.phone, email: lead.email || '',
-    interest: interestLabel, message: lead.message || '',
-    notify_phone: cfg.whatsapp_notify_phone, created_at: dateStr,
+    name:       lead.name,
+    phone:      lead.phone,
+    email:      lead.email || '',
+    email_line: lead.email ? `\n📧 *E-mail:* ${lead.email}` : '',
+    interest:   interestLabel,
+    message:    lead.message || '',
+    created_at: dateStr,
   };
 
-  const headers  = JSON.parse(cfg.whatsapp_notify_headers || '{}');
-  const bodyTmpl = cfg.whatsapp_notify_body || '';
-  const body     = fillTemplate(bodyTmpl, vars);
+  const text = fillTemplate(cfg.evolution_message, vars);
+  const baseUrl = cfg.evolution_url.replace(/\/$/, '');
+  const url = `${baseUrl}/message/sendText/${cfg.evolution_instance}`;
 
-  const res = await fetch(cfg.whatsapp_notify_url, {
-    method: 'POST', headers, body,
+  const res = await fetch(url, {
+    method:  'POST',
+    headers: { 'apikey': cfg.evolution_apikey, 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ number: cfg.evolution_phone, text }),
   });
-  if (!res.ok) throw new Error(`WhatsApp API: HTTP ${res.status}`);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`Evolution API: HTTP ${res.status} ${detail}`);
+  }
 }
 
 async function dispatchWebhook(lead, cfg) {
@@ -309,10 +317,10 @@ async function dispatchWebhook(lead, cfg) {
 function fireNotifications(lead, cfg) {
   Promise.allSettled([
     notifyEmail(lead, cfg),
-    notifyWhatsApp(lead, cfg),
+    notifyEvolution(lead, cfg),
     dispatchWebhook(lead, cfg),
   ]).then(results => {
-    const names = ['email', 'whatsapp', 'webhook'];
+    const names = ['email', 'evolution', 'webhook'];
     results.forEach((r, i) => {
       if (r.status === 'rejected') console.error(`[notif:${names[i]}]`, r.reason?.message);
     });
@@ -613,8 +621,8 @@ app.post('/api/test/webhook', auth, async (_req, res) => {
 
 app.post('/api/test/whatsapp', auth, async (_req, res) => {
   try {
-    await notifyWhatsApp(FAKE_LEAD, { ...getConfig(), whatsapp_notify_enabled: 'true' });
-    res.json({ success: true, message: 'Notificação WhatsApp enviada!' });
+    await notifyEvolution(FAKE_LEAD, { ...getConfig(), evolution_enabled: 'true' });
+    res.json({ success: true, message: 'Notificação Evolution API enviada!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
