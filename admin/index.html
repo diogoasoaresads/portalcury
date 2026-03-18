@@ -526,9 +526,9 @@
           <h1>Gestão de Leads</h1>
           <p>Todos os leads capturados pelo portal</p>
         </div>
-        <button class="btn btn-primary" onclick="exportCSV()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;font-size:.95rem">
+        <button class="btn btn-primary" onclick="exportExcel()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;font-size:.95rem">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Baixar Leads (CSV)
+          Baixar Leads (Excel)
         </button>
       </div>
 
@@ -551,7 +551,7 @@
             <option value="farol-guanabara">Farol da Guanabara</option>
             <option value="residencial-pixinguinha">Res. Pixinguinha</option>
           </select>
-          <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Exportar CSV</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportExcel()">⬇ Exportar Excel</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -1265,25 +1265,25 @@ document.getElementById('leadModal').addEventListener('click', (e) => {
 });
 
 /* ============================================================
-   EXPORT CSV
+   EXPORT EXCEL
 ============================================================ */
-async function exportCSV() {
+async function exportExcel() {
   try {
-    const { leads } = await api('GET', `/api/leads?limit=9999`);
-    const headers = ['ID','Nome','Telefone','Email','Empreendimento','Status','Notas','Data'];
-    const rows = leads.map(l => [
-      l.id, l.name, l.phone, l.email,
-      INTEREST_LABELS[l.interest] || l.interest,
-      STATUS_LABELS[l.status] || l.status,
-      (l.notes || '').replace(/"/g, '""'),
-      formatDate(l.created_at),
-    ].map(v => `"${v}"`).join(','));
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const params = new URLSearchParams({
+      status:    document.getElementById('filterStatus').value,
+      interest:  document.getElementById('filterInterest').value,
+      search:    document.getElementById('searchInput').value,
+    });
+    const res = await fetch(`/api/leads/export-excel?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Erro ao exportar'); }
+    const blob = await res.blob();
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `leads_portalcury_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `leads_portalcury_${new Date().toISOString().slice(0,10)}.xlsx`;
     a.click();
+    toast('Planilha Excel gerada com sucesso!', 'success');
   } catch (e) { toast(e.message, 'error'); }
 }
 
