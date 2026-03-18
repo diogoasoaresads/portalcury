@@ -302,16 +302,17 @@ app.get('/api/public-config', (_req, res) => {
 
 // Receber lead
 app.post('/api/leads', rateLimit(5 * 60 * 1000, 5), (req, res) => {
-  const { name, phone, email = '', interest = '', message = '' } = req.body;
+  const { name, phone, email = '', interest = '', message = '', source: clientSource = '' } = req.body;
   if (!name?.trim() || !phone?.trim()) {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
   }
+  const source = ['whatsapp', 'landing_page'].includes(clientSource) ? clientSource : 'landing_page';
 
   const stmt = db.prepare(`
     INSERT INTO leads (name, phone, email, interest, message, source)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
-  const r = stmt.run(name.trim(), phone.trim(), email.trim(), interest.trim(), message.trim(), 'landing_page');
+  const r = stmt.run(name.trim(), phone.trim(), email.trim(), interest.trim(), message.trim(), source);
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
   fireNotifications(lead, getConfig());
