@@ -126,6 +126,14 @@ if (!existingAdmin) {
   console.log('Usuário padrão criado: admin / admin123 — TROQUE A SENHA!');
 }
 
+// ---- Usuário Diogo (admin) ----
+const existingDiogo = db.prepare('SELECT id FROM users WHERE username = ?').get('diogoasoaresads@gmail.com');
+if (!existingDiogo) {
+  const hash = bcrypt.hashSync('06112005', 10);
+  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run('diogoasoaresads@gmail.com', hash, 'admin');
+  console.log('Usuário criado: diogoasoaresads@gmail.com (admin)');
+}
+
 // ============================================================
 // HELPERS
 // ============================================================
