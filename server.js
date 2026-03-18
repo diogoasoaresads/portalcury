@@ -7,10 +7,17 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const empreendimentos = require('./data/empreendimentos');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'TROQUE_ESTA_CHAVE_EM_PRODUCAO_' + Math.random();
+
+// ============================================================
+// TEMPLATE ENGINE
+// ============================================================
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // ============================================================
 // MIDDLEWARE
@@ -454,6 +461,16 @@ app.post('/api/test/whatsapp', auth, async (_req, res) => {
     await notifyWhatsApp(FAKE_LEAD, { ...getConfig(), whatsapp_notify_enabled: 'true' });
     res.json({ success: true, message: 'Notificação WhatsApp enviada!' });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ============================================================
+// EMPREENDIMENTOS – individual pages
+// ============================================================
+app.get('/empreendimentos/:slug', (req, res) => {
+  const emp = empreendimentos.find(e => e.slug === req.params.slug);
+  if (!emp) return res.status(404).sendFile(path.join(__dirname, 'index.html'));
+  const others = empreendimentos.filter(e => e.slug !== emp.slug).slice(0, 5);
+  res.render('empreendimento', { emp, others });
 });
 
 // ============================================================

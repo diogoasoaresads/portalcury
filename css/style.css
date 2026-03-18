@@ -5,9 +5,9 @@
 
 /* ---------- CSS VARIABLES ---------- */
 :root {
-  --color-primary:    #C8232A;
-  --color-primary-dk: #a01a20;
-  --color-secondary:  #1a2e4a;
+  --color-primary:    #ea723d;
+  --color-primary-dk: #c8571e;
+  --color-secondary:  #00447d;
   --color-accent:     #f5a623;
   --color-whatsapp:   #25D366;
   --color-bg:         #f7f8fa;
@@ -86,12 +86,12 @@ h1, h2, h3, h4 {
 .btn--primary {
   background: var(--color-primary);
   color: var(--color-white);
-  box-shadow: 0 4px 14px rgba(200,35,42,.3);
+  box-shadow: 0 4px 14px rgba(234,114,61,.3);
 }
 .btn--primary:hover {
   background: var(--color-primary-dk);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(200,35,42,.4);
+  box-shadow: 0 6px 20px rgba(234,114,61,.4);
 }
 
 .btn--outline {
@@ -151,7 +151,7 @@ h1, h2, h3, h4 {
 
 .section-header__eyebrow {
   display: inline-block;
-  background: rgba(200,35,42,.1);
+  background: rgba(234,114,61,.1);
   color: var(--color-primary);
   font-family: var(--font-heading);
   font-weight: 700;
@@ -275,7 +275,7 @@ h1, h2, h3, h4 {
 .hero__bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #0f2133 0%, #1a3a5c 50%, #C8232A 100%);
+  background: linear-gradient(135deg, #0f2133 0%, #1a3a5c 50%, #ea723d 100%);
   z-index: 0;
 }
 .hero__bg::after {
@@ -419,7 +419,7 @@ h1, h2, h3, h4 {
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(200,35,42,.12);
+  box-shadow: 0 0 0 3px rgba(234,114,61,.12);
 }
 .form-group input.error,
 .form-group select.error {
@@ -568,22 +568,11 @@ h1, h2, h3, h4 {
 }
 .emp-card:hover .emp-card__img { transform: scale(1.05); }
 
-/* Gradient overlays as background colors (sem imagens reais) */
-.emp-card__img--luzes       { background: linear-gradient(135deg, #1a3a5c 0%, #C8232A 100%); }
-.emp-card__img--cartola     { background: linear-gradient(135deg, #2d6a4f 0%, #1a3a5c 100%); }
-.emp-card__img--raizes      { background: linear-gradient(135deg, #5c4a1a 0%, #2d6a4f 100%); }
-.emp-card__img--caminhos    { background: linear-gradient(135deg, #1a2e4a 0%, #4a6fa5 100%); }
-.emp-card__img--farol       { background: linear-gradient(135deg, #C8232A 0%, #5c1a2e 100%); }
-.emp-card__img--pixinguinha { background: linear-gradient(135deg, #4a2d1a 0%, #C8232A 100%); }
-
-/* Ícone ilustrativo no centro do card */
-.emp-card__img::before {
-  content: '🏢';
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 3rem;
-  opacity: .6;
+/* Real photos via inline style; fallback gradient */
+.emp-card__img {
+  background-color: #1a3a5c;
+  background-size: cover;
+  background-position: center;
 }
 
 .emp-card__tag {
@@ -694,7 +683,7 @@ h1, h2, h3, h4 {
   position: absolute;
   top: -40%; right: -10%;
   width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(200,35,42,.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(234,114,61,.2) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -718,7 +707,7 @@ h1, h2, h3, h4 {
 
 .vantagem-item__icon {
   width: 60px; height: 60px;
-  background: rgba(200,35,42,.2);
+  background: rgba(234,114,61,.2);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -894,7 +883,7 @@ h1, h2, h3, h4 {
 
 .channel-item__icon {
   width: 48px; height: 48px;
-  background: rgba(200,35,42,.1);
+  background: rgba(234,114,61,.1);
   color: var(--color-primary);
   border-radius: var(--radius-sm);
   display: flex;
