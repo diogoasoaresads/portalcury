@@ -116,6 +116,17 @@ const DEFAULT_CONFIG = {
   evolution_apikey:   '',       // Global API Key ou Instance API Key
   evolution_phone:    '',       // Número destino com DDI (ex: 5521999999999)
   evolution_message:  '🔔 *Novo Lead — Portal Cury*\n\n👤 *Nome:* {{name}}\n📱 *Telefone:* {{phone}}{{email_line}}\n🏢 *Empreendimento:* {{interest}}\n⏰ {{created_at}}',
+
+  // Google Ads
+  gads_tag_id:           '',   // Ex: AW-123456789
+  gads_conversion_label: '',   // Ex: AbCdEfGhIjKl (label do evento de conversão)
+
+  // Google Tag Manager
+  gtm_id: '',                  // Ex: GTM-XXXXXXX
+
+  // Código personalizado nas páginas
+  custom_head_code: '',        // HTML/JS injetado antes de </head>
+  custom_body_code: '',        // HTML/JS injetado após <body>
 };
 
 const insertCfg = db.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)');
@@ -345,12 +356,17 @@ function fireNotifications(lead, cfg) {
 // Landing page
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-// Config público (para atualizar botão WhatsApp dinamicamente)
+// Config público (WhatsApp, rastreamento e códigos personalizados)
 app.get('/api/public-config', (_req, res) => {
   const cfg = getConfig();
   res.json({
-    whatsapp_number:  cfg.whatsapp_number,
-    whatsapp_message: cfg.whatsapp_message,
+    whatsapp_number:       cfg.whatsapp_number  || '',
+    whatsapp_message:      cfg.whatsapp_message || '',
+    gads_tag_id:           cfg.gads_tag_id      || '',
+    gads_conversion_label: cfg.gads_conversion_label || '',
+    gtm_id:                cfg.gtm_id           || '',
+    custom_head_code:      cfg.custom_head_code  || '',
+    custom_body_code:      cfg.custom_body_code  || '',
   });
 });
 
@@ -785,9 +801,17 @@ app.post('/api/test/whatsapp', auth, async (_req, res) => {
 app.get('/empreendimentos/:slug', (req, res) => {
   const emp = empreendimentos.find(e => e.slug === req.params.slug);
   if (!emp) return res.status(404).sendFile(path.join(__dirname, 'index.html'));
-  if (emp.emBreve) return res.render('em-breve', { emp });
+  const cfg = getConfig();
+  const tracking = {
+    gtm_id:                cfg.gtm_id                || '',
+    gads_tag_id:           cfg.gads_tag_id            || '',
+    gads_conversion_label: cfg.gads_conversion_label  || '',
+    custom_head_code:      cfg.custom_head_code        || '',
+    custom_body_code:      cfg.custom_body_code        || '',
+  };
+  if (emp.emBreve) return res.render('em-breve', { emp, tracking });
   const others = empreendimentos.filter(e => e.slug !== emp.slug).slice(0, 5);
-  res.render('empreendimento', { emp, others });
+  res.render('empreendimento', { emp, others, tracking });
 });
 
 // ============================================================

@@ -766,6 +766,7 @@
         <button class="config-tab" data-tab="email">E-mail</button>
         <button class="config-tab" data-tab="webhook">Webhook</button>
         <button class="config-tab" data-tab="wanotify">Aviso WhatsApp</button>
+        <button class="config-tab" data-tab="tracking">Rastreamento</button>
         <button class="config-tab" data-tab="security">Segurança</button>
       </div>
 
@@ -953,6 +954,81 @@
             <button class="btn btn-secondary" onclick="testWhatsApp()">Enviar teste</button>
           </div>
         </div>
+      </div>
+
+      <!-- Tab: Rastreamento -->
+      <div class="config-panel" id="tab-tracking">
+
+        <!-- Google Ads -->
+        <div class="config-card">
+          <h4><span class="dot"></span>Google Ads</h4>
+          <p class="hint" style="margin-bottom:20px">Configure o pixel de conversão do Google Ads. A conversão será disparada automaticamente quando um lead for enviado com sucesso em qualquer página do site.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label>ID da Tag Google (Tag ID)</label>
+              <input type="text" id="cfg-gads-tag-id" placeholder="AW-123456789" />
+              <p class="hint">Encontrado em Google Ads → Ferramentas → Conversões → Tag do Google</p>
+            </div>
+            <div class="field">
+              <label>Label da Conversão</label>
+              <input type="text" id="cfg-gads-label" placeholder="AbCdEfGhIjKl-MnO" />
+              <p class="hint">Encontrado em Google Ads → Ferramentas → Conversões → Detalhes da ação</p>
+            </div>
+          </div>
+          <div id="gadsConfigMsg" style="margin-top:12px"></div>
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary" onclick="saveTrackingConfig()">Salvar</button>
+            <span id="gadsPreview" style="font-size:.8rem;color:var(--gray);font-family:monospace"></span>
+          </div>
+        </div>
+
+        <!-- GTM -->
+        <div class="config-card">
+          <h4><span class="dot"></span>Google Tag Manager</h4>
+          <p class="hint" style="margin-bottom:20px">O GTM é injetado automaticamente em todas as páginas. Use-o para gerenciar pixels, eventos e scripts sem mexer no código.</p>
+          <div class="field" style="max-width:360px">
+            <label>ID do Contêiner GTM</label>
+            <input type="text" id="cfg-gtm-id" placeholder="GTM-XXXXXXX" />
+            <p class="hint">Encontrado em Tag Manager → Administrador → Contêiner → ID do contêiner</p>
+          </div>
+          <div id="gtmConfigMsg" style="margin-top:12px"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="saveTrackingConfig()">Salvar</button>
+        </div>
+
+        <!-- Código personalizado -->
+        <div class="config-card">
+          <h4><span class="dot"></span>Código Personalizado</h4>
+          <p class="hint" style="margin-bottom:20px">Cole aqui scripts personalizados (Facebook Pixel, TikTok Pixel, Hotjar, etc). O código é injetado em <strong>todas as páginas</strong>.</p>
+          <div class="field">
+            <label>Código no &lt;head&gt;</label>
+            <textarea id="cfg-custom-head" rows="6" placeholder="<!-- Ex: Meta Pixel, scripts de analytics -->
+<script>
+  /* seu código aqui */
+</script>"></textarea>
+            <p class="hint">Injetado antes de <code>&lt;/head&gt;</code> em todas as páginas</p>
+          </div>
+          <div class="field" style="margin-top:16px">
+            <label>Código no &lt;body&gt;</label>
+            <textarea id="cfg-custom-body" rows="6" placeholder="<!-- Ex: noscript do GTM, chat, scripts de suporte -->
+<noscript>...</noscript>"></textarea>
+            <p class="hint">Injetado logo após <code>&lt;body&gt;</code> em todas as páginas</p>
+          </div>
+          <div id="customCodeMsg" style="margin-top:12px"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="saveTrackingConfig()">Salvar todas as configurações de rastreamento</button>
+        </div>
+
+        <!-- Como funciona -->
+        <div class="config-card" style="background:#f8fafc;border:1px solid var(--border);box-shadow:none">
+          <h4><span class="dot" style="background:#2563eb"></span>Como funciona o rastreamento de conversão</h4>
+          <ol style="margin-top:12px;padding-left:20px;font-size:.875rem;color:var(--gray);line-height:1.8">
+            <li>Preencha o <strong>ID da Tag Google</strong> (formato <code>AW-XXXXXXXXX</code>)</li>
+            <li>Preencha o <strong>Label da Conversão</strong> da ação configurada no Google Ads</li>
+            <li>Salve — o pixel é ativado automaticamente em todas as páginas</li>
+            <li>Quando um visitante preenche qualquer formulário do site, o evento <code>conversion</code> é disparado</li>
+            <li>O Google Ads registra a conversão e otimiza seus anúncios automaticamente</li>
+          </ol>
+        </div>
+
       </div>
 
       <!-- Tab: Segurança -->
@@ -1516,6 +1592,43 @@ async function loadConfig() {
     document.getElementById('cfg-evolution-apikey').value     = cfg.evolution_apikey || '';
     document.getElementById('cfg-evolution-phone').value      = cfg.evolution_phone || '';
     document.getElementById('cfg-evolution-message').value    = cfg.evolution_message || '';
+
+    // Rastreamento
+    document.getElementById('cfg-gads-tag-id').value  = cfg.gads_tag_id  || '';
+    document.getElementById('cfg-gads-label').value   = cfg.gads_conversion_label || '';
+    document.getElementById('cfg-gtm-id').value        = cfg.gtm_id       || '';
+    document.getElementById('cfg-custom-head').value   = cfg.custom_head_code || '';
+    document.getElementById('cfg-custom-body').value   = cfg.custom_body_code || '';
+    updateGadsPreview(cfg.gads_tag_id, cfg.gads_conversion_label);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function updateGadsPreview(tagId, label) {
+  const el = document.getElementById('gadsPreview');
+  if (!el) return;
+  if (tagId && label) el.textContent = `send_to: "${tagId}/${label}"`;
+  else if (tagId) el.textContent = `Tag: ${tagId} (sem label de conversão)`;
+  else el.textContent = '';
+}
+
+async function saveTrackingConfig() {
+  try {
+    const tagId  = document.getElementById('cfg-gads-tag-id').value.trim();
+    const label  = document.getElementById('cfg-gads-label').value.trim();
+    const gtmId  = document.getElementById('cfg-gtm-id').value.trim();
+    const head   = document.getElementById('cfg-custom-head').value;
+    const body   = document.getElementById('cfg-custom-body').value;
+
+    await api('PUT', '/api/config', {
+      gads_tag_id:           tagId,
+      gads_conversion_label: label,
+      gtm_id:                gtmId,
+      custom_head_code:      head,
+      custom_body_code:      body,
+    });
+
+    updateGadsPreview(tagId, label);
+    toast('Configurações de rastreamento salvas!');
   } catch (e) { toast(e.message, 'error'); }
 }
 

@@ -157,10 +157,10 @@
         form.reset();
         showModal();
 
-        // Google Ads Conversion Tracking (descomentar após configurar)
-        // if (typeof gtag !== 'undefined') {
-        //   gtag('event', 'conversion', { 'send_to': 'AW-XXXXXXXXX/XXXXXXXX' });
-        // }
+        // Google Ads Conversion — disparado automaticamente via config do admin
+        if (typeof gtag !== 'undefined' && window._GADS) {
+          gtag('event', 'conversion', { 'send_to': window._GADS });
+        }
 
         // Facebook Pixel (descomentar após configurar)
         // if (typeof fbq !== 'undefined') {
@@ -232,15 +232,44 @@
     });
   });
 
-  /* ---- Dynamic WhatsApp config from API ---- */
+  /* ---- Dynamic config from API (WhatsApp + Rastreamento) ---- */
   fetch('/api/public-config')
     .then(r => r.json())
     .then(cfg => {
-      if (!cfg.whatsapp_number) return;
-      const num = cfg.whatsapp_number.replace(/\D/g, '');
-      const msg = encodeURIComponent(cfg.whatsapp_message || '');
-      const waUrl = `https://wa.me/${num}?text=${msg}`;
-      document.querySelectorAll('a[href*="wa.me"]').forEach(a => { a.href = waUrl; });
+      // WhatsApp links
+      if (cfg.whatsapp_number) {
+        const num = cfg.whatsapp_number.replace(/\D/g, '');
+        const msg = encodeURIComponent(cfg.whatsapp_message || '');
+        const waUrl = `https://wa.me/${num}?text=${msg}`;
+        document.querySelectorAll('a[href*="wa.me"]').forEach(a => { a.href = waUrl; });
+      }
+
+      // Google Tag Manager
+      if (cfg.gtm_id) {
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',cfg.gtm_id);
+        var ns=document.createElement('noscript');var fr=document.createElement('iframe');fr.src='https://www.googletagmanager.com/ns.html?id='+cfg.gtm_id;fr.height='0';fr.width='0';fr.style.cssText='display:none;visibility:hidden';ns.appendChild(fr);document.body.insertBefore(ns,document.body.firstChild);
+      }
+
+      // Google Ads (gtag.js)
+      if (cfg.gads_tag_id) {
+        var gScript=document.createElement('script');gScript.async=true;gScript.src='https://www.googletagmanager.com/gtag/js?id='+cfg.gads_tag_id;document.head.appendChild(gScript);
+        window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments);};gtag('js',new Date());gtag('config',cfg.gads_tag_id);
+        if (cfg.gads_conversion_label) {
+          window._GADS = cfg.gads_tag_id + '/' + cfg.gads_conversion_label;
+        }
+      }
+
+      // Código personalizado no <head>
+      if (cfg.custom_head_code) {
+        var headFrag=document.createElement('div');headFrag.innerHTML=cfg.custom_head_code;
+        Array.from(headFrag.childNodes).forEach(function(n){document.head.appendChild(n.cloneNode(true));});
+      }
+
+      // Código personalizado no <body>
+      if (cfg.custom_body_code) {
+        var bodyFrag=document.createElement('div');bodyFrag.innerHTML=cfg.custom_body_code;
+        Array.from(bodyFrag.childNodes).forEach(function(n){document.body.insertBefore(n.cloneNode(true),document.body.firstChild);});
+      }
     })
     .catch(() => {});
 
