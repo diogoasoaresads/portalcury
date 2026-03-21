@@ -352,4 +352,14 @@
     });
   })();
 
+  /* ---- Clique na foto do card ---- */
+  document.querySelectorAll('.emp-card').forEach(card => {
+    const imgWrap = card.querySelector('.emp-card__img-wrap');
+    const link = card.querySelector('a.btn');
+    if (imgWrap && link) {
+      imgWrap.style.cursor = 'pointer';
+      imgWrap.addEventListener('click', () => { window.location.href = link.href; });
+    }
+  });
+
 })();
