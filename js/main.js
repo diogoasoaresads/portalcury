@@ -7,8 +7,14 @@
 
   /* ---- Sticky Header ---- */
   const header = document.getElementById('header');
+
+  /* ---- Hero Parallax ---- */
+  const heroBgParallax = document.querySelector('.hero__bg-parallax');
   window.addEventListener('scroll', () => {
     header.classList.toggle('scrolled', window.scrollY > 60);
+    if (heroBgParallax) {
+      heroBgParallax.style.transform = `translateY(${window.scrollY * 0.22}px)`;
+    }
   }, { passive: true });
 
   /* ---- Mobile Menu ---- */
