@@ -358,19 +358,12 @@
       btn.disabled = true;
       btn.textContent = 'Aguarde...';
 
-      const waFgts      = (modal.querySelector('[name="fgts"]')      || {}).value || '';
-      const waFgtsValor = (modal.querySelector('[name="fgts_valor"]') || {}).value || '';
-      const waRenda     = (modal.querySelector('[name="renda"]')      || {}).value || '';
-      let waMsgParts = [];
-      if (waFgts)      waMsgParts.push(`FGTS/Entrada: ${waFgts}`);
-      if (waFgtsValor) waMsgParts.push(`Valor: ${waFgtsValor}`);
-      if (waRenda)     waMsgParts.push(`Renda familiar: ${waRenda}`);
       let waRedirectUrl = pendingWaUrl;
       try {
         const resp = await fetch('/api/leads/wa', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, message: waMsgParts.join('. ') }),
+          body: JSON.stringify({ name, phone }),
         });
         const json = await resp.json();
         if (json.wa_url) waRedirectUrl = json.wa_url;
