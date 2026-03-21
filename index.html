@@ -167,9 +167,14 @@
                 <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
                 <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
                 <option value="nova-norte-raizes">Res. Nova Norte Raízes – Irajá</option>
+                <option value="nova-olaria">Nova Olaria – Olaria</option>
                 <option value="caminhos-guanabara">Caminhos da Guanabara – Niterói</option>
                 <option value="farol-guanabara">Farol da Guanabara – Porto</option>
                 <option value="residencial-pixinguinha">Res. Pixinguinha – Porto</option>
+                <option value="metropolitan-dream">Metropolitan Dream – Barra Olímpica</option>
+                <option value="americas-19-recreio">Américas 19 – Recreio</option>
+                <option value="my-jacarepagua-taquara">My Jacarepaguá – Taquara</option>
+                <option value="parque-brito-iii">Parque Brito III – Campo Grande</option>
                 <option value="cury-niteroi">🔔 Orla Central – Em Breve</option>
                 <option value="cury-piedade">🔔 Parque Piedade – Em Breve</option>
               </select>
@@ -178,10 +183,15 @@
               <label>Região de interesse</label>
               <div class="form-pills">
                 <span class="form-pills__item"><input type="checkbox" name="regions" value="São Cristóvão" id="hero-r-sc"><label for="hero-r-sc">São Cristóvão</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Olaria" id="hero-r-ol"><label for="hero-r-ol">Olaria</label></span>
                 <span class="form-pills__item"><input type="checkbox" name="regions" value="Irajá" id="hero-r-ir"><label for="hero-r-ir">Irajá</label></span>
                 <span class="form-pills__item"><input type="checkbox" name="regions" value="Niterói" id="hero-r-ni"><label for="hero-r-ni">Niterói</label></span>
                 <span class="form-pills__item"><input type="checkbox" name="regions" value="Porto Maravilha" id="hero-r-po"><label for="hero-r-po">Porto</label></span>
                 <span class="form-pills__item"><input type="checkbox" name="regions" value="Piedade" id="hero-r-pi"><label for="hero-r-pi">Piedade</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Barra Olímpica" id="hero-r-ba"><label for="hero-r-ba">Barra</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Recreio" id="hero-r-re"><label for="hero-r-re">Recreio</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Taquara" id="hero-r-ta"><label for="hero-r-ta">Taquara</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Campo Grande" id="hero-r-cg"><label for="hero-r-cg">Campo Grande</label></span>
               </div>
             </div>
             <div class="form-row">
@@ -265,10 +275,15 @@
       <div class="filter-tabs" role="tablist" aria-label="Filtrar por bairro">
         <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true">Todos</button>
         <button class="filter-tab" data-filter="sao-cristovao" role="tab" aria-selected="false">São Cristóvão</button>
+        <button class="filter-tab" data-filter="olaria" role="tab" aria-selected="false">Olaria</button>
         <button class="filter-tab" data-filter="iraja" role="tab" aria-selected="false">Irajá</button>
         <button class="filter-tab" data-filter="niteroi" role="tab" aria-selected="false">Niterói</button>
         <button class="filter-tab" data-filter="porto" role="tab" aria-selected="false">Porto</button>
         <button class="filter-tab" data-filter="piedade" role="tab" aria-selected="false">Piedade</button>
+        <button class="filter-tab" data-filter="barra" role="tab" aria-selected="false">Barra</button>
+        <button class="filter-tab" data-filter="recreio" role="tab" aria-selected="false">Recreio</button>
+        <button class="filter-tab" data-filter="taquara" role="tab" aria-selected="false">Taquara</button>
+        <button class="filter-tab" data-filter="campo-grande" role="tab" aria-selected="false">Campo Grande</button>
       </div>
 
       <div class="cards-grid" id="cardsGrid">
@@ -404,9 +419,118 @@
             </div>
           </div>
         </article>
+
+        <!-- Card 7: Nova Olaria -->
+        <article class="emp-card" data-bairro="olaria" aria-label="Residencial Nova Olaria">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img" style="background-image:url('https://curyrj.com.br/wp-content/uploads/2024/12/nova-_olaria-_cury-1-1240x720.png')"></div>
+            <span class="emp-card__tag">Olaria · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Residencial Nova Olaria</h3>
+            <p class="emp-card__desc">2 quartos de 38 a 41 m² com varanda. Perto do BRT Piscinão de Ramos e Shopping Nova América. Entrega mai/2028.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Olaria, Zona Norte do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>BRT Piscinão de Ramos</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Use seu FGTS</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 248.000</span></div>
+              <a href="/empreendimentos/nova-olaria" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
         </article>
 
-        <!-- Card 7: Orla Central – Em Breve -->
+        <!-- Card 8: Metropolitan Dream – Barra -->
+        <article class="emp-card" data-bairro="barra" aria-label="Metropolitan Dream">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img" style="background-image:url('https://curyrj.com.br/wp-content/uploads/2024/09/Metropolitan_Fachada_Drone_Final_2k_drpx86-1240x720.jpg')"></div>
+            <span class="emp-card__tag">Barra Olímpica · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Metropolitan Dream</h3>
+            <p class="emp-card__desc">Studios a 3 quartos de 30 a 65 m² na Barra Olímpica. Rooftop, +20 opções de lazer. Próximo ao Parque Olímpico e Parque Imagine.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Barra Olímpica, Rio de Janeiro</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>806 unidades, 5 torres</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Rooftop e lazer completo</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 289.000</span></div>
+              <a href="/empreendimentos/metropolitan-dream" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 9: Américas 19 – Recreio -->
+        <article class="emp-card" data-bairro="recreio" aria-label="Américas 19 Recreio">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img" style="background-image:url('https://curyrj.com.br/wp-content/uploads/2024/01/Apartamento-no-Recreio-Americas-19-8-1240x720.png')"></div>
+            <span class="emp-card__tag">Recreio · RJ</span>
+            <span class="emp-card__badge">Destaque</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Américas 19 Recreio</h3>
+            <p class="emp-card__desc">2 e 3 quartos de 54 a 137 m² em frente ao Recreio Shopping. Garden e cobertura duplex. A minutos da praia. Entrega mar/2027.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Recreio dos Bandeirantes, RJ</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>Em frente ao Recreio Shopping</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Placas solares e reuso de água</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from"></span><span class="price-value">Consulte o corretor</span></div>
+              <a href="/empreendimentos/americas-19-recreio" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 10: My Jacarepaguá – Taquara -->
+        <article class="emp-card" data-bairro="taquara" aria-label="My Jacarepaguá">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img" style="background-image:url('https://curyrj.com.br/wp-content/uploads/2022/10/WhatsApp-Image-2022-09-05-at-09.32.16.jpeg')"></div>
+            <span class="emp-card__tag">Taquara · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">My Jacarepaguá</h3>
+            <p class="emp-card__desc">1 e 2 quartos de 41 m² com opção garden em Taquara. A 3 minutos do BRT, ao lado do Prezunic. Maior polo econômico de Jacarepaguá.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Taquara, Zona Oeste do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>3 min do BRT</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Financiamento até 100% Caixa</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 199.000</span></div>
+              <a href="/empreendimentos/my-jacarepagua-taquara" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 11: Completo Parque Brito III – Campo Grande -->
+        <article class="emp-card" data-bairro="campo-grande" aria-label="Completo Parque Brito III">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img" style="background-image:url('https://api.apto.vc/images/realties/7519/completo-parque-brito-iii-condominio-1.webp')"></div>
+            <span class="emp-card__tag">Campo Grande · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Completo Parque Brito III</h3>
+            <p class="emp-card__desc">2 quartos de 37 a 40 m² em Campo Grande. 500 unidades, lazer completo entregue mobiliado. Perto do ParkShopping. Entrega jan/2028.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Campo Grande, Zona Oeste do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>Perto do ParkShopping</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Minha Casa Minha Vida</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 203.900</span></div>
+              <a href="/empreendimentos/parque-brito-iii" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 12: Orla Central – Em Breve -->
         <article class="emp-card emp-card--em-breve" data-bairro="niteroi" aria-label="Orla Central – Em Breve">
           <div class="emp-card__img-wrap">
             <div class="emp-card__img emp-card__img--gradient" style="background: linear-gradient(135deg, #00447d 0%, #006bad 60%, #ea723d 100%);"></div>
@@ -612,9 +736,14 @@
                 <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
                 <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
                 <option value="nova-norte-raizes">Res. Nova Norte Raízes – Irajá</option>
+                <option value="nova-olaria">Nova Olaria – Olaria</option>
                 <option value="caminhos-guanabara">Caminhos da Guanabara – Niterói</option>
                 <option value="farol-guanabara">Farol da Guanabara – Porto</option>
                 <option value="residencial-pixinguinha">Res. Pixinguinha – Porto</option>
+                <option value="metropolitan-dream">Metropolitan Dream – Barra Olímpica</option>
+                <option value="americas-19-recreio">Américas 19 – Recreio</option>
+                <option value="my-jacarepagua-taquara">My Jacarepaguá – Taquara</option>
+                <option value="parque-brito-iii">Parque Brito III – Campo Grande</option>
                 <option value="cury-niteroi">🔔 Orla Central – Em Breve</option>
                 <option value="cury-piedade">🔔 Parque Piedade – Em Breve</option>
               </select>
@@ -651,10 +780,15 @@
             <label>Região de interesse</label>
             <div class="form-pills">
               <span class="form-pills__item"><input type="checkbox" name="regions" value="São Cristóvão" id="ct-r-sc"><label for="ct-r-sc">São Cristóvão</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Olaria" id="ct-r-ol"><label for="ct-r-ol">Olaria</label></span>
               <span class="form-pills__item"><input type="checkbox" name="regions" value="Irajá" id="ct-r-ir"><label for="ct-r-ir">Irajá</label></span>
               <span class="form-pills__item"><input type="checkbox" name="regions" value="Niterói" id="ct-r-ni"><label for="ct-r-ni">Niterói</label></span>
               <span class="form-pills__item"><input type="checkbox" name="regions" value="Porto Maravilha" id="ct-r-po"><label for="ct-r-po">Porto</label></span>
               <span class="form-pills__item"><input type="checkbox" name="regions" value="Piedade" id="ct-r-pi"><label for="ct-r-pi">Piedade</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Barra Olímpica" id="ct-r-ba"><label for="ct-r-ba">Barra</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Recreio" id="ct-r-re"><label for="ct-r-re">Recreio</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Taquara" id="ct-r-ta"><label for="ct-r-ta">Taquara</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Campo Grande" id="ct-r-cg"><label for="ct-r-cg">Campo Grande</label></span>
             </div>
           </div>
           <div class="form-group">
