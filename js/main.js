@@ -149,7 +149,18 @@
         document.head.appendChild(style);
       }
 
-      const data = Object.fromEntries(new FormData(form).entries());
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      // Collect multi-value checkboxes (regions) and append to message
+      const regions = formData.getAll('regions');
+      const fgts    = data.fgts || '';
+      let extra = '';
+      if (regions.length > 0) extra += `Regiões: ${regions.join(', ')}. `;
+      if (fgts)               extra += `FGTS/Entrada: ${fgts}.`;
+      if (extra) data.message = extra.trim() + (data.message ? ' | ' + data.message : '');
+      delete data.regions;
+      delete data.fgts;
 
       try {
         const res = await fetch('/api/leads', {
@@ -330,12 +341,13 @@
       btn.disabled = true;
       btn.textContent = 'Aguarde...';
 
+      const waFgts = (modal.querySelector('[name="fgts"]') || {}).value || '';
       let waRedirectUrl = pendingWaUrl;
       try {
         const resp = await fetch('/api/leads/wa', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone }),
+          body: JSON.stringify({ name, phone, message: waFgts ? `FGTS/Entrada: ${waFgts}.` : '' }),
         });
         const json = await resp.json();
         if (json.wa_url) waRedirectUrl = json.wa_url;

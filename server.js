@@ -391,7 +391,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 
 // Receber lead do WhatsApp (fila WA) — retorna URL do próximo atendente
 app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
-  const { name, phone } = req.body;
+  const { name, phone, message = '' } = req.body;
   if (!name?.trim() || !phone?.trim()) {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
   }
@@ -400,9 +400,9 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   const cfg = getConfig();
 
   const r = db.prepare(`
-    INSERT INTO leads (name, phone, source, attendant_id)
-    VALUES (?, ?, 'whatsapp', ?)
-  `).run(name.trim(), phone.trim(), attendant?.id || null);
+    INSERT INTO leads (name, phone, message, source, attendant_id)
+    VALUES (?, ?, ?, 'whatsapp', ?)
+  `).run(name.trim(), phone.trim(), message.trim(), attendant?.id || null);
 
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
   fireNotifications(lead, cfg);
