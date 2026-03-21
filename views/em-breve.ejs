@@ -111,6 +111,33 @@
               <label for="eb-email">E-mail</label>
               <input type="email" id="eb-email" name="email" placeholder="seu@email.com" autocomplete="email" />
             </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="eb-fgts">FGTS ou entrada?</label>
+                <select id="eb-fgts" name="fgts">
+                  <option value="">Selecione</option>
+                  <option value="FGTS disponível">FGTS disponível</option>
+                  <option value="Tenho entrada">Tenho entrada</option>
+                  <option value="FGTS + entrada">FGTS + entrada</option>
+                  <option value="Ainda não tenho">Ainda não tenho</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="eb-renda">Renda familiar mensal</label>
+                <select id="eb-renda" name="renda">
+                  <option value="">Selecione</option>
+                  <option value="Até R$ 2.000">Até R$ 2.000</option>
+                  <option value="R$ 2.001 a R$ 3.500">R$ 2.001 a R$ 3.500</option>
+                  <option value="R$ 3.501 a R$ 5.000">R$ 3.501 a R$ 5.000</option>
+                  <option value="R$ 5.001 a R$ 8.000">R$ 5.001 a R$ 8.000</option>
+                  <option value="Acima de R$ 8.000">Acima de R$ 8.000</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="eb-fgts-valor">Valor estimado (FGTS + entrada)</label>
+              <input type="text" id="eb-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
+            </div>
             <button type="submit" class="btn btn--primary btn--full">
               Quero Ser Avisado do Lançamento
             </button>
@@ -263,15 +290,34 @@
       });
     }
 
+    // Currency mask for FGTS valor
+    const fgtsValorInput = document.getElementById('eb-fgts-valor');
+    if (fgtsValorInput) {
+      fgtsValorInput.addEventListener('input', () => {
+        let v = fgtsValorInput.value.replace(/\D/g, '');
+        if (!v) { fgtsValorInput.value = ''; return; }
+        v = (parseInt(v, 10) / 100).toFixed(2);
+        fgtsValorInput.value = 'R$ ' + v.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      });
+    }
+
     // Form submit
     document.getElementById('ebForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
       const btn = form.querySelector('button[type=submit]');
-      const name = form.querySelector('[name=name]').value.trim();
-      const phone = form.querySelector('[name=phone]').value.trim();
-      const interest = form.querySelector('[name=interest]').value;
-      const email = form.querySelector('[name=email]') ? form.querySelector('[name=email]').value.trim() : '';
+      const name      = form.querySelector('[name=name]').value.trim();
+      const phone     = form.querySelector('[name=phone]').value.trim();
+      const interest  = form.querySelector('[name=interest]').value;
+      const email     = form.querySelector('[name=email]') ? form.querySelector('[name=email]').value.trim() : '';
+      const fgts      = form.querySelector('[name=fgts]') ? form.querySelector('[name=fgts]').value : '';
+      const fgtsValor = form.querySelector('[name=fgts_valor]') ? form.querySelector('[name=fgts_valor]').value.trim() : '';
+      const renda     = form.querySelector('[name=renda]') ? form.querySelector('[name=renda]').value : '';
+
+      let message = '';
+      if (fgts)      message += `FGTS/Entrada: ${fgts}. `;
+      if (fgtsValor) message += `Valor: ${fgtsValor}. `;
+      if (renda)     message += `Renda familiar: ${renda}.`;
 
       if (!name || !phone) {
         alert('Por favor, preencha nome e telefone.');
@@ -285,7 +331,7 @@
         const res = await fetch('/api/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, email, interest }),
+          body: JSON.stringify({ name, phone, email, interest, message: message.trim() }),
         });
         if (res.ok) {
           document.getElementById('ebForm').style.display = 'none';

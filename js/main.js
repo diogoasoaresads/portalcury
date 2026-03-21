@@ -95,6 +95,17 @@
 
   document.querySelectorAll('input[type="tel"]').forEach(phoneMask);
 
+  /* ---- Currency Mask for FGTS valor ---- */
+  function currencyMask(input) {
+    input.addEventListener('input', () => {
+      let v = input.value.replace(/\D/g, '');
+      if (!v) { input.value = ''; return; }
+      v = (parseInt(v, 10) / 100).toFixed(2);
+      input.value = 'R$ ' + v.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    });
+  }
+  document.querySelectorAll('[name="fgts_valor"]').forEach(currencyMask);
+
   /* ---- Form Validation & Submission ---- */
   function validateForm(form) {
     let valid = true;
@@ -152,15 +163,21 @@
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
 
-      // Collect multi-value checkboxes (regions) and append to message
-      const regions = formData.getAll('regions');
-      const fgts    = data.fgts || '';
+      // Collect multi-value checkboxes and extra fields, append to message
+      const regions   = formData.getAll('regions');
+      const fgts      = data.fgts       || '';
+      const fgtsValor = data.fgts_valor || '';
+      const renda     = data.renda      || '';
       let extra = '';
       if (regions.length > 0) extra += `Regiões: ${regions.join(', ')}. `;
-      if (fgts)               extra += `FGTS/Entrada: ${fgts}.`;
+      if (fgts)               extra += `FGTS/Entrada: ${fgts}. `;
+      if (fgtsValor)          extra += `Valor: ${fgtsValor}. `;
+      if (renda)              extra += `Renda familiar: ${renda}.`;
       if (extra) data.message = extra.trim() + (data.message ? ' | ' + data.message : '');
       delete data.regions;
       delete data.fgts;
+      delete data.fgts_valor;
+      delete data.renda;
 
       try {
         const res = await fetch('/api/leads', {
@@ -341,13 +358,19 @@
       btn.disabled = true;
       btn.textContent = 'Aguarde...';
 
-      const waFgts = (modal.querySelector('[name="fgts"]') || {}).value || '';
+      const waFgts      = (modal.querySelector('[name="fgts"]')      || {}).value || '';
+      const waFgtsValor = (modal.querySelector('[name="fgts_valor"]') || {}).value || '';
+      const waRenda     = (modal.querySelector('[name="renda"]')      || {}).value || '';
+      let waMsgParts = [];
+      if (waFgts)      waMsgParts.push(`FGTS/Entrada: ${waFgts}`);
+      if (waFgtsValor) waMsgParts.push(`Valor: ${waFgtsValor}`);
+      if (waRenda)     waMsgParts.push(`Renda familiar: ${waRenda}`);
       let waRedirectUrl = pendingWaUrl;
       try {
         const resp = await fetch('/api/leads/wa', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, message: waFgts ? `FGTS/Entrada: ${waFgts}.` : '' }),
+          body: JSON.stringify({ name, phone, message: waMsgParts.join('. ') }),
         });
         const json = await resp.json();
         if (json.wa_url) waRedirectUrl = json.wa_url;
