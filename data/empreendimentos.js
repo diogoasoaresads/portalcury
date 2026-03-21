@@ -202,7 +202,7 @@ const empreendimentos = [
   // ── EM BREVE ────────────────────────────────────────────────
   {
     slug: 'cury-niteroi',
-    name: 'Cury Niterói',
+    name: 'Orla Central',
     interestValue: 'cury-niteroi',
     bairro: 'Niterói',
     city: 'Niterói',
@@ -212,8 +212,8 @@ const empreendimentos = [
     badgeClass: 'badge--em-breve',
     tagline: 'Uma nova história de morar bem em Niterói',
     description: 'A Cury chega a Niterói com um lançamento exclusivo para quem busca qualidade de vida, segurança e excelente infraestrutura. Vista para a Baía de Guanabara, fácil acesso ao Rio de Janeiro e tudo que a melhor cidade do estado tem a oferecer. Cadastre-se agora e seja o primeiro a receber todas as informações.',
-    seoTitle: 'Cury Niterói | Em Breve – Portal Cury',
-    seoDesc: 'Novo lançamento Cury em Niterói. Cadastre-se e antecipe seu lançamento com condições exclusivas de pré-lançamento. Em breve no Portal Cury.',
+    seoTitle: 'Orla Central | Em Breve – Portal Cury',
+    seoDesc: 'Orla Central: novo lançamento Cury em Niterói. Cadastre-se e antecipe seu lançamento com condições exclusivas de pré-lançamento. Em breve no Portal Cury.',
     heroImage: '',
     heroGradient: 'linear-gradient(135deg, #00447d 0%, #006bad 50%, #ea723d 100%)',
     benefits: [
@@ -228,7 +228,7 @@ const empreendimentos = [
   },
   {
     slug: 'cury-piedade',
-    name: 'Cury Piedade',
+    name: 'Parque Piedade',
     interestValue: 'cury-piedade',
     bairro: 'Piedade',
     city: 'Rio de Janeiro',
@@ -238,8 +238,8 @@ const empreendimentos = [
     badgeClass: 'badge--em-breve',
     tagline: 'Conectado a tudo que importa na Zona Norte',
     description: 'A Cury expande sua presença na Zona Norte do Rio com um novo lançamento em Piedade. Localização estratégica com acesso facilitado ao metrô, BRT, Avenida Brasil e Via Dutra. Morar bem, perto de tudo, com as condições especiais Cury. Cadastre-se e antecipe o lançamento.',
-    seoTitle: 'Cury Piedade | Em Breve – Portal Cury',
-    seoDesc: 'Novo lançamento Cury em Piedade, Zona Norte do Rio de Janeiro. Pré-cadastro com condições exclusivas de financiamento. Em breve no Portal Cury.',
+    seoTitle: 'Parque Piedade | Em Breve – Portal Cury',
+    seoDesc: 'Parque Piedade: novo lançamento Cury em Piedade, Zona Norte do Rio de Janeiro. Pré-cadastro com condições exclusivas de financiamento. Em breve no Portal Cury.',
     heroImage: '',
     heroGradient: 'linear-gradient(135deg, #00447d 0%, #1a5c94 50%, #ea723d 100%)',
     benefits: [
