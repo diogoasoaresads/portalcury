@@ -796,6 +796,122 @@ app.post('/api/test/whatsapp', auth, async (_req, res) => {
 });
 
 // ============================================================
+// ANALYTICS
+// ============================================================
+app.get('/api/analytics', auth, (req, res) => {
+  const { period = '30' } = req.query;
+  const days = Math.min(Math.max(parseInt(period) || 30, 7), 365);
+
+  // Filtro por atendente para não-admins
+  const agentFilter = req.user.role !== 'admin'
+    ? `AND attendant_id = ${req.user.attendant_id || -1}`
+    : '';
+
+  // ── Leads por dia (últimos N dias) ────────────────────────
+  const leadsByDay = db.prepare(`
+    SELECT date(created_at) as day, COUNT(*) as total
+    FROM leads
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+    ${agentFilter}
+    GROUP BY day ORDER BY day ASC
+  `).all(days);
+
+  // Preenche dias sem leads com zero
+  const dayMap = {};
+  leadsByDay.forEach(r => { dayMap[r.day] = r.total; });
+  const allDays = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    allDays.push({ day: key, total: dayMap[key] || 0 });
+  }
+
+  // ── Totais do período ─────────────────────────────────────
+  const periodTotal = db.prepare(`
+    SELECT COUNT(*) as n FROM leads
+    WHERE date(created_at) >= date('now', '-' || ? || ' days') ${agentFilter}
+  `).get(days).n;
+
+  const prevTotal = db.prepare(`
+    SELECT COUNT(*) as n FROM leads
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+      AND date(created_at) < date('now', '-' || ? || ' days') ${agentFilter}
+  `).get(days * 2, days).n;
+
+  // ── Breakdown por status (período) ───────────────────────
+  const byStatus = db.prepare(`
+    SELECT status, COUNT(*) as total FROM leads
+    WHERE date(created_at) >= date('now', '-' || ? || ' days') ${agentFilter}
+    GROUP BY status
+  `).all(days);
+
+  // ── Leads por empreendimento (período) ────────────────────
+  const byInterest = db.prepare(`
+    SELECT interest, COUNT(*) as total,
+      SUM(CASE WHEN status = 'convertido' THEN 1 ELSE 0 END) as convertidos
+    FROM leads
+    WHERE date(created_at) >= date('now', '-' || ? || ' days') ${agentFilter}
+    GROUP BY interest ORDER BY total DESC LIMIT 15
+  `).all(days);
+
+  // ── Leads por fonte ───────────────────────────────────────
+  const bySource = db.prepare(`
+    SELECT source, COUNT(*) as total FROM leads
+    WHERE date(created_at) >= date('now', '-' || ? || ' days') ${agentFilter}
+    GROUP BY source ORDER BY total DESC
+  `).all(days);
+
+  // ── Performance dos atendentes (período) ─────────────────
+  const attendantPerf = db.prepare(`
+    SELECT a.name,
+      COUNT(l.id) as total,
+      SUM(CASE WHEN l.status = 'convertido' THEN 1 ELSE 0 END) as convertidos,
+      SUM(CASE WHEN l.status = 'em_atendimento' THEN 1 ELSE 0 END) as em_atendimento,
+      SUM(CASE WHEN l.status = 'perdido' THEN 1 ELSE 0 END) as perdidos
+    FROM leads l
+    LEFT JOIN attendants a ON l.attendant_id = a.id
+    WHERE date(l.created_at) >= date('now', '-' || ? || ' days') ${agentFilter}
+    GROUP BY l.attendant_id ORDER BY total DESC
+  `).all(days);
+
+  // ── Leads por hora do dia ─────────────────────────────────
+  const byHour = db.prepare(`
+    SELECT CAST(strftime('%H', created_at) AS INTEGER) as hora, COUNT(*) as total
+    FROM leads
+    WHERE date(created_at) >= date('now', '-' || ? || ' days') ${agentFilter}
+    GROUP BY hora ORDER BY hora ASC
+  `).all(days);
+  const hourMap = {};
+  byHour.forEach(r => { hourMap[r.hora] = r.total; });
+  const allHours = Array.from({ length: 24 }, (_, h) => ({ hora: h, total: hourMap[h] || 0 }));
+
+  // ── Totais globais (todos os tempos) ─────────────────────
+  const allTime = db.prepare(`
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'convertido' THEN 1 ELSE 0 END) as convertido,
+      SUM(CASE WHEN status = 'novo' THEN 1 ELSE 0 END) as novo,
+      SUM(CASE WHEN status = 'em_atendimento' THEN 1 ELSE 0 END) as em_atendimento,
+      SUM(CASE WHEN status = 'perdido' THEN 1 ELSE 0 END) as perdido
+    FROM leads WHERE 1=1 ${agentFilter}
+  `).get();
+
+  res.json({
+    period: days,
+    periodTotal,
+    prevTotal,
+    allTime,
+    leadsByDay: allDays,
+    byStatus,
+    byInterest,
+    bySource,
+    attendantPerf,
+    byHour: allHours,
+  });
+});
+
+// ============================================================
 // EMPREENDIMENTOS – individual pages
 // ============================================================
 app.get('/empreendimentos/:slug', (req, res) => {
