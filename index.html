@@ -898,5 +898,48 @@
   </div>
 
   <script src="js/main.js"></script>
+  <script>
+  /* ── Rastreamento de tráfego ─────────────────────────── */
+  (function(){
+    if (!sessionStorage.getItem('sid')) {
+      sessionStorage.setItem('sid', 'sid_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
+    }
+    const sid = sessionStorage.getItem('sid');
+    const p = new URLSearchParams(location.search);
+    const utms = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'];
+    const saved = JSON.parse(sessionStorage.getItem('utms') || '{}');
+    let hasUtm = false;
+    utms.forEach(k => { if (p.has(k)) { saved[k] = p.get(k); hasUtm = true; } });
+    if (hasUtm) sessionStorage.setItem('utms', JSON.stringify(saved));
+    const utm = JSON.parse(sessionStorage.getItem('utms') || '{}');
+    function detectDevice() {
+      const ua = navigator.userAgent;
+      if (/tablet|ipad|playbook|silk|(android(?!.*mobile))/i.test(ua)) return 'tablet';
+      if (/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/i.test(ua)) return 'mobile';
+      return 'desktop';
+    }
+    function detectBrowser() {
+      const ua = navigator.userAgent;
+      if (/edg\//i.test(ua)) return 'Edge';
+      if (/opr\//i.test(ua)) return 'Opera';
+      if (/chrome/i.test(ua)) return 'Chrome';
+      if (/safari/i.test(ua) && !/chrome/i.test(ua)) return 'Safari';
+      if (/firefox/i.test(ua)) return 'Firefox';
+      return 'Outro';
+    }
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sid,
+        page: location.pathname + location.search,
+        utm_source: utm.utm_source || '', utm_medium: utm.utm_medium || '',
+        utm_campaign: utm.utm_campaign || '', utm_content: utm.utm_content || '',
+        utm_term: utm.utm_term || '', referrer: document.referrer || '',
+        device: detectDevice(), browser: detectBrowser(),
+      })
+    }).catch(() => {});
+  })();
+  </script>
 </body>
 </html>

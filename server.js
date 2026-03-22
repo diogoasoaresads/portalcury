@@ -78,6 +78,28 @@ db.exec(`
   );
 `);
 
+// Tabela de visualizações de página (analytics de tráfego)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS page_views (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id   TEXT    DEFAULT '',
+    page         TEXT    DEFAULT '/',
+    utm_source   TEXT    DEFAULT '',
+    utm_medium   TEXT    DEFAULT '',
+    utm_campaign TEXT    DEFAULT '',
+    utm_content  TEXT    DEFAULT '',
+    utm_term     TEXT    DEFAULT '',
+    referrer     TEXT    DEFAULT '',
+    traffic_type TEXT    DEFAULT 'Direto',
+    device       TEXT    DEFAULT '',
+    browser      TEXT    DEFAULT '',
+    city         TEXT    DEFAULT '',
+    region       TEXT    DEFAULT '',
+    country      TEXT    DEFAULT 'BR',
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 // Migrations — add columns if they don't exist yet
 ['ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
  'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
@@ -796,6 +818,100 @@ app.post('/api/test/whatsapp', auth, async (_req, res) => {
 });
 
 // ============================================================
+// RASTREAMENTO DE TRÁFEGO
+// ============================================================
+
+// Geo-lookup via ip-api.com (grátis, sem necessidade de chave)
+function geoLookup(ip) {
+  return new Promise((resolve) => {
+    const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+    if (!ip || local.includes(ip) || ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+      return resolve({ city: 'Local', region: 'Local', country: 'BR' });
+    }
+    const https = require('https');
+    const req = https.get(
+      `https://ip-api.com/json/${ip}?lang=pt-BR&fields=status,city,regionName,country`,
+      (res) => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          try {
+            const g = JSON.parse(data);
+            if (g.status === 'success') {
+              resolve({ city: g.city || '', region: g.regionName || '', country: g.country || 'BR' });
+            } else {
+              resolve({ city: '', region: '', country: 'BR' });
+            }
+          } catch { resolve({ city: '', region: '', country: 'BR' }); }
+        });
+      }
+    );
+    req.on('error', () => resolve({ city: '', region: '', country: 'BR' }));
+    req.setTimeout(4000, () => { req.destroy(); resolve({ city: '', region: '', country: 'BR' }); });
+  });
+}
+
+// Classifica a fonte de tráfego com base nos parâmetros UTM e referrer
+function classifyTraffic(utm_source, utm_medium, referrer) {
+  const src = (utm_source || '').toLowerCase().trim();
+  const med = (utm_medium || '').toLowerCase().trim();
+  const ref = (referrer || '').toLowerCase();
+
+  const isPago = ['cpc', 'ppc', 'paid', 'paid_social', 'paid-social', 'paidsearch', 'paid_search', 'display'].includes(med);
+
+  if ((src === 'google' || src === 'google ads') && isPago)           return 'Google Ads';
+  if (['facebook', 'fb', 'meta'].includes(src) && isPago)             return 'Facebook Ads';
+  if (['instagram', 'ig'].includes(src) && isPago)                    return 'Instagram Ads';
+  if (src === 'tiktok' && isPago)                                      return 'TikTok Ads';
+  if (['youtube', 'yt'].includes(src) && isPago)                       return 'YouTube Ads';
+  if (med === 'email' || src === 'email' || src === 'newsletter')      return 'E-mail';
+  if (src === 'whatsapp' || ref.includes('api.whatsapp') || ref.includes('wa.me')) return 'WhatsApp';
+  if (['facebook', 'fb', 'meta'].includes(src) || ref.includes('facebook.com') || ref.includes('fb.com') || ref.includes('messenger.com')) return 'Facebook';
+  if (['instagram', 'ig'].includes(src) || ref.includes('instagram.com')) return 'Instagram';
+  if (src === 'tiktok' || ref.includes('tiktok.com'))                  return 'TikTok';
+  if (['youtube', 'yt'].includes(src) || ref.includes('youtube.com') || ref.includes('youtu.be')) return 'YouTube';
+  if (src === 'google' || med === 'organic' || ref.includes('google.') || ref.includes('bing.com') || ref.includes('yahoo.com') || ref.includes('duckduckgo.com')) return 'Orgânico';
+  if (src || med) return (src || med);
+  if (ref) return 'Referência';
+  return 'Direto';
+}
+
+// Endpoint público de rastreamento (sem autenticação)
+app.post('/api/track', rateLimit(60 * 1000, 60), async (req, res) => {
+  try {
+    const {
+      session_id = '', page = '/',
+      utm_source = '', utm_medium = '', utm_campaign = '',
+      utm_content = '', utm_term = '',
+      referrer = '', device = '', browser = '',
+    } = req.body;
+
+    const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
+    const traffic_type = classifyTraffic(utm_source, utm_medium, referrer);
+
+    const r = db.prepare(`
+      INSERT INTO page_views (session_id, page, utm_source, utm_medium, utm_campaign,
+        utm_content, utm_term, referrer, traffic_type, device, browser)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(session_id, page.slice(0, 500), utm_source.slice(0,100), utm_medium.slice(0,100),
+           utm_campaign.slice(0,200), utm_content.slice(0,200), utm_term.slice(0,200),
+           referrer.slice(0,500), traffic_type, device.slice(0,20), browser.slice(0,30));
+
+    res.json({ ok: true });
+
+    // Geo-lookup assíncrono (após retornar resposta)
+    geoLookup(ip).then(geo => {
+      try {
+        db.prepare('UPDATE page_views SET city = ?, region = ?, country = ? WHERE id = ?')
+          .run(geo.city, geo.region, geo.country, r.lastInsertRowid);
+      } catch {}
+    }).catch(() => {});
+  } catch (e) {
+    res.json({ ok: false });
+  }
+});
+
+// ============================================================
 // ANALYTICS
 // ============================================================
 app.get('/api/analytics', auth, (req, res) => {
@@ -897,6 +1013,101 @@ app.get('/api/analytics', auth, (req, res) => {
     FROM leads WHERE 1=1 ${agentFilter}
   `).get();
 
+  // ── Tráfego: sessões e pageviews por dia ──────────────────
+  const trafficByDay = db.prepare(`
+    SELECT date(created_at) as day,
+      COUNT(DISTINCT session_id) as sessions,
+      COUNT(*) as views
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+    GROUP BY day ORDER BY day ASC
+  `).all(days);
+
+  const trafficDayMap = {};
+  trafficByDay.forEach(r => { trafficDayMap[r.day] = { sessions: r.sessions, views: r.views }; });
+  const allTrafficDays = allDays.map(d => ({
+    day: d.day,
+    sessions: trafficDayMap[d.day]?.sessions || 0,
+    views: trafficDayMap[d.day]?.views || 0,
+  }));
+
+  // Totais de tráfego no período
+  const trafficTotals = db.prepare(`
+    SELECT
+      COUNT(DISTINCT session_id) as totalSessions,
+      COUNT(*) as totalViews
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+  `).get(days);
+
+  const trafficPrevTotals = db.prepare(`
+    SELECT COUNT(DISTINCT session_id) as totalSessions
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+      AND date(created_at) < date('now', '-' || ? || ' days')
+  `).get(days * 2, days);
+
+  // ── Tráfego por canal/fonte ───────────────────────────────
+  const byTrafficType = db.prepare(`
+    SELECT traffic_type, COUNT(DISTINCT session_id) as sessions, COUNT(*) as views
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+    GROUP BY traffic_type ORDER BY sessions DESC
+  `).all(days);
+
+  // ── Tráfego por dispositivo ───────────────────────────────
+  const byDevice = db.prepare(`
+    SELECT device, COUNT(DISTINCT session_id) as sessions
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+    GROUP BY device ORDER BY sessions DESC
+  `).all(days);
+
+  // ── Tráfego por cidade ────────────────────────────────────
+  const byCity = db.prepare(`
+    SELECT city, region, COUNT(DISTINCT session_id) as sessions
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+      AND city != '' AND city IS NOT NULL
+    GROUP BY city ORDER BY sessions DESC LIMIT 20
+  `).all(days);
+
+  // ── Páginas mais visitadas ────────────────────────────────
+  const byPage = db.prepare(`
+    SELECT page, COUNT(*) as views, COUNT(DISTINCT session_id) as sessions
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+    GROUP BY page ORDER BY views DESC LIMIT 20
+  `).all(days);
+
+  // ── Campanhas UTM ─────────────────────────────────────────
+  const byCampaign = db.prepare(`
+    SELECT utm_campaign, utm_source, utm_medium,
+      COUNT(DISTINCT session_id) as sessions, COUNT(*) as views
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+      AND utm_campaign != '' AND utm_campaign IS NOT NULL
+    GROUP BY utm_campaign ORDER BY sessions DESC LIMIT 20
+  `).all(days);
+
+  // ── Referrers ─────────────────────────────────────────────
+  const byReferrer = db.prepare(`
+    SELECT referrer, COUNT(DISTINCT session_id) as sessions
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+      AND referrer != '' AND referrer IS NOT NULL
+    GROUP BY referrer ORDER BY sessions DESC LIMIT 20
+  `).all(days);
+
+  // ── Navegador ─────────────────────────────────────────────
+  const byBrowser = db.prepare(`
+    SELECT browser, COUNT(DISTINCT session_id) as sessions
+    FROM page_views
+    WHERE date(created_at) >= date('now', '-' || ? || ' days')
+      AND browser != '' AND browser IS NOT NULL
+    GROUP BY browser ORDER BY sessions DESC
+  `).all(days);
+
   res.json({
     period: days,
     periodTotal,
@@ -908,6 +1119,17 @@ app.get('/api/analytics', auth, (req, res) => {
     bySource,
     attendantPerf,
     byHour: allHours,
+    // Tráfego
+    trafficByDay: allTrafficDays,
+    trafficTotals,
+    trafficPrevTotals,
+    byTrafficType,
+    byDevice,
+    byCity,
+    byPage,
+    byCampaign,
+    byReferrer,
+    byBrowser,
   });
 });
 

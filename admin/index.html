@@ -613,6 +613,29 @@
     .an-rate--mid { background: #fef3c7; color: var(--yellow); }
     .an-empty { color: var(--gray); font-size: .88rem; text-align: center; padding: 24px 0; }
 
+    /* Separador de seção */
+    .an-section-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 1rem; font-weight: 700; color: var(--dark);
+      margin: 32px 0 16px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary);
+    }
+    .an-section-title svg { color: var(--primary); }
+
+    /* Tabelas de lista (páginas, campanhas, referrers) */
+    .an-list-table { overflow: auto; }
+    .an-list-table table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+    .an-list-table th { padding: 8px 10px; text-align: left; font-size: .78rem; text-transform: uppercase;
+      color: var(--gray); background: var(--gray-lt); border-bottom: 1px solid var(--border); font-weight: 600; }
+    .an-list-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--dark); }
+    .an-list-table tr:last-child td { border-bottom: none; }
+    .an-list-table tr:hover td { background: var(--gray-lt); }
+    .an-list-table .an-bar-cell { display: flex; align-items: center; gap: 8px; }
+    .an-list-table .an-bar { height: 6px; background: var(--primary); border-radius: 3px; min-width: 4px; }
+    .an-list-table .an-num { font-weight: 700; color: var(--primary); min-width: 36px; text-align: right; }
+    .an-list-table .an-url { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      color: var(--gray); font-size: .78rem; }
+
     @media (max-width: 900px) {
       .an-grid, .an-grid--wide, .an-grid--3 { grid-template-columns: 1fr; }
     }
@@ -1268,6 +1291,119 @@
           <div class="an-empty">Carregando…</div>
         </div>
       </div>
+
+      <!-- ──────── SEÇÃO DE TRÁFEGO ──────── -->
+      <div class="an-section-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        Análise de Tráfego
+      </div>
+
+      <!-- KPIs de tráfego -->
+      <div class="an-kpis" id="anTrafficKpis">
+        <div class="an-kpi">
+          <div class="an-kpi__label">Sessões no Período</div>
+          <div class="an-kpi__value" id="anKpiSessions">—</div>
+          <div class="an-kpi__sub" id="anKpiSessionsSub"></div>
+        </div>
+        <div class="an-kpi">
+          <div class="an-kpi__label">Pageviews</div>
+          <div class="an-kpi__value" id="anKpiViews">—</div>
+          <div class="an-kpi__sub">páginas vistas no período</div>
+        </div>
+        <div class="an-kpi">
+          <div class="an-kpi__label">Págs. / Sessão</div>
+          <div class="an-kpi__value" id="anKpiPagesPerSession">—</div>
+          <div class="an-kpi__sub">média de páginas por visita</div>
+        </div>
+        <div class="an-kpi an-kpi--conv">
+          <div class="an-kpi__label">Taxa Lead/Sessão</div>
+          <div class="an-kpi__value" id="anKpiLeadRate">—</div>
+          <div class="an-kpi__sub">% de sessões que viraram lead</div>
+        </div>
+      </div>
+
+      <!-- Sessões por dia + Canal de tráfego -->
+      <div class="an-grid an-grid--wide">
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Sessões por Dia
+          </div>
+          <div class="an-chart-wrap an-chart-wrap--tall">
+            <canvas id="chartTrafficByDay"></canvas>
+          </div>
+        </div>
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+            Canal de Tráfego
+          </div>
+          <div class="an-chart-wrap">
+            <canvas id="chartByTrafficType"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dispositivos + Navegadores -->
+      <div class="an-grid">
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1"/></svg>
+            Dispositivos
+          </div>
+          <div class="an-chart-wrap">
+            <canvas id="chartByDevice"></canvas>
+          </div>
+        </div>
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 010 20"/></svg>
+            Navegadores
+          </div>
+          <div class="an-chart-wrap">
+            <canvas id="chartByBrowser"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cidades + Páginas mais visitadas -->
+      <div class="an-grid an-grid--wide">
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Cidades (Top 10)
+          </div>
+          <div class="an-chart-wrap an-chart-wrap--tall">
+            <canvas id="chartByCity"></canvas>
+          </div>
+        </div>
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Páginas Mais Visitadas
+          </div>
+          <div id="anPageTable" class="an-list-table"><div class="an-empty">Carregando…</div></div>
+        </div>
+      </div>
+
+      <!-- Campanhas UTM + Referrers -->
+      <div class="an-grid an-grid--wide">
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Campanhas (UTM)
+          </div>
+          <div id="anCampaignTable" class="an-list-table"><div class="an-empty">Carregando…</div></div>
+        </div>
+        <div class="an-card">
+          <div class="an-card__title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Referrers
+          </div>
+          <div id="anReferrerTable" class="an-list-table"><div class="an-empty">Carregando…</div></div>
+        </div>
+      </div>
+
     </section>
 
     <!-- ===== ATENDENTES ===== -->
@@ -2378,6 +2514,16 @@ async function loadAnalytics() {
     renderAnFunnel(data.allTime);
     renderAnByHour(data.byHour);
     renderAnAttendants(data.attendantPerf);
+    // Tráfego
+    renderAnTrafficKPIs(data);
+    renderAnTrafficByDay(data.trafficByDay || []);
+    renderAnByTrafficType(data.byTrafficType || []);
+    renderAnByDevice(data.byDevice || []);
+    renderAnByBrowser(data.byBrowser || []);
+    renderAnByCity(data.byCity || []);
+    renderAnPageTable(data.byPage || []);
+    renderAnCampaignTable(data.byCampaign || []);
+    renderAnReferrerTable(data.byReferrer || []);
 
     const end = new Date();
     const start = new Date();
@@ -2589,6 +2735,237 @@ function renderAnAttendants(rows) {
         }).join('')}
       </tbody>
     </table>`;
+}
+
+// ── Tráfego: KPIs ────────────────────────────────────────────────
+function renderAnTrafficKPIs(data) {
+  const { trafficTotals = {}, trafficPrevTotals = {}, periodTotal = 0 } = data;
+  const sessions = trafficTotals.totalSessions || 0;
+  const views = trafficTotals.totalViews || 0;
+  const prevSessions = trafficPrevTotals.totalSessions || 0;
+  document.getElementById('anKpiSessions').textContent = sessions.toLocaleString('pt-BR');
+  document.getElementById('anKpiSessionsSub').innerHTML = anDelta(sessions, prevSessions);
+  document.getElementById('anKpiViews').textContent = views.toLocaleString('pt-BR');
+  document.getElementById('anKpiPagesPerSession').textContent =
+    sessions ? (views / sessions).toFixed(1) : '—';
+  const rate = sessions ? ((periodTotal / sessions) * 100).toFixed(1) : '0.0';
+  document.getElementById('anKpiLeadRate').textContent = rate + '%';
+}
+
+// ── Tráfego: Sessões por Dia ──────────────────────────────────────
+function renderAnTrafficByDay(rows) {
+  anDestroyChart('trafficByDay');
+  if (!rows.length) return;
+  const labels = rows.map(r => r.day.slice(5).replace('-', '/'));
+  anCharts['trafficByDay'] = new Chart(
+    document.getElementById('chartTrafficByDay').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Sessões',
+          data: rows.map(r => r.sessions),
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99,102,241,0.1)',
+          fill: true, tension: 0.35, pointRadius: 2, borderWidth: 2,
+        },
+        {
+          label: 'Pageviews',
+          data: rows.map(r => r.views),
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249,115,22,0.07)',
+          fill: false, tension: 0.35, pointRadius: 2, borderWidth: 2,
+          borderDash: [5, 3],
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 14 } },
+        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── Tráfego: Por canal ────────────────────────────────────────────
+const TRAFFIC_COLORS = {
+  'Google Ads': '#4285F4', 'Facebook Ads': '#1877F2', 'Instagram Ads': '#E1306C',
+  'TikTok Ads': '#010101', 'YouTube Ads': '#FF0000', 'E-mail': '#EA4335',
+  'WhatsApp': '#25D366', 'Facebook': '#3b5998', 'Instagram': '#C13584',
+  'TikTok': '#69C9D0', 'YouTube': '#FF0000', 'Orgânico': '#22c55e',
+  'Referência': '#f59e0b', 'Direto': '#6366f1',
+};
+function renderAnByTrafficType(rows) {
+  anDestroyChart('byTrafficType');
+  if (!rows.length) return;
+  anCharts['byTrafficType'] = new Chart(
+    document.getElementById('chartByTrafficType').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: rows.map(r => r.traffic_type),
+      datasets: [{
+        data: rows.map(r => r.sessions),
+        backgroundColor: rows.map(r => TRAFFIC_COLORS[r.traffic_type] || '#94a3b8'),
+        borderWidth: 2, borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 14 } } },
+      cutout: '55%',
+    }
+  });
+}
+
+// ── Tráfego: Por Dispositivo ──────────────────────────────────────
+const DEVICE_LABELS = { mobile: 'Celular', desktop: 'Desktop', tablet: 'Tablet' };
+const DEVICE_COLORS = ['#6366f1', '#f97316', '#22c55e'];
+function renderAnByDevice(rows) {
+  anDestroyChart('byDevice');
+  if (!rows.length) return;
+  anCharts['byDevice'] = new Chart(
+    document.getElementById('chartByDevice').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: rows.map(r => DEVICE_LABELS[r.device] || r.device || 'Desconhecido'),
+      datasets: [{
+        data: rows.map(r => r.sessions),
+        backgroundColor: DEVICE_COLORS,
+        borderWidth: 2, borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 12 }, boxWidth: 14 } } },
+      cutout: '55%',
+    }
+  });
+}
+
+// ── Tráfego: Por Navegador ────────────────────────────────────────
+const BROWSER_COLORS = ['#4285F4', '#FF6600', '#FF0079', '#00C853', '#6366f1', '#94a3b8'];
+function renderAnByBrowser(rows) {
+  anDestroyChart('byBrowser');
+  if (!rows.length) return;
+  anCharts['byBrowser'] = new Chart(
+    document.getElementById('chartByBrowser').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.browser || 'Outro'),
+      datasets: [{
+        label: 'Sessões',
+        data: rows.map(r => r.sessions),
+        backgroundColor: rows.map((_, i) => BROWSER_COLORS[i % BROWSER_COLORS.length]),
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1, font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+      }
+    }
+  });
+}
+
+// ── Tráfego: Por Cidade ───────────────────────────────────────────
+function renderAnByCity(rows) {
+  anDestroyChart('byCity');
+  const top = rows.slice(0, 10);
+  if (!top.length) return;
+  anCharts['byCity'] = new Chart(
+    document.getElementById('chartByCity').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: top.map(r => r.city || 'Desconhecida'),
+      datasets: [{
+        label: 'Sessões',
+        data: top.map(r => r.sessions),
+        backgroundColor: '#6366f1',
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1, font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── Tráfego: Páginas ─────────────────────────────────────────────
+function renderAnPageTable(rows) {
+  const el = document.getElementById('anPageTable');
+  if (!rows.length) { el.innerHTML = '<div class="an-empty">Nenhuma visualização registrada ainda.</div>'; return; }
+  const max = rows[0].views;
+  el.innerHTML = `<table>
+    <thead><tr><th>Página</th><th style="text-align:right">Views</th><th style="text-align:right">Sessões</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const pct = max ? Math.round((r.views / max) * 100) : 0;
+      return `<tr>
+        <td>
+          <div class="an-bar-cell">
+            <div class="an-bar" style="width:${pct}%"></div>
+          </div>
+          <div class="an-url" title="${r.page}">${r.page}</div>
+        </td>
+        <td style="text-align:right"><span class="an-num">${r.views}</span></td>
+        <td style="text-align:right;color:var(--gray)">${r.sessions}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+// ── Tráfego: Campanhas UTM ───────────────────────────────────────
+function renderAnCampaignTable(rows) {
+  const el = document.getElementById('anCampaignTable');
+  if (!rows.length) { el.innerHTML = '<div class="an-empty">Nenhuma campanha UTM registrada ainda.</div>'; return; }
+  const max = rows[0].sessions;
+  el.innerHTML = `<table>
+    <thead><tr><th>Campanha</th><th>Fonte</th><th>Mídia</th><th style="text-align:right">Sessões</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const pct = max ? Math.round((r.sessions / max) * 100) : 0;
+      return `<tr>
+        <td>
+          <div class="an-bar-cell"><div class="an-bar" style="width:${pct}%"></div></div>
+          <div style="font-weight:600;font-size:.85rem">${r.utm_campaign}</div>
+        </td>
+        <td><span class="an-url">${r.utm_source || '—'}</span></td>
+        <td><span class="an-url">${r.utm_medium || '—'}</span></td>
+        <td style="text-align:right"><span class="an-num">${r.sessions}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+// ── Tráfego: Referrers ───────────────────────────────────────────
+function renderAnReferrerTable(rows) {
+  const el = document.getElementById('anReferrerTable');
+  if (!rows.length) { el.innerHTML = '<div class="an-empty">Nenhum referrer registrado ainda.</div>'; return; }
+  const max = rows[0].sessions;
+  el.innerHTML = `<table>
+    <thead><tr><th>Referrer</th><th style="text-align:right">Sessões</th></tr></thead>
+    <tbody>${rows.map(r => {
+      const pct = max ? Math.round((r.sessions / max) * 100) : 0;
+      return `<tr>
+        <td>
+          <div class="an-bar-cell"><div class="an-bar" style="width:${pct}%"></div></div>
+          <div class="an-url" title="${r.referrer}">${r.referrer}</div>
+        </td>
+        <td style="text-align:right"><span class="an-num">${r.sessions}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
 }
 
 // Botões de período
