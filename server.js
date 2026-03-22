@@ -100,6 +100,18 @@ db.exec(`
   );
 `);
 
+// Tabela de atividades / histórico de contatos do lead
+db.exec(`
+  CREATE TABLE IF NOT EXISTS lead_activities (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id    INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+    type       TEXT    DEFAULT 'novo_contato',
+    title      TEXT    DEFAULT '',
+    body       TEXT    DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 // Migrations — add columns if they don't exist yet
 ['ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
  'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
@@ -197,6 +209,30 @@ const INTEREST_LABELS = {
 
 function fillTemplate(template, vars) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '');
+}
+
+// ---- Deduplicação de leads ----
+function normalizePhone(p) {
+  return (p || '').replace(/\D/g, '');
+}
+
+function findDuplicateLead(phone, email) {
+  const phoneNorm = normalizePhone(phone);
+  const leads = db.prepare('SELECT * FROM leads ORDER BY id DESC').all();
+  return leads.find(l => {
+    if (normalizePhone(l.phone) === phoneNorm) return true;
+    if (email && email.trim() && l.email && l.email.trim() &&
+        l.email.toLowerCase().trim() === email.toLowerCase().trim()) return true;
+    return false;
+  }) || null;
+}
+
+// ---- Registro de atividades no lead ----
+function addActivity(lead_id, type, title, body) {
+  db.prepare(`
+    INSERT INTO lead_activities (lead_id, type, title, body)
+    VALUES (?, ?, ?, ?)
+  `).run(lead_id, type, title, body || '');
 }
 
 // ---- Round-robin attendant queue ----
@@ -399,16 +435,62 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
   }
 
-  const attendant = nextAttendant('form_queue_idx');
+  const existing = findDuplicateLead(phone, email);
 
+  if (existing) {
+    // Lead já existe — atualiza dados e registra nova atividade
+    db.prepare(`
+      UPDATE leads SET
+        name       = ?,
+        email      = CASE WHEN ? != '' THEN ? ELSE email END,
+        interest   = CASE WHEN ? != '' THEN ? ELSE interest END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(
+      name.trim(),
+      email.trim(), email.trim(),
+      interest.trim(), interest.trim(),
+      existing.id
+    );
+
+    const bodyLines = [
+      `Nome: ${name.trim()}`,
+      `Telefone: ${phone.trim()}`,
+      email.trim()    ? `E-mail: ${email.trim()}`       : null,
+      interest.trim() ? `Empreendimento: ${interest.trim()}` : null,
+      message.trim()  ? `Mensagem: ${message.trim()}`   : null,
+      `Fonte: landing_page`,
+    ].filter(Boolean).join('\n');
+
+    addActivity(existing.id, 'novo_contato', 'Novo contato recebido (landing page)', bodyLines);
+
+    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
+    fireNotifications(lead, getConfig());
+    return res.json({ success: true, id: lead.id, duplicate: true });
+  }
+
+  // Lead novo
+  const attendant = nextAttendant('form_queue_idx');
   const r = db.prepare(`
     INSERT INTO leads (name, phone, email, interest, message, source, attendant_id)
     VALUES (?, ?, ?, ?, ?, 'landing_page', ?)
   `).run(name.trim(), phone.trim(), email.trim(), interest.trim(), message.trim(), attendant?.id || null);
 
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
+
+  const bodyLines = [
+    `Nome: ${lead.name}`,
+    `Telefone: ${lead.phone}`,
+    lead.email    ? `E-mail: ${lead.email}`             : null,
+    lead.interest ? `Empreendimento: ${lead.interest}`  : null,
+    lead.message  ? `Mensagem: ${lead.message}`         : null,
+    `Fonte: landing_page`,
+  ].filter(Boolean).join('\n');
+
+  addActivity(lead.id, 'novo_contato', 'Lead recebido (landing page)', bodyLines);
+
   fireNotifications(lead, getConfig());
-  res.json({ success: true, id: lead.id });
+  res.json({ success: true, id: lead.id, duplicate: false });
 });
 
 // Receber lead do WhatsApp (fila WA) — retorna URL do próximo atendente
@@ -418,20 +500,56 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
   }
 
-  const attendant = nextAttendant('wa_queue_idx');
   const cfg = getConfig();
+  const existing = findDuplicateLead(phone, '');
 
+  if (existing) {
+    // Lead já existe — atualiza nome e registra atividade
+    db.prepare(`
+      UPDATE leads SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+    `).run(name.trim(), existing.id);
+
+    const bodyLines = [
+      `Nome: ${name.trim()}`,
+      `Telefone: ${phone.trim()}`,
+      message.trim() ? `Mensagem: ${message.trim()}` : null,
+      `Fonte: whatsapp`,
+    ].filter(Boolean).join('\n');
+
+    addActivity(existing.id, 'novo_contato', 'Novo contato recebido (WhatsApp)', bodyLines);
+
+    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
+    fireNotifications(lead, cfg);
+
+    const attendant = db.prepare('SELECT * FROM attendants WHERE id = ?').get(existing.attendant_id);
+    const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
+    const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
+    return res.json({ success: true, id: lead.id, duplicate: true, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
+  }
+
+  // Lead novo
+  const attendant = nextAttendant('wa_queue_idx');
   const r = db.prepare(`
     INSERT INTO leads (name, phone, message, source, attendant_id)
     VALUES (?, ?, ?, 'whatsapp', ?)
   `).run(name.trim(), phone.trim(), message.trim(), attendant?.id || null);
 
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
+
+  const bodyLines = [
+    `Nome: ${lead.name}`,
+    `Telefone: ${lead.phone}`,
+    lead.message ? `Mensagem: ${lead.message}` : null,
+    `Fonte: whatsapp`,
+  ].filter(Boolean).join('\n');
+
+  addActivity(lead.id, 'novo_contato', 'Lead recebido (WhatsApp)', bodyLines);
+
   fireNotifications(lead, cfg);
 
   const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
   const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
-  res.json({ success: true, id: lead.id, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
+  res.json({ success: true, id: lead.id, duplicate: false, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
 });
 
 // ============================================================
@@ -484,7 +602,8 @@ app.get('/api/leads', auth, (req, res) => {
 
   const total = db.prepare(`SELECT COUNT(*) as n FROM leads l ${where}`).get(...params).n;
   const leads = db.prepare(`
-    SELECT l.*, a.name as attendant_name
+    SELECT l.*, a.name as attendant_name,
+      (SELECT COUNT(*) FROM lead_activities la WHERE la.lead_id = l.id AND la.type = 'novo_contato') as contacts_count
     FROM leads l LEFT JOIN attendants a ON l.attendant_id = a.id
     ${where} ORDER BY l.created_at DESC LIMIT ? OFFSET ?
   `).all(...params, parseInt(limit), offset);
@@ -658,15 +777,40 @@ app.get('/api/leads/stats', auth, (req, res) => {
   res.json({ ...stats, today });
 });
 
+app.get('/api/leads/:id', auth, (req, res) => {
+  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+  if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
+  res.json(lead);
+});
+
+app.get('/api/leads/:id/activities', auth, (req, res) => {
+  const activities = db.prepare(`
+    SELECT * FROM lead_activities WHERE lead_id = ? ORDER BY created_at ASC
+  `).all(req.params.id);
+  res.json(activities);
+});
+
 app.put('/api/leads/:id', auth, (req, res) => {
   const { id } = req.params;
   const { status, notes } = req.body;
-  const lead = db.prepare('SELECT id FROM leads WHERE id = ?').get(id);
+  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(id);
   if (!lead) return res.status(404).json({ error: 'Lead não encontrado.' });
 
   db.prepare(`
     UPDATE leads SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
   `).run(status, notes ?? '', id);
+
+  // Registra atividade quando status muda
+  if (status && status !== lead.status) {
+    const STATUS_LABELS = { novo: 'Novo', em_atendimento: 'Em atendimento', convertido: 'Convertido', perdido: 'Perdido' };
+    addActivity(id, 'status_alterado', `Status alterado para "${STATUS_LABELS[status] || status}"`, '');
+  }
+
+  // Registra atividade quando anotação é salva (e mudou)
+  const newNotes = (notes ?? '').trim();
+  if (newNotes && newNotes !== (lead.notes || '').trim()) {
+    addActivity(id, 'anotacao', 'Anotação registrada', newNotes);
+  }
 
   res.json({ success: true });
 });

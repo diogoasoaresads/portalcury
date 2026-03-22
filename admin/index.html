@@ -292,6 +292,36 @@
     .detail-row .lbl { font-size: .8rem; font-weight: 600; color: var(--gray); padding-top: 2px; }
     .detail-row .val { font-size: .9rem; color: var(--navy); }
 
+    /* ---- Timeline de atividades ---- */
+    .activity-timeline { margin-top: 8px; }
+    .activity-timeline h4 { font-size: .82rem; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 14px; }
+    .act-item { display: flex; gap: 12px; margin-bottom: 16px; position: relative; }
+    .act-item:not(:last-child)::before {
+      content: ''; position: absolute; left: 15px; top: 28px;
+      width: 2px; bottom: -10px; background: var(--border);
+    }
+    .act-icon {
+      flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem;
+    }
+    .act-icon.novo_contato   { background: #e8f5e9; }
+    .act-icon.status_alterado{ background: #e3f2fd; }
+    .act-icon.anotacao       { background: #fff8e1; }
+    .act-body { flex: 1; min-width: 0; }
+    .act-title { font-size: .88rem; font-weight: 600; color: var(--navy); }
+    .act-date  { font-size: .75rem; color: var(--gray); margin-top: 2px; }
+    .act-text  {
+      font-size: .8rem; color: var(--navy); background: var(--gray-lt);
+      border-radius: 6px; padding: 8px 10px; margin-top: 6px;
+      white-space: pre-wrap; line-height: 1.5;
+    }
+    .badge-multi {
+      display: inline-block; background: #e3f2fd; color: #1565c0;
+      font-size: .7rem; font-weight: 700; border-radius: 20px;
+      padding: 1px 7px; margin-left: 6px; vertical-align: middle;
+    }
+
     /* ============================================================
        CONFIG TABS
     ============================================================ */
@@ -1787,7 +1817,7 @@ async function loadLeads() {
       tbody.innerHTML = data.leads.map(l => `
         <tr>
           <td style="color:var(--gray);font-size:.8rem">#${l.id}</td>
-          <td><strong>${l.name}</strong></td>
+          <td><strong>${l.name}</strong>${l.contacts_count > 1 ? `<span class="badge-multi">${l.contacts_count}x</span>` : ''}</td>
           <td><a href="tel:${l.phone}" style="color:var(--red)">${l.phone}</a></td>
           <td style="color:var(--gray);font-size:.85rem">${l.email || '—'}</td>
           <td style="font-size:.85rem">${INTEREST_LABELS[l.interest] || l.interest || '—'}</td>
@@ -1821,15 +1851,44 @@ function changePage(delta) {
 /* ============================================================
    LEAD DETAIL MODAL
 ============================================================ */
+const ACT_ICONS = {
+  novo_contato:    '📥',
+  status_alterado: '🔄',
+  anotacao:        '📝',
+};
+
 async function openLead(id) {
   try {
-    const { leads } = await api('GET', `/api/leads?page=1&limit=200`);
-    const lead = leads.find(l => l.id === id);
-    if (!lead) return;
+    const [lead, activities] = await Promise.all([
+      api('GET', `/api/leads/${id}`),
+      api('GET', `/api/leads/${id}/activities`),
+    ]);
     currentLead = lead;
 
+    const contatos = activities.filter(a => a.type === 'novo_contato').length;
+    const badgeHtml = contatos > 1
+      ? `<span class="badge-multi">${contatos}x contatos</span>`
+      : '';
+
+    const timelineHtml = activities.length ? `
+      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
+      <div class="activity-timeline">
+        <h4>Histórico de atividades</h4>
+        ${activities.map(a => `
+          <div class="act-item">
+            <div class="act-icon ${a.type}">${ACT_ICONS[a.type] || '📌'}</div>
+            <div class="act-body">
+              <div class="act-title">${a.title}</div>
+              <div class="act-date">${formatDate(a.created_at)}</div>
+              ${a.body ? `<div class="act-text">${a.body}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
     document.getElementById('leadDetailContent').innerHTML = `
-      <div class="detail-row"><span class="lbl">Nome</span><span class="val"><strong>${lead.name}</strong></span></div>
+      <div class="detail-row"><span class="lbl">Nome</span><span class="val"><strong>${lead.name}</strong>${badgeHtml}</span></div>
       <div class="detail-row"><span class="lbl">Telefone</span><span class="val"><a href="tel:${lead.phone}" style="color:var(--red)">${lead.phone}</a></span></div>
       <div class="detail-row"><span class="lbl">E-mail</span><span class="val">${lead.email || '—'}</span></div>
       <div class="detail-row"><span class="lbl">Empreendimento</span><span class="val">${INTEREST_LABELS[lead.interest] || lead.interest || '—'}</span></div>
@@ -1852,6 +1911,7 @@ async function openLead(id) {
         <a href="https://wa.me/55${lead.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-green btn-sm">Abrir WhatsApp</a>
         <a href="tel:${lead.phone}" class="btn btn-secondary btn-sm">Ligar</a>
       </div>
+      ${timelineHtml}
     `;
 
     document.getElementById('deleteLeadBtn').onclick = () => deleteLead(lead.id);
