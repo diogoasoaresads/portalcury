@@ -1637,6 +1637,16 @@ async function api(method, path, body) {
   return data;
 }
 
+// Escapa HTML para prevenir XSS ao inserir dados de usuário em innerHTML
+function escHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function formatDate(str) {
   return new Date(str).toLocaleString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -1770,9 +1780,9 @@ async function loadDashboard() {
     }
     tbody.innerHTML = leads.map(l => `
       <tr>
-        <td><strong>${l.name}</strong></td>
-        <td><a href="tel:${l.phone}" style="color:var(--red)">${l.phone}</a></td>
-        <td>${INTEREST_LABELS[l.interest] || l.interest || '—'}</td>
+        <td><strong>${escHtml(l.name)}</strong></td>
+        <td><a href="tel:${escHtml(l.phone)}" style="color:var(--red)">${escHtml(l.phone)}</a></td>
+        <td>${escHtml(INTEREST_LABELS[l.interest] || l.interest || '—')}</td>
         <td>${badgeHtml(l.status)}</td>
         <td style="color:var(--gray);font-size:.82rem">${formatDate(l.created_at)}</td>
         <td><div class="actions">
@@ -1817,11 +1827,11 @@ async function loadLeads() {
       tbody.innerHTML = data.leads.map(l => `
         <tr>
           <td style="color:var(--gray);font-size:.8rem">#${l.id}</td>
-          <td><strong>${l.name}</strong>${l.contacts_count > 1 ? `<span class="badge-multi">${l.contacts_count}x</span>` : ''}</td>
-          <td><a href="tel:${l.phone}" style="color:var(--red)">${l.phone}</a></td>
-          <td style="color:var(--gray);font-size:.85rem">${l.email || '—'}</td>
-          <td style="font-size:.85rem">${INTEREST_LABELS[l.interest] || l.interest || '—'}</td>
-          <td style="font-size:.82rem;color:var(--gray)">${l.attendant_name || '—'}</td>
+          <td><strong>${escHtml(l.name)}</strong>${l.contacts_count > 1 ? `<span class="badge-multi">${l.contacts_count}x</span>` : ''}</td>
+          <td><a href="tel:${escHtml(l.phone)}" style="color:var(--red)">${escHtml(l.phone)}</a></td>
+          <td style="color:var(--gray);font-size:.85rem">${escHtml(l.email || '—')}</td>
+          <td style="font-size:.85rem">${escHtml(INTEREST_LABELS[l.interest] || l.interest || '—')}</td>
+          <td style="font-size:.82rem;color:var(--gray)">${escHtml(l.attendant_name || '—')}</td>
           <td>${badgeHtml(l.status)}</td>
           <td style="color:var(--gray);font-size:.82rem;white-space:nowrap">${formatDate(l.created_at)}</td>
           <td><div class="actions">
@@ -1876,11 +1886,11 @@ async function openLead(id) {
         <h4>Histórico de atividades</h4>
         ${activities.map(a => `
           <div class="act-item">
-            <div class="act-icon ${a.type}">${ACT_ICONS[a.type] || '📌'}</div>
+            <div class="act-icon ${escHtml(a.type)}">${ACT_ICONS[a.type] || '📌'}</div>
             <div class="act-body">
-              <div class="act-title">${a.title}</div>
+              <div class="act-title">${escHtml(a.title)}</div>
               <div class="act-date">${formatDate(a.created_at)}</div>
-              ${a.body ? `<div class="act-text">${a.body}</div>` : ''}
+              ${a.body ? `<div class="act-text">${escHtml(a.body)}</div>` : ''}
             </div>
           </div>
         `).join('')}
@@ -1888,11 +1898,11 @@ async function openLead(id) {
     ` : '';
 
     document.getElementById('leadDetailContent').innerHTML = `
-      <div class="detail-row"><span class="lbl">Nome</span><span class="val"><strong>${lead.name}</strong>${badgeHtml}</span></div>
-      <div class="detail-row"><span class="lbl">Telefone</span><span class="val"><a href="tel:${lead.phone}" style="color:var(--red)">${lead.phone}</a></span></div>
-      <div class="detail-row"><span class="lbl">E-mail</span><span class="val">${lead.email || '—'}</span></div>
-      <div class="detail-row"><span class="lbl">Empreendimento</span><span class="val">${INTEREST_LABELS[lead.interest] || lead.interest || '—'}</span></div>
-      <div class="detail-row"><span class="lbl">Mensagem</span><span class="val" style="white-space:pre-wrap">${lead.message || '—'}</span></div>
+      <div class="detail-row"><span class="lbl">Nome</span><span class="val"><strong>${escHtml(lead.name)}</strong>${badgeHtml}</span></div>
+      <div class="detail-row"><span class="lbl">Telefone</span><span class="val"><a href="tel:${escHtml(lead.phone)}" style="color:var(--red)">${escHtml(lead.phone)}</a></span></div>
+      <div class="detail-row"><span class="lbl">E-mail</span><span class="val">${escHtml(lead.email || '—')}</span></div>
+      <div class="detail-row"><span class="lbl">Empreendimento</span><span class="val">${escHtml(INTEREST_LABELS[lead.interest] || lead.interest || '—')}</span></div>
+      <div class="detail-row"><span class="lbl">Mensagem</span><span class="val" style="white-space:pre-wrap">${escHtml(lead.message || '—')}</span></div>
       <div class="detail-row"><span class="lbl">Recebido em</span><span class="val">${formatDate(lead.created_at)}</span></div>
       <hr style="margin:18px 0;border:none;border-top:1px solid var(--border)">
       <div class="field">
@@ -1905,11 +1915,11 @@ async function openLead(id) {
       </div>
       <div class="field">
         <label>Anotações</label>
-        <textarea id="leadNotes" rows="4" placeholder="Registre aqui informações do atendimento...">${lead.notes || ''}</textarea>
+        <textarea id="leadNotes" rows="4" placeholder="Registre aqui informações do atendimento...">${escHtml(lead.notes || '')}</textarea>
       </div>
       <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
         <a href="https://wa.me/55${lead.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-green btn-sm">Abrir WhatsApp</a>
-        <a href="tel:${lead.phone}" class="btn btn-secondary btn-sm">Ligar</a>
+        <a href="tel:${escHtml(lead.phone)}" class="btn btn-secondary btn-sm">Ligar</a>
       </div>
       ${timelineHtml}
     `;
@@ -2460,9 +2470,9 @@ function buildKbCard(lead) {
   const waPhone  = '55' + lead.phone.replace(/\D/g, '');
   return `
     <div class="kb-card kb-card--${lead.status || 'novo'}" draggable="true" data-id="${lead.id}">
-      <div class="kb-card__name">${lead.name}</div>
-      <div class="kb-card__phone">${lead.phone}</div>
-      <div class="kb-card__interest">${interest}</div>
+      <div class="kb-card__name">${escHtml(lead.name)}</div>
+      <div class="kb-card__phone">${escHtml(lead.phone)}</div>
+      <div class="kb-card__interest">${escHtml(interest)}</div>
       <div class="kb-card__footer">
         <span class="kb-card__date">${dateStr}</span>
         <div class="kb-card__actions">

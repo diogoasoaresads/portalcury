@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const crypto  = require('crypto');
+const helmet  = require('helmet');
 const express = require('express');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
@@ -12,7 +14,13 @@ const empreendimentos = require('./data/empreendimentos');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'TROQUE_ESTA_CHAVE_EM_PRODUCAO_' + Math.random();
+
+// JWT_SECRET: obrigatório em produção — fallback criptograficamente seguro para dev
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('[SEGURANÇA] JWT_SECRET não definido! Configure a variável de ambiente JWT_SECRET.');
+  process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(48).toString('hex');
 
 // ============================================================
 // TEMPLATE ENGINE
@@ -23,6 +31,11 @@ app.set('views', path.join(__dirname, 'views'));
 // ============================================================
 // MIDDLEWARE
 // ============================================================
+// Headers de segurança HTTP
+app.use(helmet({
+  contentSecurityPolicy: false, // desativado pois admin usa inline scripts e CDNs externos
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -112,6 +125,13 @@ db.exec(`
   );
 `);
 
+// Índices para acelerar deduplicação de leads
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);
+  CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
+  CREATE INDEX IF NOT EXISTS idx_lead_activities_lead_id ON lead_activities(lead_id);
+`);
+
 // Migrations — add columns if they don't exist yet
 ['ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
  'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
@@ -166,20 +186,12 @@ const DEFAULT_CONFIG = {
 const insertCfg = db.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)');
 for (const [k, v] of Object.entries(DEFAULT_CONFIG)) insertCfg.run(k, v);
 
-// ---- Default admin user ----
-const existingAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('admin');
-if (!existingAdmin) {
+// ---- Default admin user (criado apenas se não existir NENHUM usuário) ----
+const anyUser = db.prepare('SELECT id FROM users LIMIT 1').get();
+if (!anyUser) {
   const hash = bcrypt.hashSync('admin123', 10);
   db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').run('admin', hash);
-  console.log('Usuário padrão criado: admin / admin123 — TROQUE A SENHA!');
-}
-
-// ---- Usuário Diogo (admin) ----
-const existingDiogo = db.prepare('SELECT id FROM users WHERE username = ?').get('diogoasoaresads@gmail.com');
-if (!existingDiogo) {
-  const hash = bcrypt.hashSync('06112005', 10);
-  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run('diogoasoaresads@gmail.com', hash, 'admin');
-  console.log('Usuário criado: diogoasoaresads@gmail.com (admin)');
+  console.warn('[SETUP] Usuário padrão criado: admin / admin123 — TROQUE A SENHA IMEDIATAMENTE no painel de configurações!');
 }
 
 // ============================================================
@@ -216,15 +228,22 @@ function normalizePhone(p) {
   return (p || '').replace(/\D/g, '');
 }
 
+// Usa índices do banco para busca eficiente — sem carregar todos os leads em memória
 function findDuplicateLead(phone, email) {
   const phoneNorm = normalizePhone(phone);
-  const leads = db.prepare('SELECT * FROM leads ORDER BY id DESC').all();
-  return leads.find(l => {
-    if (normalizePhone(l.phone) === phoneNorm) return true;
-    if (email && email.trim() && l.email && l.email.trim() &&
-        l.email.toLowerCase().trim() === email.toLowerCase().trim()) return true;
-    return false;
-  }) || null;
+
+  // Busca por telefone (compara dígitos para ignorar formatação)
+  const byPhone = db.prepare('SELECT * FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone," ",""),"-",""),"(",""),")",""),"+","") = ? LIMIT 1').get(phoneNorm);
+  if (byPhone) return byPhone;
+
+  // Busca por e-mail (case-insensitive, só se fornecido)
+  const emailNorm = (email || '').trim().toLowerCase();
+  if (emailNorm) {
+    const byEmail = db.prepare('SELECT * FROM leads WHERE LOWER(TRIM(email)) = ? AND email != "" LIMIT 1').get(emailNorm);
+    if (byEmail) return byEmail;
+  }
+
+  return null;
 }
 
 // ---- Registro de atividades no lead ----
@@ -266,6 +285,17 @@ function adminOnly(req, res, next) {
 
 // ---- Simple in-memory rate limiter ----
 const rateMap = new Map();
+
+// Limpeza periódica do rateMap para evitar memory leak (a cada 10 min)
+setInterval(() => {
+  const cutoff = Date.now() - 30 * 60 * 1000; // remove entradas mais antigas que 30min
+  for (const [key, hits] of rateMap.entries()) {
+    const fresh = hits.filter(t => t > cutoff);
+    if (fresh.length === 0) rateMap.delete(key);
+    else rateMap.set(key, fresh);
+  }
+}, 10 * 60 * 1000).unref();
+
 function rateLimit(windowMs, max) {
   return (req, res, next) => {
     const key = req.ip;
@@ -861,8 +891,8 @@ app.get('/api/users', auth, adminOnly, (_req, res) => {
 
 app.post('/api/users', auth, adminOnly, (req, res) => {
   const { username, password, role = 'agent', attendant_id } = req.body;
-  if (!username?.trim() || !password || password.length < 6)
-    return res.status(400).json({ error: 'Usuário e senha (mín. 6 caracteres) são obrigatórios.' });
+  if (!username?.trim() || !password || password.length < 8)
+    return res.status(400).json({ error: 'Usuário e senha (mín. 8 caracteres) são obrigatórios.' });
   try {
     const r = db.prepare('INSERT INTO users (username, password_hash, role, attendant_id) VALUES (?, ?, ?, ?)').run(
       username.trim(), bcrypt.hashSync(password, 10), role, attendant_id || null
@@ -877,7 +907,7 @@ app.post('/api/users', auth, adminOnly, (req, res) => {
 app.put('/api/users/:id', auth, adminOnly, (req, res) => {
   const { role, attendant_id, password } = req.body;
   if (password) {
-    if (password.length < 6) return res.status(400).json({ error: 'Senha deve ter ao menos 6 caracteres.' });
+    if (password.length < 8) return res.status(400).json({ error: 'Senha deve ter ao menos 8 caracteres.' });
     db.prepare('UPDATE users SET role = ?, attendant_id = ?, password_hash = ? WHERE id = ?').run(
       role, attendant_id || null, bcrypt.hashSync(password, 10), req.params.id
     );
@@ -896,14 +926,14 @@ app.delete('/api/users/:id', auth, adminOnly, (req, res) => {
 // ============================================================
 // ROUTES — CONFIG (protegidos)
 // ============================================================
-app.get('/api/config', auth, (_req, res) => {
+app.get('/api/config', auth, adminOnly, (_req, res) => {
   const cfg = getConfig();
-  // Mascarar senha
+  // Mascarar senha SMTP
   if (cfg.email_smtp_pass) cfg.email_smtp_pass = '••••••••';
   res.json(cfg);
 });
 
-app.put('/api/config', auth, (req, res) => {
+app.put('/api/config', auth, adminOnly, (req, res) => {
   setConfig(req.body);
   res.json({ success: true });
 });
@@ -920,8 +950,8 @@ app.put('/api/config/smtp-pass', auth, (req, res) => {
 // Trocar senha admin
 app.put('/api/auth/password', auth, (req, res) => {
   const { current_password, new_password } = req.body;
-  if (!new_password || new_password.length < 6) {
-    return res.status(400).json({ error: 'A nova senha deve ter ao menos 6 caracteres.' });
+  if (!new_password || new_password.length < 8) {
+    return res.status(400).json({ error: 'A nova senha deve ter ao menos 8 caracteres.' });
   }
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   if (!bcrypt.compareSync(current_password, user.password_hash)) {
@@ -1303,10 +1333,36 @@ app.get('/admin', (_req, res) => res.sendFile(path.join(__dirname, 'admin', 'ind
 app.get('/admin/*', (_req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
 
 // ============================================================
+// HEALTH CHECK
+// ============================================================
+app.get('/health', (_req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ status: 'ok', db: true, uptime: Math.floor(process.uptime()) });
+  } catch {
+    res.status(503).json({ status: 'error', db: false });
+  }
+});
+
+// ============================================================
 // START
 // ============================================================
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`\n✅ Portal Cury rodando em http://localhost:${PORT}`);
   console.log(`   Admin CRM: http://localhost:${PORT}/admin`);
-  console.log(`   Login padrão: admin / admin123\n`);
+  console.log(`   Health:    http://localhost:${PORT}/health\n`);
 });
+
+// Graceful shutdown — fecha banco antes de sair
+function shutdown(signal) {
+  console.log(`\n[${signal}] Encerrando servidor...`);
+  server.close(() => {
+    db.close();
+    console.log('Banco de dados fechado. Até logo!');
+    process.exit(0);
+  });
+  // Força saída após 10s se não finalizar
+  setTimeout(() => process.exit(1), 10000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
