@@ -2177,9 +2177,12 @@ async function changePassword() {
 /* ============================================================
    ATENDENTES
 ============================================================ */
+let attendantsCache = [];
+
 async function loadAttendants() {
   try {
     const list = await api('GET', '/api/attendants');
+    attendantsCache = list;
     const tbody = document.getElementById('attendantsTable');
     if (!list.length) {
       tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum atendente cadastrado.</p></div></td></tr>`;
@@ -2188,12 +2191,12 @@ async function loadAttendants() {
     tbody.innerHTML = list.map(a => `
       <tr>
         <td style="color:var(--gray);font-size:.8rem">#${a.id}</td>
-        <td><strong>${a.name}</strong></td>
-        <td><a href="https://wa.me/${a.phone.replace(/\D/g,'')}" target="_blank" style="color:var(--green)">${a.phone}</a></td>
+        <td><strong>${escHtml(a.name)}</strong></td>
+        <td><a href="https://wa.me/${a.phone.replace(/\D/g,'')}" target="_blank" style="color:var(--green)">${escHtml(a.phone)}</a></td>
         <td><span class="badge ${a.active ? 'badge-conv' : 'badge-perdido'}">${a.active ? 'Ativo' : 'Inativo'}</span></td>
         <td style="color:var(--gray);font-size:.82rem">${formatDate(a.created_at)}</td>
         <td><div class="actions">
-          <button class="btn btn-secondary btn-sm" onclick="openAttendantModal(${JSON.stringify(a).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="btn btn-secondary btn-sm" onclick="openAttendantModal(${a.id})">Editar</button>
           <button class="btn btn-danger btn-sm" onclick="deleteAttendant(${a.id})">Excluir</button>
         </div></td>
       </tr>
@@ -2201,7 +2204,8 @@ async function loadAttendants() {
   } catch(e) { toast(e.message, 'error'); }
 }
 
-function openAttendantModal(att) {
+function openAttendantModal(id) {
+  const att = id != null ? attendantsCache.find(a => a.id === id) : null;
   currentAttendant = att || null;
   document.getElementById('attendantModalTitle').textContent = att ? 'Editar Atendente' : 'Novo Atendente';
   document.getElementById('att-name').value   = att?.name  || '';
@@ -2249,12 +2253,15 @@ document.getElementById('attendantModal').addEventListener('click', e => {
 /* ============================================================
    USUÁRIOS
 ============================================================ */
+let usersCache = [];
+
 async function loadUsers() {
   try {
-    const [users, attendants] = await Promise.all([
+    const [users] = await Promise.all([
       api('GET', '/api/users'),
-      api('GET', '/api/attendants'),
+      loadAttendants(), // garante attendantsCache atualizado
     ]);
+    usersCache = users;
     const tbody = document.getElementById('usersTable');
     if (!users.length) {
       tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum usuário cadastrado.</p></div></td></tr>`;
@@ -2263,12 +2270,12 @@ async function loadUsers() {
     tbody.innerHTML = users.map(u => `
       <tr>
         <td style="color:var(--gray);font-size:.8rem">#${u.id}</td>
-        <td><strong>${u.username}</strong></td>
+        <td><strong>${escHtml(u.username)}</strong></td>
         <td><span class="badge ${u.role === 'admin' ? 'badge-atend' : 'badge-novo'}">${u.role === 'admin' ? 'Admin' : 'Agente'}</span></td>
-        <td style="font-size:.85rem">${u.attendant_name || '—'}</td>
+        <td style="font-size:.85rem">${escHtml(u.attendant_name || '—')}</td>
         <td style="color:var(--gray);font-size:.82rem">${formatDate(u.created_at)}</td>
         <td><div class="actions">
-          <button class="btn btn-secondary btn-sm" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')}, ${JSON.stringify(attendants).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="btn btn-secondary btn-sm" onclick="openUserModal(${u.id})">Editar</button>
           <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Excluir</button>
         </div></td>
       </tr>
@@ -2276,7 +2283,8 @@ async function loadUsers() {
   } catch(e) { toast(e.message, 'error'); }
 }
 
-async function openUserModal(usr, preloadedAttendants) {
+async function openUserModal(id) {
+  const usr = id != null ? usersCache.find(u => u.id === id) : null;
   currentUser = usr || null;
   document.getElementById('userModalTitle').textContent = usr ? 'Editar Usuário' : 'Novo Usuário';
   document.getElementById('usr-username').value  = usr?.username || '';
@@ -2285,11 +2293,11 @@ async function openUserModal(usr, preloadedAttendants) {
   document.getElementById('usr-pass-hint').style.display = usr ? 'block' : 'none';
   document.getElementById('usrModalMsg').style.display = 'none';
 
-  // Preenche select de atendentes
-  const attendants = preloadedAttendants || await api('GET', '/api/attendants').catch(() => []);
+  // Preenche select de atendentes usando o cache
+  const attendants = attendantsCache.length ? attendantsCache : await api('GET', '/api/attendants').catch(() => []);
   const sel = document.getElementById('usr-attendant');
   sel.innerHTML = '<option value="">— Nenhum —</option>' +
-    attendants.map(a => `<option value="${a.id}" ${usr?.attendant_id == a.id ? 'selected' : ''}>${a.name}</option>`).join('');
+    attendants.map(a => `<option value="${a.id}" ${usr?.attendant_id == a.id ? 'selected' : ''}>${escHtml(a.name)}</option>`).join('');
 
   document.getElementById('userModal').classList.add('open');
 }

@@ -50,6 +50,10 @@ app.use(express.static(path.join(__dirname), { index: false }));
 const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
+// Garante que o diretório de logs existe (necessário para PM2)
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+
 const db = new Database(path.join(dataDir, 'portalcury.db'));
 
 db.pragma('journal_mode = WAL');
