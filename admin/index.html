@@ -1935,8 +1935,18 @@ async function api(method, path, body) {
   };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(path, opts);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
+  
+  let data;
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    data = await res.json();
+  } else {
+    const text = await res.text();
+    if (!res.ok) throw new Error(`Erro do servidor (${res.status}): ${text.slice(0, 100)}`);
+    data = { message: text };
+  }
+
+  if (!res.ok) throw new Error(data.error || data.message || `Erro ${res.status}`);
   return data;
 }
 
@@ -3692,7 +3702,7 @@ async function saveWaAtendConfig() {
       wa_atend_instance:      document.getElementById('cfg-wa-atend-instance')?.value || '',
       wa_atend_distribution:  document.getElementById('cfg-wa-atend-distribution')?.value || 'manual',
     };
-    await api('POST', '/api/config', val);
+    await api('PUT', '/api/config', val);
     showMsg('waAtendConfigMsg', 'Configurações salvas!', 'success');
     checkWaStatus();
   } catch (err) {
