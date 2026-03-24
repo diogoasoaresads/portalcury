@@ -641,6 +641,7 @@ function fireNotifications(lead, cfg) {
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
 app.post('/webhook/wa-incoming', express.json(), (req, res) => {
+  waLog(`[${new Date().toISOString()}] TRIGGER Webhook: INÍCIO DA FUNÇÃO`);
   res.sendStatus(200); // Responde imediatamente
 
   try {

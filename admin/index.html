@@ -2576,6 +2576,7 @@ async function testWhatsApp() {
 }
 
 async function sendWaTest() {
+  console.log('Iniciando sendWaTest...');
   try {
     const payload = {
       event: 'messages.upsert',
@@ -2587,17 +2588,27 @@ async function sendWaTest() {
         messageType: 'conversation'
       }
     };
+    
+    // Alerta de debug 1
+    console.log('Enviando fetch para /webhook/wa-incoming...');
+    
     const res = await fetch('/webhook/wa-incoming', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
+    
+    // Alerta de debug 2
+    console.log('Resposta recebida:', res.status);
+    
     if (res.ok) {
       toast('✅ Simulação enviada! Aguarde 2s e clique em "Ver Logs" para verificar.', 'success');
     } else {
+      alert('ERRO NA RESPOSTA: ' + res.status);
       throw new Error('Falha ao simular: ' + res.status);
     }
   } catch (e) {
+    alert('ERRO NO CATCH: ' + e.message);
     toast('Erro: ' + e.message, 'error');
   }
 }
