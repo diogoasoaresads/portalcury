@@ -413,6 +413,18 @@
     #toast.toast-success { background: var(--green); }
     #toast.toast-error   { background: #dc2626; }
 
+    /* Branding */
+    .branding-text {
+      text-align: center; font-size: .72rem; color: var(--gray);
+      margin-top: 24px; opacity: .7;
+    }
+    .branding-text a { font-weight: 600; text-decoration: underline; }
+    .branding-sidebar {
+      padding: 12px 20px; font-size: .68rem; color: rgba(255,255,255,.35);
+      border-top: 1px solid rgba(255,255,255,.05); text-align: center;
+    }
+    .branding-sidebar a { color: rgba(255,255,255,.5); }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .stats-grid { grid-template-columns: repeat(3, 1fr); }
@@ -848,6 +860,9 @@
       <div id="loginError" class="error-msg" style="display:none;margin-bottom:12px"></div>
       <button type="submit" class="btn btn-primary btn-full" id="loginBtn">Entrar</button>
     </form>
+    <div class="branding-text">
+      CRM feito por <a href="https://agenciaqao.com.br" target="_blank">agenciaqao.com.br</a>
+    </div>
   </div>
 </div>
 
@@ -906,6 +921,9 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Sair
       </div>
+    </div>
+    <div class="branding-sidebar">
+      CRM feito por <a href="https://agenciaqao.com.br" target="_blank">agenciaqao.com.br</a>
     </div>
   </aside>
 
