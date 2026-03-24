@@ -182,6 +182,10 @@ const DEFAULT_CONFIG = {
   // Google Tag Manager
   gtm_id: '',                  // Ex: GTM-XXXXXXX
 
+  // Meta Ads (Facebook Pixel)
+  meta_pixel_id:         '',   // Ex: 123456789012345
+  meta_conversion_event: 'Lead', // Evento disparado (ex: Lead, CompleteRegistration)
+
   // Código personalizado nas páginas
   custom_head_code: '',        // HTML/JS injetado antes de </head>
   custom_body_code: '',        // HTML/JS injetado após <body>
@@ -457,6 +461,8 @@ app.get('/api/public-config', (_req, res) => {
     gads_tag_id:           cfg.gads_tag_id      || '',
     gads_conversion_label: cfg.gads_conversion_label || '',
     gtm_id:                cfg.gtm_id           || '',
+    meta_pixel_id:         cfg.meta_pixel_id     || '',
+    meta_conversion_event: cfg.meta_conversion_event || 'Lead',
     custom_head_code:      cfg.custom_head_code  || '',
     custom_body_code:      cfg.custom_body_code  || '',
   });
@@ -1322,6 +1328,8 @@ app.get('/empreendimentos/:slug', (req, res) => {
     gtm_id:                cfg.gtm_id                || '',
     gads_tag_id:           cfg.gads_tag_id            || '',
     gads_conversion_label: cfg.gads_conversion_label  || '',
+    meta_pixel_id:         cfg.meta_pixel_id         || '',
+    meta_conversion_event: cfg.meta_conversion_event || 'Lead',
     custom_head_code:      cfg.custom_head_code        || '',
     custom_body_code:      cfg.custom_body_code        || '',
   };

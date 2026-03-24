@@ -196,10 +196,10 @@
           gtag('event', 'conversion', { 'send_to': window._GADS });
         }
 
-        // Facebook Pixel (descomentar após configurar)
-        // if (typeof fbq !== 'undefined') {
-        //   fbq('track', 'Lead');
-        // }
+        // Meta Ads (Facebook Pixel) — disparado automaticamente via config do admin
+        if (typeof fbq !== 'undefined' && window._META_EVENT) {
+          fbq('track', window._META_EVENT);
+        }
 
       } catch (err) {
         console.error('Erro ao enviar formulário:', err);
@@ -291,6 +291,26 @@
         if (cfg.gads_conversion_label) {
           window._GADS = cfg.gads_tag_id + '/' + cfg.gads_conversion_label;
         }
+      }
+
+      // Meta Ads (Facebook Pixel)
+      if (cfg.meta_pixel_id) {
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+        document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', cfg.meta_pixel_id);
+        fbq('track', 'PageView');
+        window._META_EVENT = cfg.meta_conversion_event || 'Lead';
+        
+        // NoScript fallback
+        var ns=document.createElement('noscript');
+        var img=document.createElement('img');
+        img.height='1'; img.width='1'; img.style.display='none';
+        img.src='https://www.facebook.com/tr?id='+cfg.meta_pixel_id+'&ev=PageView&noscript=1';
+        ns.appendChild(img);
+        document.body.insertBefore(ns, document.body.firstChild);
       }
 
       // Código personalizado no <head>

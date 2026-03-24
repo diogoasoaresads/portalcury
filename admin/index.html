@@ -1139,6 +1139,26 @@
           <button class="btn btn-primary" style="margin-top:16px" onclick="saveTrackingConfig()">Salvar</button>
         </div>
 
+        <!-- Meta Ads (Facebook Pixel) -->
+        <div class="config-card">
+          <h4><span class="dot" style="background:#1877F2"></span>Meta Ads (Facebook Pixel)</h4>
+          <p class="hint" style="margin-bottom:20px">Configure o Meta Pixel para rastreamento de anúncios e conversões. O evento será disparado automaticamente ao final de cada conversão.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label>ID do Pixel do Facebook</label>
+              <input type="text" id="cfg-meta-pixel-id" placeholder="123456789012345" />
+              <p class="hint">Encontrado no Gerenciador de Eventos → Configurações → ID do Pixel</p>
+            </div>
+            <div class="field">
+              <label>Evento de Conversão</label>
+              <input type="text" id="cfg-meta-event" placeholder="Lead" />
+              <p class="hint">Evento disparado na conversão (ex: Lead, CompleteRegistration)</p>
+            </div>
+          </div>
+          <div id="metaConfigMsg" style="margin-top:12px"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="saveTrackingConfig()">Salvar</button>
+        </div>
+
         <!-- Código personalizado -->
         <div class="config-card">
           <h4><span class="dot"></span>Código Personalizado</h4>
@@ -2023,6 +2043,8 @@ async function loadConfig() {
     document.getElementById('cfg-gads-tag-id').value  = cfg.gads_tag_id  || '';
     document.getElementById('cfg-gads-label').value   = cfg.gads_conversion_label || '';
     document.getElementById('cfg-gtm-id').value        = cfg.gtm_id       || '';
+    document.getElementById('cfg-meta-pixel-id').value = cfg.meta_pixel_id || '';
+    document.getElementById('cfg-meta-event').value    = cfg.meta_conversion_event || 'Lead';
     document.getElementById('cfg-custom-head').value   = cfg.custom_head_code || '';
     document.getElementById('cfg-custom-body').value   = cfg.custom_body_code || '';
     updateGadsPreview(cfg.gads_tag_id, cfg.gads_conversion_label);
@@ -2039,16 +2061,20 @@ function updateGadsPreview(tagId, label) {
 
 async function saveTrackingConfig() {
   try {
-    const tagId  = document.getElementById('cfg-gads-tag-id').value.trim();
-    const label  = document.getElementById('cfg-gads-label').value.trim();
-    const gtmId  = document.getElementById('cfg-gtm-id').value.trim();
-    const head   = document.getElementById('cfg-custom-head').value;
-    const body   = document.getElementById('cfg-custom-body').value;
+    const tagId   = document.getElementById('cfg-gads-tag-id').value.trim();
+    const label   = document.getElementById('cfg-gads-label').value.trim();
+    const gtmId   = document.getElementById('cfg-gtm-id').value.trim();
+    const pixelId = document.getElementById('cfg-meta-pixel-id').value.trim();
+    const event   = document.getElementById('cfg-meta-event').value.trim();
+    const head    = document.getElementById('cfg-custom-head').value;
+    const body    = document.getElementById('cfg-custom-body').value;
 
     await api('PUT', '/api/config', {
       gads_tag_id:           tagId,
       gads_conversion_label: label,
       gtm_id:                gtmId,
+      meta_pixel_id:         pixelId,
+      meta_conversion_event: event,
       custom_head_code:      head,
       custom_body_code:      body,
     });

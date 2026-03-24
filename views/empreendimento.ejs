@@ -54,6 +54,13 @@
   <!-- End Google Ads -->
   <% } %>
 
+  <% if (tracking.meta_pixel_id) { %>
+  <!-- Meta Pixel Code -->
+  <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init', '<%= tracking.meta_pixel_id %>');fbq('track', 'PageView');</script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=<%= tracking.meta_pixel_id %>&ev=PageView&noscript=1"/></noscript>
+  <!-- End Meta Pixel Code -->
+  <% } %>
+
   <% if (tracking.custom_head_code) { %>
   <%- tracking.custom_head_code %>
   <% } %>
@@ -471,6 +478,24 @@
         orig();
         if (typeof gtag !== 'undefined' && window._GADS) {
           gtag('event','conversion',{'send_to': window._GADS});
+        }
+      };
+    }
+  })();
+  </script>
+  <% } %>
+
+  <% if (tracking.meta_pixel_id) { %>
+  <script>
+  // Dispara conversão do Meta Pixel quando lead for enviado com sucesso
+  (function(){
+    var orig = window.showModal;
+    if (typeof orig === 'function') {
+      const oldShowModal = window.showModal;
+      window.showModal = function() {
+        oldShowModal();
+        if (typeof fbq !== 'undefined') {
+          fbq('track', '<%= tracking.meta_conversion_event || "Lead" %>');
         }
       };
     }
