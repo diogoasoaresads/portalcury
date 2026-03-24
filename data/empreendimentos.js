@@ -24,7 +24,7 @@ const empreendimentos = [
       'Playground', 'Brinquedoteca', 'Oficina compartilhada', 'Segurança 24h',
     ],
     nearby: ['Metrô São Cristóvão', 'Quinta da Boa Vista', 'AquaRio', 'Rio Star', 'Feira de São Cristóvão', 'Ponte Rio-Niterói'],
-    seoTitle: 'Luzes do Rio | Apartamentos em São Cristóvão – Portal Cury',
+    seoTitle: 'Luzes do Rio | Apartamentos em São Cristóvão – Cury Meu Apê',
     seoDesc: 'Luzes do Rio: 1 e 2 quartos de 32 a 38 m² em São Cristóvão, Rio de Janeiro. E-bike inclusa, a partir de R$ 300.532, entrega dez/2029. Simule agora.',
     heroImage: `${BASE}/2025/12/lancamento_cury_luzes_do_rio_residencial_porto_maravilha-5-1240x720.jpeg`,
     gallery: [
@@ -56,7 +56,7 @@ const empreendimentos = [
       'Pet care', 'Pet place', 'Coworking', 'Segurança 24h',
     ],
     nearby: ['400m Metrô/Trem São Cristóvão', 'Hospital Quinta D\'Or', 'Quinta da Boa Vista', 'BRT e ônibus'],
-    seoTitle: 'Residencial Cartola | Apartamentos em São Cristóvão – Portal Cury',
+    seoTitle: 'Residencial Cartola | Apartamentos em São Cristóvão – Cury Meu Apê',
     seoDesc: 'Residencial Cartola: 1 e 2 quartos de 31 a 52 m² em São Cristóvão, a 400m do metrô. A partir de R$ 296.000. Financiamento facilitado. Simule agora.',
     heroImage: `${BASE}/2025/07/residencial_cartola_cury_sao_cristovao-2-1240x720.png`,
     gallery: [
@@ -89,8 +89,8 @@ const empreendimentos = [
       'Unidades garden', 'Varandas', 'Opções com suíte', 'Segurança 24h',
     ],
     nearby: ['Metrô Irajá', 'Via Dutra', 'Avenida Brasil', 'BRT', 'Carioca Shopping', 'Hospital Silva Telles'],
-    seoTitle: 'Nova Norte Raízes | Apartamentos em Irajá – Portal Cury',
-    seoDesc: 'Nova Norte Raízes: 2 e 3 quartos de 36 a 62 m² em Irajá, Rio de Janeiro. A partir de R$ 258.184. Próximo ao metrô. Simule agora com o Portal Cury.',
+    seoTitle: 'Nova Norte Raízes | Apartamentos em Irajá – Cury Meu Apê',
+    seoDesc: 'Nova Norte Raízes: 2 e 3 quartos de 36 a 62 m² em Irajá, Rio de Janeiro. A partir de R$ 258.184. Próximo ao metrô. Simule agora com o Cury Meu Apê.',
     heroImage: `${BML}/1.webp`,
     gallery: [
       `${BML}/2.jpeg`,
@@ -121,7 +121,7 @@ const empreendimentos = [
       'Salão de festas', 'Pet care', 'Coworking', 'Lavanderia', 'Bicicletário', 'Segurança 24h',
     ],
     nearby: ['Shopping Plaza Niterói', 'Rodoviária de Niterói', 'CCR Barcas', 'UFF', 'MAC-Niterói', 'Caminho Niemeyer'],
-    seoTitle: 'Caminhos da Guanabara | Apartamentos em Niterói – Portal Cury',
+    seoTitle: 'Caminhos da Guanabara | Apartamentos em Niterói – Cury Meu Apê',
     seoDesc: 'Caminhos da Guanabara: 2 quartos de 42 m² em Niterói com vista para a Baía de Guanabara. A partir de R$ 381.847. Em frente ao Caminho Niemeyer. Simule agora.',
     heroImage: `${BASE}/2025/01/lancamento_cury_caminhos_da_guanabara_niteroi-21-1240x720.png`,
     gallery: [
@@ -154,7 +154,7 @@ const empreendimentos = [
       'Salão de festas', 'Espaço gourmet', 'VLT na porta', 'Segurança 24h',
     ],
     nearby: ['VLT na porta', 'Museu do Amanhã', 'Boulevard Olímpico', 'Yup Star', 'AquaRio', 'MAR'],
-    seoTitle: 'Farol da Guanabara | Apartamentos no Porto Maravilha – Portal Cury',
+    seoTitle: 'Farol da Guanabara | Apartamentos no Porto Maravilha – Cury Meu Apê',
     seoDesc: 'Farol da Guanabara: studios a 3 quartos de 32 a 79 m² no Porto Maravilha. A partir de R$ 374.300. Vista para a Baía, VLT na porta. Simule agora.',
     heroImage: `${BASE}/2025/09/farol-da-guanabara-porto-maravilha-4-1240x720.png`,
     gallery: [
@@ -187,7 +187,7 @@ const empreendimentos = [
       'Boulevard de lojas 3.000 m²', 'VLT na porta', 'Unidades garden', 'Segurança 24h',
     ],
     nearby: ['VLT na porta', 'Rodoviária Novo Rio', 'Cidade do Samba', 'Sambódromo', 'Metrô Cidade Nova', 'Museu do Amanhã'],
-    seoTitle: 'Residencial Pixinguinha | Apartamentos no Porto Maravilha – Portal Cury',
+    seoTitle: 'Residencial Pixinguinha | Apartamentos no Porto Maravilha – Cury Meu Apê',
     seoDesc: 'Residencial Pixinguinha: studios a 3 quartos de 30 a 65 m² no Porto Maravilha. A partir de R$ 299.900. Isenção IPTU, VLT na porta. Simule agora.',
     heroImage: `${BASE}/2025/04/residencial_pixinguinha_cury_porto_maravilha-3-1-1240x720.png`,
     gallery: [
@@ -220,7 +220,7 @@ const empreendimentos = [
       'Condomínio fechado', 'Segurança 24h',
     ],
     nearby: ['BRT Piscinão de Ramos', 'Shopping Nova América', 'Hospital Geral de Bonsucesso', 'Av. Brasil', 'Supermercado Guanabara', 'Polo Gastronômico'],
-    seoTitle: 'Residencial Nova Olaria | Apartamentos em Olaria – Portal Cury',
+    seoTitle: 'Residencial Nova Olaria | Apartamentos em Olaria – Cury Meu Apê',
     seoDesc: 'Residencial Nova Olaria: 2 quartos de 38 a 41 m² em Olaria, Rio de Janeiro. A partir de R$ 248.000, entrega mai/2028. Perto do BRT e Shopping Nova América. Simule agora.',
     heroImage: 'https://curyrj.com.br/wp-content/uploads/2024/12/nova-_olaria-_cury-1-1240x720.png',
     gallery: [
@@ -254,7 +254,7 @@ const empreendimentos = [
       'Playground', 'Sala zen', 'Brinquedoteca', 'Lavanderia', 'Segurança 24h',
     ],
     nearby: ['Shopping Metropolitano', 'Parque Olímpico', 'Parque Imagine', 'Praia da Barra', 'Hospital Barra D\'Or', 'Hospital Perinatal'],
-    seoTitle: 'Metropolitan Dream | Apartamentos na Barra Olímpica – Portal Cury',
+    seoTitle: 'Metropolitan Dream | Apartamentos na Barra Olímpica – Cury Meu Apê',
     seoDesc: 'Metropolitan Dream: studios a 3 quartos de 30 a 65 m² na Barra Olímpica. A partir de R$ 289.000. Rooftop, lazer completo, ao lado do Parque Olímpico. Simule agora.',
     heroImage: 'https://curyrj.com.br/wp-content/uploads/2024/09/Metropolitan_Fachada_Drone_Final_2k_drpx86-1240x720.jpg',
     gallery: [
@@ -288,8 +288,8 @@ const empreendimentos = [
       'Placas solares', 'Reuso de água', 'Portaria dupla', 'Segurança 24h',
     ],
     nearby: ['Recreio Shopping', 'Praia do Recreio', 'Praia do Pontal', 'Linha Amarela', 'Avenida das Américas'],
-    seoTitle: 'Américas 19 Recreio | Apartamentos no Recreio – Portal Cury',
-    seoDesc: 'Américas 19 Recreio: 2 e 3 quartos de 54 a 137 m² no Recreio dos Bandeirantes. Em frente ao Recreio Shopping. Entrega mar/2027. Simule agora com o Portal Cury.',
+    seoTitle: 'Américas 19 Recreio | Apartamentos no Recreio – Cury Meu Apê',
+    seoDesc: 'Américas 19 Recreio: 2 e 3 quartos de 54 a 137 m² no Recreio dos Bandeirantes. Em frente ao Recreio Shopping. Entrega mar/2027. Simule agora com o Cury Meu Apê.',
     heroImage: 'https://curyrj.com.br/wp-content/uploads/2024/01/Apartamento-no-Recreio-Americas-19-8-1240x720.png',
     gallery: [
       'https://curyrj.com.br/wp-content/uploads/2024/01/Apartamento-no-Recreio-Americas-19-1-1240x720.png',
@@ -319,7 +319,7 @@ const empreendimentos = [
       'Bicicletário', 'Lavanderia', 'Opções garden', 'Segurança 24h',
     ],
     nearby: ['3 min do BRT', 'Park Shopping Jacarepaguá', 'Bosque da Freguesia', 'Linha Amarela', 'Av. Ayrton Senna', 'Supermercado Prezunic'],
-    seoTitle: 'My Jacarepaguá | Apartamentos em Taquara – Portal Cury',
+    seoTitle: 'My Jacarepaguá | Apartamentos em Taquara – Cury Meu Apê',
     seoDesc: 'My Jacarepaguá: 1 e 2 quartos de 41 m² em Taquara, Rio de Janeiro. A partir de R$ 199.000. A 3 min do BRT, perto do Park Shopping. FGTS e Caixa. Simule agora.',
     heroImage: 'https://curyrj.com.br/wp-content/uploads/2022/10/WhatsApp-Image-2022-09-05-at-09.32.16.jpeg',
     gallery: [
@@ -350,7 +350,7 @@ const empreendimentos = [
       'Espaço mulher', 'Bicicletário (500 vagas)', 'Portaria 24h', 'Lazer entregue mobiliado',
     ],
     nearby: ['ParkShopping Campo Grande', 'Hospital Oeste D\'Or', 'Estrada da Cachamorra', 'Transporte público na porta'],
-    seoTitle: 'Completo Parque Brito III | Apartamentos em Campo Grande – Portal Cury',
+    seoTitle: 'Completo Parque Brito III | Apartamentos em Campo Grande – Cury Meu Apê',
     seoDesc: 'Completo Parque Brito III: 2 quartos de 37 m² em Campo Grande. A partir de R$ 203.900, entrega jan/2028. Perto do ParkShopping. MCMV disponível. Simule agora.',
     heroImage: 'https://api.apto.vc/images/realties/7519/completo-parque-brito-iii-condominio-1.webp',
     gallery: [
@@ -375,8 +375,8 @@ const empreendimentos = [
     badgeClass: 'badge--em-breve',
     tagline: 'Uma nova história de morar bem em Niterói',
     description: 'A Cury chega a Niterói com um lançamento exclusivo para quem busca qualidade de vida, segurança e excelente infraestrutura. Vista para a Baía de Guanabara, fácil acesso ao Rio de Janeiro e tudo que a melhor cidade do estado tem a oferecer. Cadastre-se agora e seja o primeiro a receber todas as informações.',
-    seoTitle: 'Orla Central | Em Breve – Portal Cury',
-    seoDesc: 'Orla Central: novo lançamento Cury em Niterói. Cadastre-se e antecipe seu lançamento com condições exclusivas de pré-lançamento. Em breve no Portal Cury.',
+    seoTitle: 'Orla Central | Em Breve – Cury Meu Apê',
+    seoDesc: 'Orla Central: novo lançamento Cury em Niterói. Cadastre-se e antecipe seu lançamento com condições exclusivas de pré-lançamento. Em breve no Cury Meu Apê.',
     heroImage: '',
     heroGradient: 'linear-gradient(135deg, #00447d 0%, #006bad 50%, #ea723d 100%)',
     benefits: [
@@ -401,8 +401,8 @@ const empreendimentos = [
     badgeClass: 'badge--em-breve',
     tagline: 'Conectado a tudo que importa na Zona Norte',
     description: 'A Cury expande sua presença na Zona Norte do Rio com um novo lançamento em Piedade. Localização estratégica com acesso facilitado ao metrô, BRT, Avenida Brasil e Via Dutra. Morar bem, perto de tudo, com as condições especiais Cury. Cadastre-se e antecipe o lançamento.',
-    seoTitle: 'Parque Piedade | Em Breve – Portal Cury',
-    seoDesc: 'Parque Piedade: novo lançamento Cury em Piedade, Zona Norte do Rio de Janeiro. Pré-cadastro com condições exclusivas de financiamento. Em breve no Portal Cury.',
+    seoTitle: 'Parque Piedade | Em Breve – Cury Meu Apê',
+    seoDesc: 'Parque Piedade: novo lançamento Cury em Piedade, Zona Norte do Rio de Janeiro. Pré-cadastro com condições exclusivas de financiamento. Em breve no Cury Meu Apê.',
     heroImage: '',
     heroGradient: 'linear-gradient(135deg, #00447d 0%, #1a5c94 50%, #ea723d 100%)',
     benefits: [
