@@ -633,7 +633,7 @@ function fireNotifications(lead, cfg) {
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
 app.post('/webhook/wa-incoming', express.json(), (req, res) => {
-  // res.sendStatus(200); // Removido daqui para evitar conflito de header
+  res.sendStatus(200); // Responde imediatamente
 
   try {
     const body = req.body;
@@ -644,7 +644,7 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
     const looksLikeMessage = body?.data?.key || body?.message?.key || body?.key;
     
     if (!event.toLowerCase().includes('message') && !looksLikeMessage) {
-      wa_debug_logs.unshift(`[${new Date().toISOString()}] Ignorado: evento irrelevante (${event})`);
+      wa_debug_logs.unshift(`[${new Date().toISOString()}] Ignorado: não parece mensagem (event=${event})`);
       return;
     }
 
@@ -652,8 +652,10 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
     const jid  = msg?.key?.remoteJid || msg?.remoteJid || '';
     const fromMe = msg?.key?.fromMe || false;
 
-    // Ignora grupos e mensagens enviadas por nós via outro canal
-    if (!jid || jid.includes('@g.us')) return;
+    if (!jid || jid.includes('@g.us')) {
+      wa_debug_logs.unshift(`[${new Date().toISOString()}] Ignorado: JID inválido ou grupo (${jid})`);
+      return;
+    }
 
     const text = msg?.message?.conversation
       || msg?.message?.extendedTextMessage?.text
@@ -663,11 +665,14 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
     const pushName = msg?.pushName || msg?.key?.participant || '';
     const messageId = msg?.key?.id || '';
 
+    wa_debug_logs.unshift(`[${new Date().toISOString()}] Processando JID=${jid} pushName=${pushName}`);
+
     const conv = upsertConversation(jid, pushName);
     const direction = fromMe ? 'out' : 'in';
     const saved = saveMessage(conv.id, direction, text, messageId);
 
-    // Push para o CRM via SSE
+    wa_debug_logs.unshift(`[${new Date().toISOString()}] ✅ Salvo! Conv=${conv.id}`);
+
     sseBroadcast('new_message', {
       conversation_id: conv.id,
       direction,
@@ -679,9 +684,8 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
       lead_id: conv.lead_id,
       assigned_to: conv.assigned_to,
     });
-
-    res.json({ ok: true });
   } catch (err) {
+    wa_debug_logs.unshift(`[${new Date().toISOString()}] ❌ ERRO: ${err.message}`);
     console.error('[WA-Webhook] Erro processando mensagem:', err);
   }
 });
