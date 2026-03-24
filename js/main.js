@@ -410,4 +410,29 @@
     }
   });
 
+  /* ---- Lazy Background Images (Intersection Observer) ---- */
+  if ('IntersectionObserver' in window) {
+    const lazyBgObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const bg = el.dataset.bg;
+          if (bg) {
+            el.style.backgroundImage = `url('${bg}')`;
+            el.removeAttribute('data-bg');
+          }
+          lazyBgObserver.unobserve(el);
+        }
+      });
+    }, { rootMargin: '200px 0px' }); // começa a carregar 200px antes de entrar na tela
+
+    document.querySelectorAll('.lazy-bg').forEach(el => lazyBgObserver.observe(el));
+  } else {
+    // Fallback para browsers sem suporte a IntersectionObserver
+    document.querySelectorAll('.lazy-bg').forEach(el => {
+      const bg = el.dataset.bg;
+      if (bg) el.style.backgroundImage = `url('${bg}')`;
+    });
+  }
+
 })();
