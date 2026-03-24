@@ -1,3 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO Primary Tags -->
+  <title>Cury Meu Apê | Apartamentos e Imóveis no Rio de Janeiro e Niterói</title>
+  <meta name="description" content="Encontre seu apartamento ideal com o Cury Meu Apê. Empreendimentos em São Cristóvão, Irajá, Niterói e Porto com condições especiais. Simule agora e realize seu sonho." />
+  <meta name="keywords" content="apartamentos rio de janeiro, imóveis são cristóvão, apartamentos niterói, cury construtora, luzes do rio, residencial cartola, caminhos da guanabara, farol da guanabara" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.portalcury.com.br/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.portalcury.com.br/" />
+  <meta property="og:title" content="Cury Meu Apê | Apartamentos no Rio de Janeiro e Niterói" />
+  <meta property="og:description" content="Encontre seu apartamento ideal. Empreendimentos em São Cristóvão, Irajá, Niterói e Porto com condições especiais de financiamento." />
+  <meta property="og:image" content="https://www.portalcury.com.br/images/og-image.jpg" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cury Meu Apê | Apartamentos no Rio de Janeiro e Niterói" />
+  <meta name="twitter:description" content="Encontre seu apartamento ideal com condições especiais. Simule agora!" />
+
+  <% if (tracking.meta_pixel_id) { %>
+  <!-- Meta Pixel Code -->
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '<%= tracking.meta_pixel_id %>');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=<%= tracking.meta_pixel_id %>&ev=PageView&noscript=1"/></noscript>
+  <!-- End Meta Pixel Code -->
+  <% } %>
+
+  <!-- Google Ads / Conversion -->
+  <meta name="google-site-verification" content="ADICIONE_SEU_CODIGO_AQUI" />
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "name": "Cury Meu Apê",
+    "url": "https://www.portalcury.com.br",
+    "logo": "https://www.portalcury.com.br/images/logo-cury.png",
+    "description": "Cury Meu Apê oferece empreendimentos residenciais de qualidade no Rio de Janeiro e Niterói com condições especiais de financiamento.",
+    "telephone": "+55-21-99999-9999",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Rio de Janeiro",
+      "addressRegion": "RJ",
+      "addressCountry": "BR"
+    },
+    "areaServed": ["São Cristóvão", "Irajá", "Niterói", "Porto"],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Empreendimentos Cury",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "name": "Luzes do Rio",
+          "description": "Apartamentos em São Cristóvão, Rio de Janeiro",
+          "areaServed": "São Cristóvão, Rio de Janeiro"
+        },
+        {
+          "@type": "Offer",
+          "name": "Residencial Cartola",
+          "description": "Apartamentos em São Cristóvão, Rio de Janeiro",
+          "areaServed": "São Cristóvão, Rio de Janeiro"
+        },
+        {
+          "@type": "Offer",
+          "name": "Residencial Nova Norte Raízes",
+          "description": "Apartamentos em Irajá, Rio de Janeiro",
+          "areaServed": "Irajá, Rio de Janeiro"
+        },
+        {
+          "@type": "Offer",
+          "name": "Caminhos da Guanabara",
+          "description": "Apartamentos em Niterói, Rio de Janeiro",
+          "areaServed": "Niterói, Rio de Janeiro"
+        },
+        {
+          "@type": "Offer",
+          "name": "Farol da Guanabara",
+          "description": "Apartamentos em Porto, Rio de Janeiro",
+          "areaServed": "Porto, Rio de Janeiro"
+        },
+        {
+          "@type": "Offer",
+          "name": "Residencial Pixinguinha",
+          "description": "Apartamentos em Porto, Rio de Janeiro",
+          "areaServed": "Porto, Rio de Janeiro"
+        }
+      ]
+    }
+  }
+  </script>
+
+  <!-- Preconnect + preload fonts (non-render-blocking) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap" /></noscript>
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Header Sticky -->
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#" class="header__logo" aria-label="Cury Meu Apê - Página Inicial">
+        <img src="/images/logo-cury.png" class="logo__img" alt="Cury Meu Apê" height="36" width="111" fetchpriority="high" decoding="async">
+      </a>
+      <nav class="header__nav" aria-label="Navegação principal">
+        <a href="#empreendimentos">Empreendimentos</a>
+        <a href="#vantagens">Vantagens</a>
+        <a href="#contato">Contato</a>
+        <a href="https://wa.me/5521999999999?text=Olá!%20Gostaria%20de%20agendar%20uma%20visita%20a%20um%20empreendimento%20Cury." class="btn btn--header btn--nav-visita" aria-label="Agende sua visita">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Agende sua Visita
+        </a>
+        <a href="https://wa.me/5521999999999?text=Olá!%20Quero%20fazer%20uma%20simulação%20de%20financiamento%20Cury." class="btn btn--header btn--nav-simul" aria-label="Faça sua simulação">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+          Faça sua Simulação
+        </a>
+      </nav>
+      <button class="header__menu-btn" id="menuBtn" aria-label="Abrir menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" aria-label="Seção principal">
+    <div class="hero__bg">
+      <div class="hero__bg-parallax">
+        <div class="hero__bg-img"></div>
+      </div>
+    </div>
+    <div class="container hero__content">
+      <div class="hero__text">
+        <span class="hero__badge">Condições Especiais de Financiamento</span>
+        <h1 class="hero__title">Seu <span class="highlight">Apartamento Próprio</span> no Rio de Janeiro e Niterói</h1>
+        <p class="hero__subtitle">Empreendimentos de qualidade em localização privilegiada. Parcelas que cabem no seu bolso com as melhores condições do mercado.</p>
+        <ul class="hero__features">
+          <li>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Entrada facilitada
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Financiamento até 90% Caixa
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Use seu FGTS
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Financiamento em até 360x
+          </li>
+        </ul>
+        <a href="#contato" class="btn btn--primary btn--lg">Quero Saber Mais <span class="btn__arrow">→</span></a>
+      </div>
+      <div class="hero__form-wrap">
+        <div class="hero__form-card">
+          <p class="form-card__eyebrow">Simulação Gratuita</p>
+          <h2 class="form-card__title">Fale com um Especialista</h2>
+          <p class="form-card__subtitle">Preencha e receba contato em até 5 minutos</p>
+          <form class="lead-form" id="heroForm" novalidate>
+            <div class="form-group">
+              <label for="hero-name">Seu nome completo *</label>
+              <input type="text" id="hero-name" name="name" placeholder="Digite seu nome" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="hero-phone">WhatsApp / Telefone *</label>
+              <input type="tel" id="hero-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" />
+            </div>
+            <div class="form-group">
+              <label for="hero-interest">Empreendimento de interesse</label>
+              <select id="hero-interest" name="interest">
+                <option value="">Selecione um empreendimento</option>
+                <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
+                <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
+                <option value="nova-norte-raizes">Res. Nova Norte Raízes – Irajá</option>
+                <option value="nova-olaria">Nova Olaria – Olaria</option>
+                <option value="caminhos-guanabara">Caminhos da Guanabara – Niterói</option>
+                <option value="farol-guanabara">Farol da Guanabara – Porto</option>
+                <option value="residencial-pixinguinha">Res. Pixinguinha – Porto</option>
+                <option value="metropolitan-dream">Metropolitan Dream – Barra Olímpica</option>
+                <option value="americas-19-recreio">Américas 19 – Recreio</option>
+                <option value="my-jacarepagua-taquara">My Jacarepaguá – Taquara</option>
+                <option value="parque-brito-iii">Parque Brito III – Campo Grande</option>
+                <option value="cury-niteroi">🔔 Orla Central – Em Breve</option>
+                <option value="cury-piedade">🔔 Parque Piedade – Em Breve</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Região de interesse</label>
+              <div class="form-pills">
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="São Cristóvão" id="hero-r-sc"><label for="hero-r-sc">São Cristóvão</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Olaria" id="hero-r-ol"><label for="hero-r-ol">Olaria</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Irajá" id="hero-r-ir"><label for="hero-r-ir">Irajá</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Niterói" id="hero-r-ni"><label for="hero-r-ni">Niterói</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Porto Maravilha" id="hero-r-po"><label for="hero-r-po">Porto</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Piedade" id="hero-r-pi"><label for="hero-r-pi">Piedade</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Barra Olímpica" id="hero-r-ba"><label for="hero-r-ba">Barra</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Recreio" id="hero-r-re"><label for="hero-r-re">Recreio</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Taquara" id="hero-r-ta"><label for="hero-r-ta">Taquara</label></span>
+                <span class="form-pills__item"><input type="checkbox" name="regions" value="Campo Grande" id="hero-r-cg"><label for="hero-r-cg">Campo Grande</label></span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="hero-fgts">FGTS ou entrada?</label>
+                <select id="hero-fgts" name="fgts">
+                  <option value="">Selecione</option>
+                  <option value="FGTS disponível">FGTS disponível</option>
+                  <option value="Tenho entrada">Tenho entrada</option>
+                  <option value="FGTS + entrada">FGTS + entrada</option>
+                  <option value="Ainda não tenho">Ainda não tenho</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="hero-renda">Renda familiar mensal</label>
+                <select id="hero-renda" name="renda">
+                  <option value="">Selecione</option>
+                  <option value="R$ 3.000 a R$ 5.000">R$ 3.000 a R$ 5.000</option>
+                  <option value="R$ 5.001 a R$ 8.000">R$ 5.001 a R$ 8.000</option>
+                  <option value="R$ 8.001 a R$ 12.000">R$ 8.001 a R$ 12.000</option>
+                  <option value="R$ 12.001 a R$ 20.000">R$ 12.001 a R$ 20.000</option>
+                  <option value="R$ 20.001 a R$ 30.000">R$ 20.001 a R$ 30.000</option>
+                  <option value="Acima de R$ 30.000">Acima de R$ 30.000</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="hero-fgts-valor">Valor estimado (FGTS + entrada)</label>
+              <input type="text" id="hero-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
+            </div>
+            <button type="submit" class="btn btn--primary btn--full">
+              Quero Minha Simulação Grátis
+            </button>
+            <p class="form-card__privacy">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              Seus dados estão protegidos. Não fazemos spam.
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="hero__wave">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#ffffff"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <section class="stats" aria-label="Números do Cury Meu Apê">
+    <div class="container stats__grid">
+      <div class="stat-item">
+        <span class="stat-item__number">+30</span>
+        <span class="stat-item__label">Anos de experiência</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-item__number">+60mil</span>
+        <span class="stat-item__label">Famílias atendidas</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-item__number">8</span>
+        <span class="stat-item__label">Empreendimentos</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-item__number">R$55mil</span>
+        <span class="stat-item__label">Subsídio do governo</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Empreendimentos Section -->
+  <section class="empreendimentos" id="empreendimentos" aria-label="Nossos empreendimentos">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-header__eyebrow">Onde Você Quer Morar?</span>
+        <h2 class="section-header__title">Nossos Empreendimentos</h2>
+        <p class="section-header__subtitle">Escolha o empreendimento ideal para você e sua família em localização estratégica no Rio de Janeiro e Niterói</p>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs" role="tablist" aria-label="Filtrar por bairro">
+        <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true">Todos</button>
+        <button class="filter-tab" data-filter="sao-cristovao" role="tab" aria-selected="false">São Cristóvão</button>
+        <button class="filter-tab" data-filter="olaria" role="tab" aria-selected="false">Olaria</button>
+        <button class="filter-tab" data-filter="iraja" role="tab" aria-selected="false">Irajá</button>
+        <button class="filter-tab" data-filter="niteroi" role="tab" aria-selected="false">Niterói</button>
+        <button class="filter-tab" data-filter="porto" role="tab" aria-selected="false">Porto</button>
+        <button class="filter-tab" data-filter="piedade" role="tab" aria-selected="false">Piedade</button>
+        <button class="filter-tab" data-filter="barra" role="tab" aria-selected="false">Barra</button>
+        <button class="filter-tab" data-filter="recreio" role="tab" aria-selected="false">Recreio</button>
+        <button class="filter-tab" data-filter="taquara" role="tab" aria-selected="false">Taquara</button>
+        <button class="filter-tab" data-filter="campo-grande" role="tab" aria-selected="false">Campo Grande</button>
+      </div>
+
+      <div class="cards-grid" id="cardsGrid">
+
+        <!-- Card 1: Luzes do Rio -->
+        <article class="emp-card" data-bairro="sao-cristovao" aria-label="Luzes do Rio">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2025/12/lancamento_cury_luzes_do_rio_residencial_porto_maravilha-5-1240x720.jpeg"></div>
+            <span class="emp-card__tag">São Cristóvão · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Luzes do Rio</h3>
+            <p class="emp-card__desc">1 e 2 quartos de 32 a 38 m². E-bike elétrica inclusa, lazer completo e mobilidade urbana integrada a 8,8 km de ciclovias. Entrega dez/2029.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>São Cristóvão, Rio de Janeiro</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>Próximo ao metrô</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>E-bike elétrica inclusa</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">Consulte valores</span></div>
+              <a href="/empreendimentos/luzes-do-rio" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 2: Residencial Cartola -->
+        <article class="emp-card" data-bairro="sao-cristovao" aria-label="Residencial Cartola">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2025/07/residencial_cartola_cury_sao_cristovao-2-680x510.png"></div>
+            <span class="emp-card__tag">São Cristóvão · RJ</span>
+            <span class="emp-card__badge">Destaque</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Residencial Cartola</h3>
+            <p class="emp-card__desc">1 e 2 quartos com lazer completo no coração de São Cristóvão. A 400m do metrô, ao lado da Quinta da Boa Vista. Ato a partir de R$ 400.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>São Cristóvão, Rio de Janeiro</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>400m do metrô</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Subsídio disponível</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">Consulte valores</span></div>
+              <a href="/empreendimentos/residencial-cartola" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 3: Nova Norte Raízes -->
+        <article class="emp-card" data-bairro="iraja" aria-label="Residencial Nova Norte Raízes">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://bmlancamentos.com.br/images/empreendimentos/279/1.webp"></div>
+            <span class="emp-card__tag">Irajá · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Res. Nova Norte Raízes</h3>
+            <p class="emp-card__desc">2 e 3 quartos de 35 a 130 m² na Zona Norte do Rio. Plantas com varanda, suíte e garden. Perto da Via Dutra e Av. Brasil.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Irajá, Zona Norte do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>BRT e ônibus na porta</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Use seu FGTS</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">Consulte valores</span></div>
+              <a href="/empreendimentos/nova-norte-raizes" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 4: Caminhos da Guanabara -->
+        <article class="emp-card" data-bairro="niteroi" aria-label="Caminhos da Guanabara">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2025/01/lancamento_cury_caminhos_da_guanabara_niteroi-21-680x510.png"></div>
+            <span class="emp-card__tag">Niterói · RJ</span>
+            <span class="emp-card__badge">Destaque</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Caminhos da Guanabara</h3>
+            <p class="emp-card__desc">1, 2 e 3 quartos com vista para a Baía de Guanabara. Ao lado do Caminho Niemeyer, no coração de Niterói. Lazer completo e infraestrutura premium.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Niterói, Rio de Janeiro</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Vista para a Baía</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Caminho Niemeyer</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">Consulte valores</span></div>
+              <a href="/empreendimentos/caminhos-da-guanabara" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 5: Farol da Guanabara -->
+        <article class="emp-card" data-bairro="porto" aria-label="Farol da Guanabara">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2025/09/farol-da-guanabara-porto-maravilha-4-680x510.png"></div>
+            <span class="emp-card__tag">Porto · RJ</span>
+            <span class="emp-card__badge">Destaque</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Farol da Guanabara</h3>
+            <p class="emp-card__desc">Studios a 3 quartos no Porto Maravilha com rooftop, piscina e vista protegida para a Baía. VLT na porta. Isenção de IPTU.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Porto Maravilha, RJ</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>VLT na porta</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Isenção de IPTU</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">Consulte valores</span></div>
+              <a href="/empreendimentos/farol-da-guanabara" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 6: Residencial Pixinguinha -->
+        <article class="emp-card" data-bairro="porto" aria-label="Residencial Pixinguinha">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2025/04/residencial_pixinguinha_cury_porto_maravilha-3-1-1240x720.png"></div>
+            <span class="emp-card__tag">Porto · RJ</span>
+            <span class="emp-card__badge">Mega Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Residencial Pixinguinha</h3>
+            <p class="emp-card__desc">Studios a 3 quartos de 30 a 65 m². O maior lançamento do Porto Maravilha: VGV R$ 1 bi, 2.500+ unidades e o maior boulevard de lojas da região.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Porto Maravilha, RJ</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Financiamento até 90% Caixa</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>2.500+ unidades</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">Consulte valores</span></div>
+              <a href="/empreendimentos/residencial-pixinguinha" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 7: Nova Olaria -->
+        <article class="emp-card" data-bairro="olaria" aria-label="Residencial Nova Olaria">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2024/12/nova-_olaria-_cury-1-1240x720.png"></div>
+            <span class="emp-card__tag">Olaria · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Residencial Nova Olaria</h3>
+            <p class="emp-card__desc">2 quartos de 38 a 41 m² com varanda. Perto do BRT Piscinão de Ramos e Shopping Nova América. Entrega mai/2028.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Olaria, Zona Norte do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>BRT Piscinão de Ramos</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Use seu FGTS</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 248.000</span></div>
+              <a href="/empreendimentos/nova-olaria" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 8: Metropolitan Dream – Barra -->
+        <article class="emp-card" data-bairro="barra" aria-label="Metropolitan Dream">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2024/09/Metropolitan_Fachada_Drone_Final_2k_drpx86-1240x720.jpg"></div>
+            <span class="emp-card__tag">Barra Olímpica · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Metropolitan Dream</h3>
+            <p class="emp-card__desc">Studios a 3 quartos de 30 a 65 m² na Barra Olímpica. Rooftop, +20 opções de lazer. Próximo ao Parque Olímpico e Parque Imagine.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Barra Olímpica, Rio de Janeiro</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>806 unidades, 5 torres</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Rooftop e lazer completo</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 289.000</span></div>
+              <a href="/empreendimentos/metropolitan-dream" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 9: Américas 19 – Recreio -->
+        <article class="emp-card" data-bairro="recreio" aria-label="Américas 19 Recreio">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2024/01/Apartamento-no-Recreio-Americas-19-8-1240x720.png"></div>
+            <span class="emp-card__tag">Recreio · RJ</span>
+            <span class="emp-card__badge">Destaque</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Américas 19 Recreio</h3>
+            <p class="emp-card__desc">2 e 3 quartos de 54 a 137 m² em frente ao Recreio Shopping. Garden e cobertura duplex. A minutos da praia. Entrega mar/2027.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Recreio dos Bandeirantes, RJ</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>Em frente ao Recreio Shopping</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Placas solares e reuso de água</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from"></span><span class="price-value">Consulte o corretor</span></div>
+              <a href="/empreendimentos/americas-19-recreio" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 10: My Jacarepaguá – Taquara -->
+        <article class="emp-card" data-bairro="taquara" aria-label="My Jacarepaguá">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2022/10/WhatsApp-Image-2022-09-05-at-09.32.16.jpeg"></div>
+            <span class="emp-card__tag">Taquara · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">My Jacarepaguá</h3>
+            <p class="emp-card__desc">1 e 2 quartos de 41 m² com opção garden em Taquara. A 3 minutos do BRT, ao lado do Prezunic. Maior polo econômico de Jacarepaguá.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Taquara, Zona Oeste do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>3 min do BRT</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Financiamento até 100% Caixa</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 199.000</span></div>
+              <a href="/empreendimentos/my-jacarepagua-taquara" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 11: Completo Parque Brito III – Campo Grande -->
+        <article class="emp-card" data-bairro="campo-grande" aria-label="Completo Parque Brito III">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="https://api.apto.vc/images/realties/7519/completo-parque-brito-iii-condominio-1.webp"></div>
+            <span class="emp-card__tag">Campo Grande · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Completo Parque Brito III</h3>
+            <p class="emp-card__desc">2 quartos de 37 a 40 m² em Campo Grande. 500 unidades, lazer completo entregue mobiliado. Perto do ParkShopping. Entrega jan/2028.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Campo Grande, Zona Oeste do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>Perto do ParkShopping</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Minha Casa Minha Vida</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">R$ 203.900</span></div>
+              <a href="/empreendimentos/parque-brito-iii" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 12: Orla Central – Em Breve -->
+        <article class="emp-card emp-card--em-breve" data-bairro="niteroi" aria-label="Orla Central – Em Breve">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img emp-card__img--gradient" style="background: linear-gradient(135deg, #00447d 0%, #006bad 60%, #ea723d 100%);"></div>
+            <span class="emp-card__tag">Niterói · RJ</span>
+            <span class="emp-card__badge emp-card__badge--em-breve">Em Breve</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Orla Central</h3>
+            <p class="emp-card__desc">Novo lançamento Cury em Niterói. Qualidade de vida, fácil acesso ao Rio, praias próximas e a melhor infraestrutura do estado. Faça seu pré-cadastro!</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Niterói, Rio de Janeiro</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lançamento em breve</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Condições exclusivas</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">Antecipe o</span><span class="price-value" style="font-size:.9rem;">Lançamento</span></div>
+              <a href="/empreendimentos/cury-niteroi" class="btn btn--primary btn--sm">Me Cadastrar</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 8: Parque Piedade – Em Breve -->
+        <article class="emp-card emp-card--em-breve" data-bairro="piedade" aria-label="Parque Piedade – Em Breve">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img emp-card__img--gradient" style="background: linear-gradient(135deg, #00447d 0%, #1a5c94 60%, #ea723d 100%);"></div>
+            <span class="emp-card__tag">Piedade · RJ</span>
+            <span class="emp-card__badge emp-card__badge--em-breve">Em Breve</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Parque Piedade</h3>
+            <p class="emp-card__desc">Novo lançamento Cury na Zona Norte do Rio. Localização estratégica com metrô, BRT e grandes vias. As melhores condições de financiamento. Pré-cadastre-se!</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Piedade, Zona Norte – RJ</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lançamento em breve</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Use seu FGTS</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">Antecipe o</span><span class="price-value" style="font-size:.9rem;">Lançamento</span></div>
+              <a href="/empreendimentos/cury-piedade" class="btn btn--primary btn--sm">Me Cadastrar</a>
+            </div>
+          </div>
+        </article>
+
+      </div><!-- /cards-grid -->
+    </div>
+  </section>
+
+  <!-- Vantagens Section -->
+  <section class="vantagens" id="vantagens" aria-label="Por que escolher a Cury">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-header__eyebrow">Por Que Escolher a Cury?</span>
+        <h2 class="section-header__title">Vantagens Exclusivas</h2>
+        <p class="section-header__subtitle">Mais de 30 anos entregando empreendimentos de alto padrão no Rio de Janeiro</p>
+      </div>
+      <div class="vantagens__grid">
+        <div class="vantagem-item">
+          <div class="vantagem-item__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3>Financiamento até 90%</h3>
+          <p>Condições exclusivas de financiamento pela Caixa Econômica Federal. Utilize seu FGTS na entrada e maximize seu poder de compra.</p>
+        </div>
+        <div class="vantagem-item">
+          <div class="vantagem-item__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Alta Valorização</h3>
+          <p>Empreendimentos em regiões com forte potencial de valorização — São Cristóvão, Niterói e Porto Maravilha estão entre as zonas de maior crescimento imobiliário do Rio.</p>
+        </div>
+        <div class="vantagem-item">
+          <div class="vantagem-item__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3>Rentabilidade de Aluguel</h3>
+          <p>Imóveis em regiões com alta demanda por locação. Invista com segurança e tenha retorno garantido com o aquecido mercado de aluguéis no Rio de Janeiro.</p>
+        </div>
+        <div class="vantagem-item">
+          <div class="vantagem-item__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <h3>Atendimento Consultivo</h3>
+          <p>Especialistas dedicados ao seu perfil de compra ou investimento. Do primeiro contato à entrega das chaves, com total transparência e agilidade.</p>
+        </div>
+        <div class="vantagem-item">
+          <div class="vantagem-item__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>+30 Anos de Tradição</h3>
+          <p>A Cury é uma das maiores construtoras do Brasil. Mais de 60 mil unidades entregues com padrão construtivo reconhecido pelo mercado.</p>
+        </div>
+        <div class="vantagem-item">
+          <div class="vantagem-item__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3>Qualidade Garantida</h3>
+          <p>Empreendimentos construídos com os mais altos padrões de qualidade e acabamento. Garantia estrutural e suporte completo pós-entrega.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Como Funciona Section -->
+  <section class="como-funciona" aria-label="Como funciona o processo">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-header__eyebrow">É mais fácil do que você imagina</span>
+        <h2 class="section-header__title">Como Funciona?</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-item">
+          <div class="step-item__number">01</div>
+          <h3>Fale com um Especialista</h3>
+          <p>Preencha o formulário ou ligue para nós. Nossa equipe entrará em contato em até 5 minutos.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-item__number">02</div>
+          <h3>Faça sua Simulação</h3>
+          <p>Verificamos as melhores condições de financiamento e as opções disponíveis para o seu perfil.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-item__number">03</div>
+          <h3>Escolha seu Apartamento</h3>
+          <p>Visite o empreendimento, conheça as plantas e escolha a unidade perfeita para sua família.</p>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-item__number">04</div>
+          <h3>Receba as Chaves!</h3>
+          <p>Assinatura do contrato e acompanhamento até a entrega. Bem-vindo ao seu novo lar!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section class="cta-banner" aria-label="Chamada para ação">
+    <div class="container">
+      <div class="cta-banner__content">
+        <h2>Unidades com alta demanda — garanta a sua!</h2>
+        <p>Empreendimentos em regiões de forte valorização. Fale agora com um especialista e reserve sua unidade.</p>
+      </div>
+      <div class="cta-banner__actions">
+        <a href="https://wa.me/5521999999999?text=Olá!%20Quero%20saber%20mais%20sobre%20os%20empreendimentos%20Cury" class="btn btn--whatsapp btn--lg" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Falar no WhatsApp
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contato / Lead Form Section -->
+  <section class="contato" id="contato" aria-label="Formulário de contato">
+    <div class="container contato__inner">
+      <div class="contato__info">
+        <span class="section-header__eyebrow">Entre em Contato</span>
+        <h2>Fale com Nosso Time de Especialistas</h2>
+        <p>Estamos prontos para tirar todas as suas dúvidas e encontrar o melhor empreendimento para você e sua família.</p>
+        <div class="contato__channels">
+          <a href="https://wa.me/5521999999999" class="channel-item" target="_blank" rel="noopener">
+            <div class="channel-item__icon channel-item__icon--wa">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </div>
+            <div>
+              <strong>WhatsApp</strong>
+              <span>Resposta imediata</span>
+            </div>
+          </a>
+          <div class="channel-item">
+            <div class="channel-item__icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <strong>Horário de Atendimento</strong>
+              <span>Seg a Sáb: 8h às 18h</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="contato__form-wrap">
+        <form class="lead-form lead-form--contato" id="contatoForm" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ct-name">Nome completo *</label>
+              <input type="text" id="ct-name" name="name" placeholder="Seu nome" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="ct-phone">WhatsApp / Telefone *</label>
+              <input type="tel" id="ct-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ct-email">E-mail</label>
+              <input type="email" id="ct-email" name="email" placeholder="seu@email.com" autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="ct-interest">Empreendimento de interesse</label>
+              <select id="ct-interest" name="interest">
+                <option value="">Selecione</option>
+                <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
+                <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
+                <option value="nova-norte-raizes">Res. Nova Norte Raízes – Irajá</option>
+                <option value="nova-olaria">Nova Olaria – Olaria</option>
+                <option value="caminhos-guanabara">Caminhos da Guanabara – Niterói</option>
+                <option value="farol-guanabara">Farol da Guanabara – Porto</option>
+                <option value="residencial-pixinguinha">Res. Pixinguinha – Porto</option>
+                <option value="metropolitan-dream">Metropolitan Dream – Barra Olímpica</option>
+                <option value="americas-19-recreio">Américas 19 – Recreio</option>
+                <option value="my-jacarepagua-taquara">My Jacarepaguá – Taquara</option>
+                <option value="parque-brito-iii">Parque Brito III – Campo Grande</option>
+                <option value="cury-niteroi">🔔 Orla Central – Em Breve</option>
+                <option value="cury-piedade">🔔 Parque Piedade – Em Breve</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ct-fgts">FGTS ou entrada?</label>
+              <select id="ct-fgts" name="fgts">
+                <option value="">Selecione</option>
+                <option value="FGTS disponível">FGTS disponível</option>
+                <option value="Tenho entrada">Tenho entrada</option>
+                <option value="FGTS + entrada">FGTS + entrada</option>
+                <option value="Ainda não tenho">Ainda não tenho</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="ct-renda">Renda familiar mensal</label>
+              <select id="ct-renda" name="renda">
+                <option value="">Selecione</option>
+                <option value="Até R$ 2.000">Até R$ 2.000</option>
+                <option value="R$ 2.001 a R$ 3.500">R$ 2.001 a R$ 3.500</option>
+                <option value="R$ 3.501 a R$ 5.000">R$ 3.501 a R$ 5.000</option>
+                <option value="R$ 5.001 a R$ 8.000">R$ 5.001 a R$ 8.000</option>
+                <option value="Acima de R$ 8.000">Acima de R$ 8.000</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="ct-fgts-valor">Valor estimado (FGTS + entrada)</label>
+            <input type="text" id="ct-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
+          </div>
+          <div class="form-group">
+            <label>Região de interesse</label>
+            <div class="form-pills">
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="São Cristóvão" id="ct-r-sc"><label for="ct-r-sc">São Cristóvão</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Olaria" id="ct-r-ol"><label for="ct-r-ol">Olaria</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Irajá" id="ct-r-ir"><label for="ct-r-ir">Irajá</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Niterói" id="ct-r-ni"><label for="ct-r-ni">Niterói</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Porto Maravilha" id="ct-r-po"><label for="ct-r-po">Porto</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Piedade" id="ct-r-pi"><label for="ct-r-pi">Piedade</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Barra Olímpica" id="ct-r-ba"><label for="ct-r-ba">Barra</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Recreio" id="ct-r-re"><label for="ct-r-re">Recreio</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Taquara" id="ct-r-ta"><label for="ct-r-ta">Taquara</label></span>
+              <span class="form-pills__item"><input type="checkbox" name="regions" value="Campo Grande" id="ct-r-cg"><label for="ct-r-cg">Campo Grande</label></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="ct-message">Mensagem (opcional)</label>
+            <textarea id="ct-message" name="message" rows="2" placeholder="Alguma dúvida ou informação adicional?"></textarea>
+          </div>
+          <button type="submit" class="btn btn--primary btn--full btn--lg">
+            Solicitar Atendimento Agora
+          </button>
+          <p class="form-card__privacy">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Seus dados estão protegidos. Não fazemos spam.
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__brand">
+        <a href="#" class="header__logo footer__logo">
+          <img src="/images/logo-cury.png" class="logo__img" alt="Cury Meu Apê" height="36">
+        </a>
+        <p>Realizando o sonho da casa própria há mais de 30 anos. Empreendimentos de qualidade no Rio de Janeiro e Niterói.</p>
+      </div>
+      <div class="footer__links">
+        <h4>Empreendimentos</h4>
+        <ul>
+          <li><a href="#empreendimentos">Luzes do Rio – São Cristóvão</a></li>
+          <li><a href="#empreendimentos">Residencial Cartola – São Cristóvão</a></li>
+          <li><a href="#empreendimentos">Res. Nova Norte Raízes – Irajá</a></li>
+          <li><a href="#empreendimentos">Caminhos da Guanabara – Niterói</a></li>
+          <li><a href="#empreendimentos">Farol da Guanabara – Porto</a></li>
+          <li><a href="#empreendimentos">Residencial Pixinguinha – Porto</a></li>
+        </ul>
+      </div>
+      <div class="footer__links">
+        <h4>Links Úteis</h4>
+        <ul>
+          <li><a href="#vantagens">Vantagens</a></li>
+          <li><a href="#como-funciona">Como Funciona</a></li>
+          <li><a href="#contato">Contato</a></li>
+        </ul>
+      </div>
+    </div>
     <div class="footer__bottom">
       <div class="container">
         <p>&copy; 2025 Cury Meu Apê – Todos os direitos reservados. CRECI RJ: 00000-J</p>
@@ -10,7 +873,8 @@
   <!-- WhatsApp Float Button -->
   <a href="https://wa.me/5521999999999?text=Olá!%20Quero%20saber%20mais%20sobre%20o%20Cury%20Meu%20Apê" class="whatsapp-float" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
     <span class="wa-label">Fale com o corretor</span>
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    <span>WhatsApp</span>
   </a>
 
   <!-- WhatsApp Lead Modal -->
