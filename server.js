@@ -341,10 +341,15 @@ function jidToPhone(jid) {
   return (jid || '').replace(/@.*$/, '').replace(/\D/g, '');
 }
 
+// Normaliza JID para busca de lead: "5521999999999@s.whatsapp.net" → "5521999999999"
+function normalizeWA(jid) {
+  return (jid || '').replace(/@.*$/, '').replace(/\D/g, '');
+}
+
 // Busca ou cria conversa pelo JID recebido do Evolution
 function upsertConversation(jid, name) {
   try {
-    const phone = jidToPhone(jid);
+    const phone = normalizeWA(jid);
     let conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
     if (!conv) {
       console.log(`[WA] Criando nova conversa para ${jid} (Name: ${name})`);
@@ -627,7 +632,7 @@ function fireNotifications(lead, cfg) {
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
 app.post('/webhook/wa-incoming', express.json(), (req, res) => {
-  res.sendStatus(200); 
+  // res.sendStatus(200); // Removido daqui para evitar conflito de header
 
   try {
     const body = req.body;
