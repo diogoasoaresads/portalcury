@@ -441,9 +441,12 @@
        ATENDIMENTO WHATSAPP
     ============================================================ */
     .wa-shell {
-      display: flex; height: calc(100vh - 56px); /* 28px top + 28px bottom padding do .main */
-      margin: -28px; /* Anula o padding do .main para encostar nas bordas */
+      display: flex; height: calc(100vh - 80px); /* Ajustado para caber no main */
+      margin: 0; 
       overflow: hidden;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
     .wa-sidebar {
       width: 320px; min-width: 260px; max-width: 380px;
@@ -1076,7 +1079,7 @@
     </section>
 
     <!-- ===== ATENDIMENTO ===== -->
-    <section class="page" id="atendimentoPage" style="padding:0;overflow:hidden;height:calc(100vh - 0px)">
+    <section class="page" id="atendimentoPage" style="padding:0; overflow:hidden;">
       <div class="wa-shell">
         <!-- Sidebar de Conversas -->
         <div class="wa-sidebar">

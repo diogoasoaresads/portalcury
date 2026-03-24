@@ -343,54 +343,67 @@ function jidToPhone(jid) {
 
 // Busca ou cria conversa pelo JID recebido do Evolution
 function upsertConversation(jid, name) {
-  const phone = jidToPhone(jid);
-  let conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
-  if (!conv) {
-    // Tenta vincular a um lead existente pelo telefone
-    const lead = db.prepare(`
-      SELECT * FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone," ",""),"-",""),"(",""),")",""),"+","") = ? LIMIT 1
-    `).get(phone);
+  try {
+    const phone = jidToPhone(jid);
+    let conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
+    if (!conv) {
+      console.log(`[WA] Criando nova conversa para ${jid} (Name: ${name})`);
+      const lead = db.prepare(`
+        SELECT id FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone," ",""),"-",""),"(",""),")",""),"+","") = ? LIMIT 1
+      `).get(phone);
 
-    const cfg = getConfig();
-    let assignedTo = null;
-    if (cfg.wa_atend_distribution === 'round_robin') {
-      // Distribui entre agentes (usuários com role 'agent' ou 'admin')
-      const agents = db.prepare("SELECT id FROM users ORDER BY id").all();
-      const idx = parseInt(db.prepare("SELECT value FROM config WHERE key='wa_queue_idx'").get()?.value || '0');
-      if (agents.length) {
-        assignedTo = agents[idx % agents.length].id;
-        db.prepare("INSERT OR REPLACE INTO config (key,value) VALUES ('wa_queue_idx',?)").run(String((idx + 1) % agents.length));
+      const cfg = getConfig();
+      let assignedTo = null;
+      if (cfg.wa_atend_distribution === 'round_robin') {
+        const agents = db.prepare("SELECT id FROM users ORDER BY id").all();
+        const idxRec = db.prepare("SELECT value FROM config WHERE key='wa_queue_idx'").get();
+        const idx = parseInt(idxRec?.value || '0');
+        if (agents.length) {
+          assignedTo = agents[idx % agents.length].id;
+          db.prepare("INSERT OR REPLACE INTO config (key,value) VALUES ('wa_queue_idx',?)").run(String((idx + 1) % agents.length));
+        }
+      }
+
+      const info = db.prepare(`
+        INSERT INTO wa_conversations (remote_jid, contact_name, contact_phone, lead_id, assigned_to)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(jid, name || phone, phone, lead?.id || null, assignedTo);
+
+      conv = db.prepare('SELECT * FROM wa_conversations WHERE id = ?').get(info.lastInsertRowid);
+      console.log(`[WA] Conversa criada ID=${conv.id}`);
+      if (lead) addActivity(lead.id, 'whatsapp', 'Conversa WhatsApp', 'Contato iniciou conversa via WhatsApp');
+    } else {
+      // Atualiza nome se mudou
+      if (name && name !== conv.contact_name) {
+        db.prepare('UPDATE wa_conversations SET contact_name = ? WHERE id = ?').run(name, conv.id);
+        conv.contact_name = name;
       }
     }
-
-    db.prepare(`
-      INSERT INTO wa_conversations (remote_jid, contact_name, contact_phone, lead_id, assigned_to)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(jid, name || phone, phone, lead?.id || null, assignedTo);
-
-    conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
-
-    // Registra atividade no lead se vinculou
-    if (lead) {
-      addActivity(lead.id, 'whatsapp', 'Conversa WhatsApp iniciada', `Contato iniciou conversa via WhatsApp`);
-    }
+    return conv;
+  } catch (err) {
+    console.error('[WA] Erro em upsertConversation:', err);
+    throw err;
   }
-  return conv;
 }
 
-// Salva mensagem e atualiza conversa
 function saveMessage(convId, direction, body, messageId) {
-  db.prepare(`
-    INSERT INTO wa_messages (conversation_id, direction, body, message_id)
-    VALUES (?, ?, ?, ?)
-  `).run(convId, direction, body, messageId || '');
+  try {
+    const info = db.prepare(`
+      INSERT INTO wa_messages (conversation_id, direction, body, message_id)
+      VALUES (?, ?, ?, ?)
+    `).run(convId, direction, body, messageId || '');
 
-  const updates = direction === 'in'
-    ? `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?, unread_count = unread_count + 1`
-    : `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?`;
+    const updates = direction === 'in'
+      ? `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?, unread_count = unread_count + 1`
+      : `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?`;
 
-  db.prepare(`UPDATE wa_conversations SET ${updates} WHERE id = ?`).run(body, convId);
-  return db.prepare('SELECT * FROM wa_messages ORDER BY id DESC LIMIT 1').get();
+    db.prepare(`UPDATE wa_conversations SET ${updates} WHERE id = ?`).run(body, convId);
+    console.log(`[WA] Msg Salva ID=${info.lastInsertRowid} na Conv=${convId}`);
+    return db.prepare('SELECT * FROM wa_messages WHERE id = ?').get(info.lastInsertRowid);
+  } catch (err) {
+    console.error('[WA] Erro em saveMessage:', err);
+    throw err;
+  }
 }
 
 // Chama Evolution API para enviar mensagem
@@ -620,10 +633,13 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
 
   try {
     const body = req.body;
-    console.log('[WA-Webhook] Payload:', JSON.stringify(body));
-    // Evolution envia diferentes formatos; tratamos o mais comum
+    console.log('[WA-Webhook] Recebido:', JSON.stringify(body));
+
     const event = body?.event || body?.type || '';
-    if (!['messages.upsert', 'MESSAGES_UPSERT'].includes(event) && !body?.data?.key) return;
+    if (!event.toLowerCase().includes('messages.upsert') && !body?.data?.key) {
+      console.log('[WA-Webhook] Ignorando evento:', event);
+      return;
+    }
 
     const msg = body?.data || body?.message || body;
     const jid  = msg?.key?.remoteJid || msg?.remoteJid || '';
@@ -656,8 +672,10 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
       lead_id: conv.lead_id,
       assigned_to: conv.assigned_to,
     });
+
+    res.json({ ok: true });
   } catch (err) {
-    console.error('[wa-incoming]', err.message);
+    console.error('[WA-Webhook] Erro processando mensagem:', err);
   }
 });
 
