@@ -1,0 +1,2467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Central Cury Vendas – CRM Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ============================================================
+       VARIABLES & RESET
+    ============================================================ */
+    :root {
+      --red:       #7b1c2e;
+      --red-dk:    #4a0f1b;
+      --navy:      #1a2e4a;
+      --navy-lt:   #243e62;
+      --green:     #16a34a;
+      --yellow:    #d97706;
+      --blue:      #2563eb;
+      --gray:      #64748b;
+      --gray-lt:   #f1f5f9;
+      --border:    #e2e8f0;
+      --white:     #ffffff;
+      --shadow:    0 1px 4px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.12);
+      --radius:    8px;
+      --sidebar-w: 240px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--gray-lt); color: #1e293b; line-height: 1.5; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+    input, select, textarea { font-family: inherit; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+
+    /* ============================================================
+       LOGIN PAGE
+    ============================================================ */
+    #loginPage {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--red) 100%);
+    }
+    .login-box {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--shadow-md);
+    }
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+    .login-logo .icon {
+      width: 42px; height: 42px;
+      background: var(--red);
+      color: #fff;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 800;
+    }
+    .login-logo span { font-size: 1.3rem; font-weight: 700; color: var(--navy); }
+    .login-logo span strong { color: var(--red); }
+    .login-box h2 { text-align: center; margin-bottom: 8px; font-size: 1.3rem; }
+    .login-box p  { text-align: center; color: var(--gray); font-size: .875rem; margin-bottom: 28px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .field label { font-size: .85rem; font-weight: 600; color: var(--navy); }
+    .field input, .field select, .field textarea {
+      padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: var(--radius); font-size: .95rem; outline: none;
+      transition: border-color .2s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(234,114,61,.1);
+    }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+           border-radius: var(--radius); font-weight: 600; font-size: .875rem;
+           transition: all .2s; white-space: nowrap; }
+    .btn-primary   { background: var(--red); color: #fff; }
+    .btn-primary:hover { background: var(--red-dk); }
+    .btn-secondary { background: var(--gray-lt); color: var(--navy); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e8edf3; }
+    .btn-green  { background: var(--green); color: #fff; }
+    .btn-green:hover { background: #15803d; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-full { width: 100%; justify-content: center; padding: 12px 20px; }
+    .btn-sm { padding: 7px 14px; font-size: .8rem; }
+
+    .error-msg { color: #dc2626; font-size: .85rem; margin-top: 8px; }
+    .success-msg { color: var(--green); font-size: .85rem; margin-top: 8px; }
+
+    /* ============================================================
+       LAYOUT
+    ============================================================ */
+    #appPage { display: none; min-height: 100vh; }
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w); background: var(--navy);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      flex-shrink: 0;
+    }
+    .sidebar-brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .sidebar-brand .icon { width: 36px; height: 36px; background: var(--red); color: #fff;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.1rem; flex-shrink: 0; }
+    .sidebar-brand span { color: rgba(255,255,255,.9); font-size: 1rem; font-weight: 700; }
+    .sidebar-brand strong { color: var(--red); }
+
+    .sidebar-nav { flex: 1; padding: 12px 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 20px; color: rgba(255,255,255,.65);
+      font-size: .875rem; font-weight: 500; cursor: pointer;
+      transition: all .2s; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.9); }
+    .nav-item.active { background: rgba(255,255,255,.08); color: #fff; border-left-color: var(--red); }
+    .nav-item svg { flex-shrink: 0; opacity: .75; }
+    .nav-item.active svg { opacity: 1; }
+
+    .sidebar-footer {
+      padding: 12px 20px 20px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .user-avatar {
+      width: 34px; height: 34px; background: var(--red);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: .875rem; flex-shrink: 0;
+    }
+    .user-info span { color: rgba(255,255,255,.8); font-size: .85rem; }
+    .logout-btn { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.5);
+      font-size: .82rem; cursor: pointer; transition: color .2s; }
+    .logout-btn:hover { color: rgba(255,255,255,.9); }
+
+    /* Main content */
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-width: 0; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Page header */
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--navy); }
+    .page-header p  { color: var(--gray); font-size: .9rem; margin-top: 4px; }
+
+    /* ============================================================
+       STAT CARDS
+    ============================================================ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 20px 18px; box-shadow: var(--shadow);
+      border-left: 4px solid transparent;
+    }
+    .stat-card--total  { border-left-color: var(--navy); }
+    .stat-card--novo   { border-left-color: var(--blue); }
+    .stat-card--atend  { border-left-color: var(--yellow); }
+    .stat-card--conv   { border-left-color: var(--green); }
+    .stat-card--today  { border-left-color: var(--red); }
+
+    .stat-card .label { font-size: .78rem; font-weight: 600; color: var(--gray);
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--navy); line-height: 1; }
+
+    /* ============================================================
+       TABLE
+    ============================================================ */
+    .card {
+      background: var(--white); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .card-header h3 { font-size: 1rem; font-weight: 600; color: var(--navy); }
+
+    .filters {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      background: #fafbfc;
+    }
+    .filters input, .filters select {
+      padding: 8px 12px; border: 1.5px solid var(--border);
+      border-radius: var(--radius); font-size: .85rem; outline: none;
+      transition: border-color .2s; background: #fff;
+    }
+    .filters input:focus, .filters select:focus { border-color: var(--red); }
+    .filters input { flex: 1; min-width: 160px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    thead tr { background: #f8fafc; }
+    th { padding: 11px 14px; text-align: left; font-size: .78rem; font-weight: 600;
+         color: var(--gray); text-transform: uppercase; letter-spacing: .04em;
+         border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+
+    .badge {
+      display: inline-flex; align-items: center; padding: 3px 10px;
+      border-radius: 100px; font-size: .75rem; font-weight: 600; white-space: nowrap;
+    }
+    .badge-novo   { background: #dbeafe; color: #1d4ed8; }
+    .badge-atend  { background: #fef3c7; color: #92400e; }
+    .badge-conv   { background: #dcfce7; color: #15803d; }
+    .badge-perdido{ background: #fee2e2; color: #991b1b; }
+
+    .actions { display: flex; gap: 6px; }
+
+    /* Pagination */
+    .pagination {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 20px; border-top: 1px solid var(--border);
+      justify-content: flex-end; font-size: .875rem; color: var(--gray);
+    }
+    .pagination button {
+      padding: 6px 10px; border-radius: 6px;
+      border: 1px solid var(--border); font-size: .85rem;
+      transition: all .2s;
+    }
+    .pagination button:not(:disabled):hover { border-color: var(--red); color: var(--red); }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+
+    /* ============================================================
+       MODAL
+    ============================================================ */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,.45); align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--white); border-radius: 12px; padding: 32px;
+      width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+      box-shadow: var(--shadow-md);
+      animation: fadeUp .2s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-header h3 { font-size: 1.15rem; font-weight: 700; color: var(--navy); }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 6px; display: flex;
+      align-items: center; justify-content: center; color: var(--gray);
+      transition: background .2s;
+    }
+    .modal-close:hover { background: var(--gray-lt); }
+    .modal-footer {
+      display: flex; gap: 10px; justify-content: flex-end;
+      margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
+    }
+
+    .detail-row {
+      display: grid; grid-template-columns: 130px 1fr;
+      gap: 8px; margin-bottom: 14px; align-items: start;
+    }
+    .detail-row .lbl { font-size: .8rem; font-weight: 600; color: var(--gray); padding-top: 2px; }
+    .detail-row .val { font-size: .9rem; color: var(--navy); }
+
+    /* ============================================================
+       CONFIG TABS
+    ============================================================ */
+    .config-tabs { display: flex; gap: 4px; margin-bottom: 24px; flex-wrap: wrap; }
+    .config-tab {
+      padding: 9px 18px; border-radius: var(--radius);
+      font-size: .85rem; font-weight: 600; color: var(--gray);
+      transition: all .2s; border: 1.5px solid transparent;
+    }
+    .config-tab:hover { color: var(--red); }
+    .config-tab.active { background: var(--white); color: var(--red); border-color: var(--border);
+      box-shadow: var(--shadow); }
+
+    .config-panel { display: none; }
+    .config-panel.active { display: block; }
+
+    .config-card {
+      background: var(--white); border-radius: var(--radius);
+      padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px;
+    }
+    .config-card h4 { font-size: .95rem; font-weight: 700; color: var(--navy);
+      margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .config-card h4 .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--red);
+    }
+
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:first-child { padding-top: 0; }
+    .toggle-row .info strong { display: block; font-size: .9rem; color: var(--navy); }
+    .toggle-row .info span  { font-size: .8rem; color: var(--gray); }
+
+    /* Toggle switch */
+    .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #cbd5e1; border-radius: 100px;
+      cursor: pointer; transition: background .2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      border-radius: 50%; background: #fff; top: 3px; left: 3px;
+      transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle input:checked + .toggle-slider { background: var(--green); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-full { grid-column: 1 / -1; }
+
+    .hint { font-size: .78rem; color: var(--gray); margin-top: 4px; }
+
+    /* Notification banners */
+    .notify-banner {
+      padding: 12px 16px; border-radius: var(--radius); font-size: .875rem;
+      margin-bottom: 16px; display: none;
+    }
+    .notify-banner.show { display: flex; align-items: center; gap: 8px; }
+    .notify-banner.success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .notify-banner.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .notify-banner.info    { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 56px 20px; color: var(--gray);
+    }
+    .empty-state svg { margin: 0 auto 16px; opacity: .4; }
+    .empty-state p { font-size: .9rem; }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .6s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+      background: var(--navy); color: #fff; padding: 14px 20px;
+      border-radius: var(--radius); font-size: .875rem; font-weight: 500;
+      box-shadow: var(--shadow-md); transform: translateY(80px); opacity: 0;
+      transition: all .3s ease; max-width: 360px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.toast-success { background: var(--green); }
+    #toast.toast-error   { background: #dc2626; }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform .3s; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; padding: 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ============================================================
+       KANBAN
+    ============================================================ */
+    .kanban-toolbar {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+      padding: 14px 0; margin-bottom: 20px;
+    }
+    .kanban-toolbar input,
+    .kanban-toolbar select {
+      padding: 8px 12px; border: 1.5px solid var(--border);
+      border-radius: var(--radius); font-size: .85rem; outline: none;
+      transition: border-color .2s; background: #fff; height: 36px;
+    }
+    .kanban-toolbar input:focus,
+    .kanban-toolbar select:focus { border-color: var(--red); }
+    .kanban-toolbar input[type=search] { min-width: 200px; }
+    .kanban-toolbar input[type=date]   { min-width: 140px; }
+
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      align-items: start;
+      min-height: calc(100vh - 260px);
+    }
+
+    .kb-col {
+      background: #f0f4f8;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 200px;
+      transition: background .2s;
+    }
+    .kb-col.drag-over { background: #e2eaf3; outline: 2px dashed var(--red); }
+
+    .kb-col__header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 14px 10px;
+    }
+    .kb-col__dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .kb-col__title {
+      font-size: .85rem; font-weight: 700; color: var(--navy);
+      flex: 1; cursor: default;
+    }
+    .kb-col__count {
+      font-size: .75rem; font-weight: 600; padding: 2px 8px;
+      border-radius: 100px; background: rgba(0,0,0,.07); color: var(--navy);
+    }
+    .kb-col__edit {
+      opacity: 0; transition: opacity .15s;
+      color: var(--gray); padding: 2px; border-radius: 4px;
+    }
+    .kb-col:hover .kb-col__edit { opacity: 1; }
+    .kb-col__edit:hover { background: var(--border); color: var(--navy); }
+
+    .kb-col__cards {
+      flex: 1;
+      padding: 0 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kb-card {
+      background: var(--white);
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      cursor: grab;
+      transition: box-shadow .2s, transform .15s;
+      border-left: 3px solid transparent;
+      user-select: none;
+    }
+    .kb-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .kb-card:active { cursor: grabbing; }
+    .kb-card.dragging { opacity: .45; transform: scale(.98); }
+
+    .kb-card--novo         { border-left-color: #2563eb; }
+    .kb-card--em_atendimento { border-left-color: #d97706; }
+    .kb-card--convertido   { border-left-color: #16a34a; }
+    .kb-card--perdido      { border-left-color: #dc2626; }
+
+    .kb-card__name {
+      font-size: .875rem; font-weight: 700; color: var(--navy);
+      margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .kb-card__phone {
+      font-size: .78rem; color: var(--red); margin-bottom: 6px;
+    }
+    .kb-card__interest {
+      font-size: .72rem; color: var(--gray);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 8px;
+    }
+    .kb-card__footer {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    }
+    .kb-card__date { font-size: .7rem; color: #94a3b8; }
+    .kb-card__actions { display: flex; gap: 4px; }
+    .kb-card__btn {
+      font-size: .7rem; padding: 3px 8px; border-radius: 4px;
+      font-weight: 600; transition: all .15s;
+    }
+    .kb-card__btn--detail { background: var(--gray-lt); color: var(--navy); border: 1px solid var(--border); }
+    .kb-card__btn--detail:hover { background: var(--border); }
+    .kb-card__btn--wa { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .kb-card__btn--wa:hover { background: #bbf7d0; }
+
+    .kb-col__empty {
+      text-align: center; padding: 24px 12px; color: #94a3b8;
+      font-size: .8rem;
+    }
+
+    /* edit-label modal */
+    .edit-label-modal {
+      display: none; position: fixed; inset: 0; z-index: 600;
+      background: rgba(0,0,0,.45); align-items: center; justify-content: center;
+    }
+    .edit-label-modal.open { display: flex; }
+    .edit-label-box {
+      background: #fff; border-radius: 12px; padding: 28px;
+      width: 100%; max-width: 380px; box-shadow: var(--shadow-md);
+      animation: fadeUp .2s ease;
+    }
+    .edit-label-box h3 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 16px; }
+
+    @media (max-width: 1200px) {
+      .kanban-board { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .kanban-board { grid-template-columns: 1fr; }
+    }
+
+    /* ============================================================
+       ANALYTICS PAGE
+    ============================================================ */
+    .an-toolbar {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .an-toolbar select { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: .875rem; background: #fff; }
+    .an-toolbar .btn-refresh { display: flex; align-items: center; gap: 6px; }
+
+    .an-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px; margin-bottom: 20px;
+    }
+    .an-kpi {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px; box-shadow: var(--shadow);
+    }
+    .an-kpi .an-kpi__label { font-size: .78rem; color: var(--gray); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+    .an-kpi .an-kpi__val   { font-size: 1.9rem; font-weight: 700; color: var(--navy); margin-top: 4px; line-height: 1; }
+    .an-kpi .an-kpi__sub   { font-size: .78rem; color: var(--gray); margin-top: 4px; }
+    .an-kpi.an-kpi--red  .an-kpi__val { color: var(--red); }
+    .an-kpi.an-kpi--green .an-kpi__val { color: var(--green); }
+
+    /* Realtime pill */
+    .an-realtime {
+      display: flex; align-items: center; gap: 10px;
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 10px 16px; box-shadow: var(--shadow); margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .an-realtime__dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--green);
+      animation: pulse-rt 1.4s infinite;
+    }
+    @keyframes pulse-rt {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .5; transform: scale(1.3); }
+    }
+    .an-realtime__count { font-size: 1.3rem; font-weight: 700; color: var(--navy); }
+    .an-realtime__label { font-size: .85rem; color: var(--gray); }
+    .an-realtime__pages { font-size: .8rem; color: var(--gray); margin-left: auto; }
+
+    /* Charts grid */
+    .an-charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px; margin-bottom: 20px;
+    }
+    .an-charts-grid .an-chart-full { grid-column: 1 / -1; }
+    .an-chart-box {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--shadow);
+    }
+    .an-chart-box h4 { font-size: .9rem; font-weight: 600; color: var(--navy); margin-bottom: 14px; }
+    .an-chart-box canvas { max-height: 260px; }
+
+    /* Tables */
+    .an-table-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .an-table-box {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; box-shadow: var(--shadow);
+    }
+    .an-table-box h4 { font-size: .9rem; font-weight: 600; color: var(--navy); margin-bottom: 12px; }
+    .an-table-box table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .an-table-box th { text-align: left; padding: 6px 8px; color: var(--gray); font-weight: 600; border-bottom: 1px solid var(--border); }
+    .an-table-box td { padding: 7px 8px; border-bottom: 1px solid var(--gray-lt); }
+    .an-table-box tr:last-child td { border-bottom: none; }
+    .an-bar { height: 6px; border-radius: 3px; background: var(--red); opacity: .75; display: inline-block; vertical-align: middle; }
+
+    /* No-data state */
+    .an-empty { text-align: center; padding: 32px; color: var(--gray); font-size: .88rem; }
+
+    @media (max-width: 900px) {
+      .an-charts-grid { grid-template-columns: 1fr; }
+      .an-table-grid  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN PAGE ===== -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">C</div>
+      <span>Central <strong>Cury</strong></span>
+    </div>
+    <h2>Painel Administrativo</h2>
+    <p>Entre com suas credenciais para acessar o CRM</p>
+    <form id="loginForm" novalidate>
+      <div class="field">
+        <label for="l-user">Usuário</label>
+        <input type="text" id="l-user" placeholder="admin" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="l-pass">Senha</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" required />
+      </div>
+      <div id="loginError" class="error-msg" style="display:none;margin-bottom:12px"></div>
+      <button type="submit" class="btn btn-primary btn-full" id="loginBtn">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="appPage">
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="icon">C</div>
+      <span>Central <strong>Cury</strong></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" data-page="leads">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Leads
+        <span id="newLeadsBadge" style="margin-left:auto;background:var(--red);color:#fff;border-radius:100px;font-size:.7rem;padding:2px 8px;display:none"></span>
+      </div>
+      <div class="nav-item" data-page="kanban">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+        Kanban
+      </div>
+      <div class="nav-item admin-only" data-page="analytics">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </div>
+      <div class="nav-item admin-only" data-page="attendants">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Atendentes
+      </div>
+      <div class="nav-item admin-only" data-page="users">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        Usuários
+      </div>
+      <div class="nav-item admin-only" data-page="config">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+        Configurações
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <span id="userNameDisplay">admin</span>
+      </div>
+      <div class="logout-btn" id="logoutBtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section class="page active" id="dashboardPage">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Visão geral dos leads e desempenho</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card stat-card--total">
+          <div class="label">Total de Leads</div>
+          <div class="value" id="statTotal">—</div>
+        </div>
+        <div class="stat-card stat-card--novo">
+          <div class="label">Novos</div>
+          <div class="value" id="statNovo">—</div>
+        </div>
+        <div class="stat-card stat-card--atend">
+          <div class="label">Em Atendimento</div>
+          <div class="value" id="statAtend">—</div>
+        </div>
+        <div class="stat-card stat-card--conv">
+          <div class="label">Convertidos</div>
+          <div class="value" id="statConv">—</div>
+        </div>
+        <div class="stat-card stat-card--today">
+          <div class="label">Recebidos Hoje</div>
+          <div class="value" id="statToday">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Leads Recentes</h3>
+          <button class="btn btn-secondary btn-sm" onclick="navigate('leads')">Ver todos</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th><th>Telefone</th><th>Empreendimento</th><th>Status</th><th>Data</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="recentLeadsTable">
+              <tr><td colspan="6"><div class="empty-state"><p>Carregando...</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== LEADS ===== -->
+    <section class="page" id="leadsPage">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1>Gestão de Leads</h1>
+          <p>Todos os leads capturados pelo site</p>
+        </div>
+        <button class="btn btn-primary" onclick="exportExcel()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;font-size:.95rem">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar Leads (Excel)
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="filters">
+          <input type="search" id="searchInput" placeholder="Buscar por nome, telefone, e-mail..." />
+          <select id="filterStatus">
+            <option value="all">Todos os status</option>
+            <option value="novo">Novo</option>
+            <option value="em_atendimento">Em Atendimento</option>
+            <option value="convertido">Convertido</option>
+            <option value="perdido">Perdido</option>
+          </select>
+          <select id="filterInterest">
+            <option value="all">Todos os empreendimentos</option>
+            <option value="luzes-do-rio">Luzes do Rio</option>
+            <option value="residencial-cartola">Residencial Cartola</option>
+            <option value="nova-norte-raizes">Nova Norte Raízes</option>
+            <option value="caminhos-guanabara">Caminhos da Guanabara</option>
+            <option value="farol-guanabara">Farol da Guanabara</option>
+            <option value="residencial-pixinguinha">Res. Pixinguinha</option>
+            <option value="americas-19">Américas 19</option>
+            <option value="metropolitan-dream">Metropolitan Dream</option>
+            <option value="cury-niteroi">Cury Niterói (Em Breve)</option>
+            <option value="cury-piedade">Cury Piedade (Em Breve)</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="exportExcel()">⬇ Exportar Excel</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Nome</th><th>Telefone</th><th>E-mail</th>
+                <th>Empreendimento</th><th>Atendente</th><th>Status</th><th>Data</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="leadsTable">
+              <tr><td colspan="9"><div class="empty-state"><p>Carregando...</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="paginationInfo">—</span>
+          <button id="prevPage" onclick="changePage(-1)">‹ Anterior</button>
+          <button id="nextPage" onclick="changePage(1)">Próxima ›</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== KANBAN ===== -->
+    <section class="page" id="kanbanPage">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:8px">
+        <div>
+          <h1>Kanban de Leads</h1>
+          <p>Arraste os cards entre colunas para atualizar o status</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadKanban()" title="Atualizar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Atualizar
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="kanban-toolbar">
+        <input type="search" id="kbSearch" placeholder="Buscar nome ou telefone…" oninput="debounceKanban()" />
+        <input type="date"   id="kbDateFrom" title="De" onchange="renderKanban()" />
+        <input type="date"   id="kbDateTo"   title="Até" onchange="renderKanban()" />
+        <select id="kbInterest" onchange="renderKanban()">
+          <option value="all">Todos empreendimentos</option>
+          <option value="luzes-do-rio">Luzes do Rio</option>
+          <option value="residencial-cartola">Residencial Cartola</option>
+          <option value="nova-norte-raizes">Nova Norte Raízes</option>
+          <option value="caminhos-guanabara">Caminhos da Guanabara</option>
+          <option value="farol-guanabara">Farol da Guanabara</option>
+          <option value="residencial-pixinguinha">Res. Pixinguinha</option>
+          <option value="americas-19">Américas 19</option>
+          <option value="metropolitan-dream">Metropolitan Dream</option>
+          <option value="cury-niteroi">Cury Niterói (Em Breve)</option>
+          <option value="cury-piedade">Cury Piedade (Em Breve)</option>
+        </select>
+        <span id="kbTotal" style="font-size:.82rem;color:var(--gray);white-space:nowrap;padding:0 4px;"></span>
+      </div>
+
+      <!-- Board -->
+      <div class="kanban-board" id="kanbanBoard">
+        <!-- Generated by JS -->
+      </div>
+    </section>
+
+    <!-- ===== ANALYTICS ===== -->
+    <section class="page" id="analyticsPage">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+        <div>
+          <h1>Analytics</h1>
+          <p>Visitantes, tráfego e performance de leads</p>
+        </div>
+        <button class="btn btn-secondary btn-sm an-btn-refresh" onclick="loadAnalytics()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Atualizar
+        </button>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="an-toolbar">
+        <label style="font-size:.85rem;color:var(--gray)">Período:</label>
+        <select id="anDays" onchange="loadAnalytics()">
+          <option value="7">Últimos 7 dias</option>
+          <option value="30" selected>Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="365">Último ano</option>
+        </select>
+      </div>
+
+      <!-- Real-time -->
+      <div class="an-realtime" id="anRealtime">
+        <div class="an-realtime__dot"></div>
+        <span class="an-realtime__count" id="anRealtimeCount">—</span>
+        <span class="an-realtime__label">visitantes ativos agora (últimos 5 min)</span>
+        <span class="an-realtime__pages" id="anRealtimePages"></span>
+      </div>
+
+      <!-- KPIs -->
+      <div class="an-kpi-grid" id="anKpis">
+        <div class="an-kpi"><div class="an-kpi__label">Visitantes únicos</div><div class="an-kpi__val" id="anKpiVisitors">—</div><div class="an-kpi__sub">sessões distintas</div></div>
+        <div class="an-kpi"><div class="an-kpi__label">Pageviews</div><div class="an-kpi__val" id="anKpiPageviews">—</div><div class="an-kpi__sub">visualizações de página</div></div>
+        <div class="an-kpi"><div class="an-kpi__label">Pág/Visitante</div><div class="an-kpi__val" id="anKpiPpv">—</div><div class="an-kpi__sub">em média</div></div>
+        <div class="an-kpi an-kpi--red"><div class="an-kpi__label">Leads gerados</div><div class="an-kpi__val" id="anKpiLeads">—</div><div class="an-kpi__sub">no período</div></div>
+        <div class="an-kpi an-kpi--green"><div class="an-kpi__label">Conversão</div><div class="an-kpi__val" id="anKpiConv">—</div><div class="an-kpi__sub">visitantes → leads</div></div>
+      </div>
+
+      <!-- Charts row 1: linha temporal + donuts -->
+      <div class="an-charts-grid">
+        <div class="an-chart-box an-chart-full">
+          <h4>Visitantes &amp; Leads por dia</h4>
+          <canvas id="chartTimeline"></canvas>
+        </div>
+        <div class="an-chart-box">
+          <h4>Fonte de tráfego</h4>
+          <canvas id="chartSources"></canvas>
+        </div>
+        <div class="an-chart-box">
+          <h4>Dispositivos</h4>
+          <canvas id="chartDevices"></canvas>
+        </div>
+        <div class="an-chart-box">
+          <h4>Leads por empreendimento</h4>
+          <canvas id="chartInterests"></canvas>
+        </div>
+        <div class="an-chart-box">
+          <h4>Canais (utm_medium)</h4>
+          <canvas id="chartMediums"></canvas>
+        </div>
+      </div>
+
+      <!-- Tables: top páginas + campanhas UTM -->
+      <div class="an-table-grid">
+        <div class="an-table-box">
+          <h4>Top páginas</h4>
+          <table>
+            <thead><tr><th>Página</th><th>Visitantes</th><th>Views</th><th></th></tr></thead>
+            <tbody id="anTopPages"><tr><td colspan="4" class="an-empty">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="an-table-box">
+          <h4>Campanhas UTM</h4>
+          <table>
+            <thead><tr><th>Campanha</th><th>Visitantes</th><th>Views</th><th></th></tr></thead>
+            <tbody id="anCampaigns"><tr><td colspan="4" class="an-empty">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONFIG ===== -->
+    <section class="page" id="configPage">
+      <div class="page-header">
+        <h1>Configurações</h1>
+        <p>Gerencie as integrações e configurações</p>
+      </div>
+
+      <div class="config-tabs">
+        <button class="config-tab active" data-tab="whatsapp">WhatsApp</button>
+        <button class="config-tab" data-tab="email">E-mail</button>
+        <button class="config-tab" data-tab="webhook">Webhook</button>
+        <button class="config-tab" data-tab="wanotify">Aviso WhatsApp</button>
+        <button class="config-tab" data-tab="tracking">Rastreamento</button>
+        <button class="config-tab" data-tab="security">Segurança</button>
+      </div>
+
+      <!-- Tab: WhatsApp (botão da landing) -->
+      <div class="config-panel active" id="tab-whatsapp">
+        <div class="config-card">
+          <h4><span class="dot"></span>Botão WhatsApp da Landing Page</h4>
+          <p class="hint" style="margin-bottom:20px">Estas configurações alteram o botão flutuante e os links de WhatsApp visíveis no site.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label>Número do WhatsApp</label>
+              <input type="text" id="cfg-wa-number" placeholder="5521999999999" />
+              <p class="hint">Apenas números, com DDI (ex: 5521988887777)</p>
+            </div>
+            <div class="field">
+              <label>Mensagem padrão</label>
+              <input type="text" id="cfg-wa-message" placeholder="Olá! Quero saber mais..." />
+              <p class="hint">Texto pré-preenchido ao abrir o WhatsApp</p>
+            </div>
+          </div>
+          <div id="waConfigMsg"></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-primary" onclick="saveWhatsAppConfig()">Salvar alterações</button>
+            <a id="waPreviewLink" href="#" target="_blank" class="btn btn-secondary">Testar link ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: E-mail -->
+      <div class="config-panel" id="tab-email">
+        <div class="config-card">
+          <h4><span class="dot"></span>Notificação por E-mail</h4>
+          <div class="toggle-row">
+            <div class="info">
+              <strong>Ativar notificações por e-mail</strong>
+              <span>Enviar e-mail a cada novo lead recebido</span>
+            </div>
+            <label class="toggle"><input type="checkbox" id="cfg-email-enabled" /><span class="toggle-slider"></span></label>
+          </div>
+          <div style="margin-top:20px">
+            <div class="form-grid">
+              <div class="field">
+                <label>E-mail de destino (para notificações)</label>
+                <input type="email" id="cfg-email-to" placeholder="seuemail@gmail.com" />
+              </div>
+              <div class="field">
+                <label>E-mail de envio (from)</label>
+                <input type="email" id="cfg-email-from" placeholder="Central Cury Vendas &lt;noreply@...&gt;" />
+              </div>
+              <div class="field">
+                <label>Servidor SMTP</label>
+                <input type="text" id="cfg-smtp-host" placeholder="smtp.gmail.com" />
+              </div>
+              <div class="field">
+                <label>Porta SMTP</label>
+                <input type="number" id="cfg-smtp-port" placeholder="587" />
+              </div>
+              <div class="field">
+                <label>Usuário SMTP</label>
+                <input type="text" id="cfg-smtp-user" placeholder="seuemail@gmail.com" />
+              </div>
+              <div class="field">
+                <label>Senha SMTP / App Password</label>
+                <input type="password" id="cfg-smtp-pass" placeholder="••••••••" autocomplete="new-password" />
+                <p class="hint">Para Gmail, gere uma <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--red)">App Password</a></p>
+              </div>
+              <div class="field">
+                <label>Segurança</label>
+                <select id="cfg-smtp-secure">
+                  <option value="false">STARTTLS (porta 587)</option>
+                  <option value="true">SSL/TLS (porta 465)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div id="emailConfigMsg" style="margin-top:12px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-primary" onclick="saveEmailConfig()">Salvar</button>
+            <button class="btn btn-secondary" onclick="testEmail()">Enviar e-mail de teste</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Webhook -->
+      <div class="config-panel" id="tab-webhook">
+        <div class="config-card">
+          <h4><span class="dot"></span>Webhook de Novos Leads</h4>
+          <p class="hint" style="margin-bottom:20px">
+            Dispara um POST para a URL configurada a cada novo lead. Compatível com RD Station, HubSpot, Zapier, Make, n8n e qualquer sistema com webhook.
+          </p>
+          <div class="toggle-row">
+            <div class="info">
+              <strong>Ativar webhook</strong>
+              <span>Disparar POST automaticamente ao receber lead</span>
+            </div>
+            <label class="toggle"><input type="checkbox" id="cfg-webhook-enabled" /><span class="toggle-slider"></span></label>
+          </div>
+          <div style="margin-top:20px">
+            <div class="field">
+              <label>URL do Webhook</label>
+              <input type="url" id="cfg-webhook-url" placeholder="https://hooks.zapier.com/hooks/catch/..." />
+            </div>
+            <div class="field" style="margin-top:12px">
+              <label>Chave secreta (opcional)</label>
+              <input type="text" id="cfg-webhook-secret" placeholder="minha-chave-secreta" />
+              <p class="hint">Enviada no header <code>X-Webhook-Secret</code> para validação</p>
+            </div>
+          </div>
+          <details style="margin-top:20px">
+            <summary style="cursor:pointer;font-size:.875rem;font-weight:600;color:var(--navy)">Ver payload de exemplo</summary>
+            <pre style="margin-top:12px;background:#f8fafc;padding:16px;border-radius:8px;font-size:.8rem;overflow-x:auto;border:1px solid var(--border)">{
+  "event": "new_lead",
+  "lead": {
+    "id": 42,
+    "name": "João Silva",
+    "phone": "(21) 9 9999-9999",
+    "email": "joao@email.com",
+    "interest": "luzes-do-rio",
+    "interest_label": "Luzes do Rio – São Cristóvão",
+    "message": "Quero saber mais",
+    "source": "landing_page",
+    "created_at": "2025-03-18T12:00:00.000Z"
+  },
+  "timestamp": "2025-03-18T12:00:00.000Z"
+}</pre>
+          </details>
+          <div id="webhookConfigMsg" style="margin-top:12px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-primary" onclick="saveWebhookConfig()">Salvar</button>
+            <button class="btn btn-secondary" onclick="testWebhook()">Disparar teste</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Aviso WhatsApp (Evolution API) -->
+      <div class="config-panel" id="tab-wanotify">
+        <div class="config-card">
+          <h4><span class="dot"></span>Aviso de Novo Lead via Evolution API</h4>
+          <p class="hint" style="margin-bottom:20px">
+            Envia uma mensagem WhatsApp pelo <strong>Evolution API</strong> a cada novo lead recebido.
+            Preencha a URL do seu servidor Evolution, o nome da instância e a API Key.
+          </p>
+          <div class="toggle-row">
+            <div class="info">
+              <strong>Ativar aviso por Evolution API</strong>
+              <span>Enviar mensagem automática ao receber lead</span>
+            </div>
+            <label class="toggle"><input type="checkbox" id="cfg-evolution-enabled" /><span class="toggle-slider"></span></label>
+          </div>
+          <div style="margin-top:20px">
+            <div class="form-grid">
+              <div class="field">
+                <label>URL do servidor Evolution</label>
+                <input type="url" id="cfg-evolution-url" placeholder="https://evo.seudominio.com" />
+                <p class="hint">URL base da sua instância Evolution (sem barra no final)</p>
+              </div>
+              <div class="field">
+                <label>Nome da instância</label>
+                <input type="text" id="cfg-evolution-instance" placeholder="minha-instancia" />
+                <p class="hint">Nome exato da instância no painel Evolution</p>
+              </div>
+              <div class="field">
+                <label>API Key</label>
+                <input type="text" id="cfg-evolution-apikey" placeholder="sua-api-key" autocomplete="off" />
+                <p class="hint">Global API Key ou Instance API Key do Evolution</p>
+              </div>
+              <div class="field">
+                <label>Número para receber aviso</label>
+                <input type="text" id="cfg-evolution-phone" placeholder="5521999999999" />
+                <p class="hint">Número de destino com DDI (ex: 5521999999999)</p>
+              </div>
+              <div class="field form-full">
+                <label>Mensagem (template)</label>
+                <textarea id="cfg-evolution-message" rows="6" placeholder="🔔 *Novo Lead — Central Cury Vendas*&#10;&#10;👤 *Nome:* {{name}}&#10;📱 *Telefone:* {{phone}}&#10;🏢 *Empreendimento:* {{interest}}&#10;⏰ {{created_at}}"></textarea>
+                <p class="hint">
+                  Variáveis: <code>{{name}}</code> <code>{{phone}}</code> <code>{{email}}</code>
+                  <code>{{email_line}}</code> <code>{{interest}}</code> <code>{{created_at}}</code>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div id="waNotifyConfigMsg" style="margin-top:12px"></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn btn-primary" onclick="saveWaNotifyConfig()">Salvar</button>
+            <button class="btn btn-secondary" onclick="testWhatsApp()">Enviar teste</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Rastreamento -->
+      <div class="config-panel" id="tab-tracking">
+
+        <!-- Google Ads -->
+        <div class="config-card">
+          <h4><span class="dot"></span>Google Ads</h4>
+          <p class="hint" style="margin-bottom:20px">Configure o pixel de conversão do Google Ads. A conversão será disparada automaticamente quando um lead for enviado com sucesso em qualquer página do site.</p>
+          <div class="form-grid">
+            <div class="field">
+              <label>ID da Tag Google (Tag ID)</label>
+              <input type="text" id="cfg-gads-tag-id" placeholder="AW-123456789" />
+              <p class="hint">Encontrado em Google Ads → Ferramentas → Conversões → Tag do Google</p>
+            </div>
+            <div class="field">
+              <label>Label da Conversão</label>
+              <input type="text" id="cfg-gads-label" placeholder="AbCdEfGhIjKl-MnO" />
+              <p class="hint">Encontrado em Google Ads → Ferramentas → Conversões → Detalhes da ação</p>
+            </div>
+          </div>
+          <div id="gadsConfigMsg" style="margin-top:12px"></div>
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary" onclick="saveTrackingConfig()">Salvar</button>
+            <span id="gadsPreview" style="font-size:.8rem;color:var(--gray);font-family:monospace"></span>
+          </div>
+        </div>
+
+        <!-- GTM -->
+        <div class="config-card">
+          <h4><span class="dot"></span>Google Tag Manager</h4>
+          <p class="hint" style="margin-bottom:20px">O GTM é injetado automaticamente em todas as páginas. Use-o para gerenciar pixels, eventos e scripts sem mexer no código.</p>
+          <div class="field" style="max-width:360px">
+            <label>ID do Contêiner GTM</label>
+            <input type="text" id="cfg-gtm-id" placeholder="GTM-XXXXXXX" />
+            <p class="hint">Encontrado em Tag Manager → Administrador → Contêiner → ID do contêiner</p>
+          </div>
+          <div id="gtmConfigMsg" style="margin-top:12px"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="saveTrackingConfig()">Salvar</button>
+        </div>
+
+        <!-- Código personalizado -->
+        <div class="config-card">
+          <h4><span class="dot"></span>Código Personalizado</h4>
+          <p class="hint" style="margin-bottom:20px">Cole aqui scripts personalizados (Facebook Pixel, TikTok Pixel, Hotjar, etc). O código é injetado em <strong>todas as páginas</strong>.</p>
+          <div class="field">
+            <label>Código no &lt;head&gt;</label>
+            <textarea id="cfg-custom-head" rows="6" placeholder="<!-- Ex: Meta Pixel, scripts de analytics -->
+<script>
+  /* seu código aqui */
+</script>"></textarea>
+            <p class="hint">Injetado antes de <code>&lt;/head&gt;</code> em todas as páginas</p>
+          </div>
+          <div class="field" style="margin-top:16px">
+            <label>Código no &lt;body&gt;</label>
+            <textarea id="cfg-custom-body" rows="6" placeholder="<!-- Ex: noscript do GTM, chat, scripts de suporte -->
+<noscript>...</noscript>"></textarea>
+            <p class="hint">Injetado logo após <code>&lt;body&gt;</code> em todas as páginas</p>
+          </div>
+          <div id="customCodeMsg" style="margin-top:12px"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="saveTrackingConfig()">Salvar todas as configurações de rastreamento</button>
+        </div>
+
+        <!-- Como funciona -->
+        <div class="config-card" style="background:#f8fafc;border:1px solid var(--border);box-shadow:none">
+          <h4><span class="dot" style="background:#2563eb"></span>Como funciona o rastreamento de conversão</h4>
+          <ol style="margin-top:12px;padding-left:20px;font-size:.875rem;color:var(--gray);line-height:1.8">
+            <li>Preencha o <strong>ID da Tag Google</strong> (formato <code>AW-XXXXXXXXX</code>)</li>
+            <li>Preencha o <strong>Label da Conversão</strong> da ação configurada no Google Ads</li>
+            <li>Salve — o pixel é ativado automaticamente em todas as páginas</li>
+            <li>Quando um visitante preenche qualquer formulário do site, o evento <code>conversion</code> é disparado</li>
+            <li>O Google Ads registra a conversão e otimiza seus anúncios automaticamente</li>
+          </ol>
+        </div>
+
+      </div>
+
+      <!-- Tab: Segurança -->
+      <div class="config-panel" id="tab-security">
+        <div class="config-card">
+          <h4><span class="dot"></span>Alterar Senha do Administrador</h4>
+          <div style="max-width:400px">
+            <div class="field">
+              <label>Senha atual</label>
+              <input type="password" id="cfg-cur-pass" autocomplete="current-password" />
+            </div>
+            <div class="field">
+              <label>Nova senha</label>
+              <input type="password" id="cfg-new-pass" autocomplete="new-password" />
+            </div>
+            <div class="field">
+              <label>Confirmar nova senha</label>
+              <input type="password" id="cfg-new-pass2" autocomplete="new-password" />
+            </div>
+            <div id="securityMsg" style="margin-bottom:12px"></div>
+            <button class="btn btn-primary" onclick="changePassword()">Alterar senha</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===== ATENDENTES ===== -->
+    <section class="page" id="attendantsPage">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1>Atendentes</h1>
+          <p>Gerencie as duas filas de rotação: formulário e WhatsApp</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAttendantModal()" style="padding:10px 20px">+ Novo Atendente</button>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div style="padding:14px 20px;background:#f8fafc;border-bottom:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0">
+          <strong style="font-size:.9rem">ℹ️ Como funciona a rotação</strong>
+          <p style="font-size:.82rem;color:var(--gray);margin-top:4px">Os leads do <b>formulário</b> e do <b>WhatsApp</b> são distribuídos em filas separadas, alternando entre os atendentes ativos em ordem.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Nome</th><th>WhatsApp</th><th>Status</th><th>Cadastrado em</th><th>Ações</th></tr></thead>
+            <tbody id="attendantsTable"><tr><td colspan="6"><div class="empty-state"><p>Carregando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== USUÁRIOS ===== -->
+    <section class="page" id="usersPage">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1>Usuários do CRM</h1>
+          <p>Crie logins para cada atendente — cada um verá apenas seus próprios leads</p>
+        </div>
+        <button class="btn btn-primary" onclick="openUserModal()" style="padding:10px 20px">+ Novo Usuário</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Usuário</th><th>Perfil</th><th>Atendente vinculado</th><th>Cadastrado em</th><th>Ações</th></tr></thead>
+            <tbody id="usersTable"><tr><td colspan="6"><div class="empty-state"><p>Carregando...</p></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</div>
+
+<!-- Attendant Modal -->
+<div class="modal-overlay" id="attendantModal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <h3 id="attendantModalTitle">Novo Atendente</h3>
+      <button class="modal-close" onclick="closeAttendantModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="padding:20px">
+      <div class="field"><label>Nome do Atendente *</label><input type="text" id="att-name" placeholder="Ex: Maria Silva" /></div>
+      <div class="field"><label>WhatsApp (com DDI) *</label><input type="tel" id="att-phone" placeholder="5521988887777" /><p class="hint">Apenas números, com DDI. Ex: 5521988887777</p></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="att-active"><option value="1">Ativo</option><option value="0">Inativo</option></select>
+      </div>
+      <div id="attModalMsg" style="display:none;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAttendantModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAttendant()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <h3 id="userModalTitle">Novo Usuário</h3>
+      <button class="modal-close" onclick="closeUserModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="padding:20px">
+      <div class="field"><label>Nome de usuário *</label><input type="text" id="usr-username" placeholder="maria.silva" autocomplete="off" /></div>
+      <div class="field"><label>Senha *</label><input type="password" id="usr-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" /><p class="hint" id="usr-pass-hint">Deixe em branco para manter a senha atual</p></div>
+      <div class="field">
+        <label>Perfil</label>
+        <select id="usr-role"><option value="agent">Agente (vê só seus leads)</option><option value="admin">Admin (vê tudo)</option></select>
+      </div>
+      <div class="field">
+        <label>Atendente vinculado</label>
+        <select id="usr-attendant"><option value="">— Nenhum —</option></select>
+        <p class="hint">Vincule ao atendente para receber os leads da fila</p>
+      </div>
+      <div id="usrModalMsg" style="display:none;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUser()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lead Detail Modal -->
+<div class="modal-overlay" id="leadModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Detalhes do Lead</h3>
+      <button class="modal-close" onclick="closeModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="leadDetailContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="deleteLeadBtn">Excluir Lead</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Fechar</button>
+      <button class="btn btn-primary" onclick="saveLead()">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Kanban Label Modal -->
+<div class="edit-label-modal" id="editLabelModal">
+  <div class="edit-label-box">
+    <h3>Renomear Etapa</h3>
+    <div class="field">
+      <label for="editLabelInput">Nome da etapa</label>
+      <input type="text" id="editLabelInput" placeholder="Ex: Aguardando retorno" maxlength="30" />
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="saveKanbanLabel()">Salvar</button>
+      <button class="btn btn-secondary" onclick="closeEditLabel()">Cancelar</button>
+      <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="resetKanbanLabel()">Redefinir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   STATE
+============================================================ */
+let token = localStorage.getItem('crm_token') || '';
+let userRole = 'admin';
+let currentLead = null;
+let currentAttendant = null;
+let currentUser = null;
+let leadsPage = 1;
+let leadsTotal = 0;
+const LIMIT = 25;
+
+const INTEREST_LABELS = {
+  'luzes-do-rio':            'Luzes do Rio – São Cristóvão',
+  'residencial-cartola':     'Residencial Cartola – São Cristóvão',
+  'nova-norte-raizes':       'Res. Nova Norte Raízes – Irajá',
+  'caminhos-guanabara':      'Caminhos da Guanabara – Niterói',
+  'farol-guanabara':         'Farol da Guanabara – Porto',
+  'residencial-pixinguinha': 'Res. Pixinguinha – Porto',
+  'americas-19':             'Américas 19 – Recreio',
+  'metropolitan-dream':      'Metropolitan Dream – Barra Olímpica',
+  'cury-niteroi':            'Cury Niterói – Em Breve',
+  'cury-piedade':            'Cury Piedade – Em Breve',
+};
+const STATUS_LABELS = {
+  novo: 'Novo', em_atendimento: 'Em Atendimento', convertido: 'Convertido', perdido: 'Perdido'
+};
+
+/* ============================================================
+   UTILS
+============================================================ */
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show toast-${type}`;
+  setTimeout(() => el.className = '', 3200);
+}
+
+function showMsg(elId, msg, type = 'success') {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = type === 'success' ? 'success-msg' : 'error-msg';
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro desconhecido');
+  return data;
+}
+
+function formatDate(str) {
+  return new Date(str).toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function badgeHtml(status) {
+  const cls = { novo: 'badge-novo', em_atendimento: 'badge-atend', convertido: 'badge-conv', perdido: 'badge-perdido' }[status] || 'badge-novo';
+  return `<span class="badge ${cls}">${STATUS_LABELS[status] || status}</span>`;
+}
+
+/* ============================================================
+   AUTH
+============================================================ */
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  btn.innerHTML = '<span class="spinner"></span> Entrando...';
+  btn.disabled = true;
+  errEl.style.display = 'none';
+
+  try {
+    const data = await (await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('l-user').value,
+        password: document.getElementById('l-pass').value,
+      }),
+    })).json();
+
+    if (data.error) throw new Error(data.error);
+    token = data.token;
+    localStorage.setItem('crm_token', token);
+    initApp(data.username, data.role || 'admin');
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.innerHTML = 'Entrar';
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  token = '';
+  localStorage.removeItem('crm_token');
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+});
+
+async function checkAuth() {
+  if (!token) return;
+  try {
+    const data = await api('GET', '/api/auth/check');
+    if (data.ok) initApp(data.username, data.role || 'admin');
+  } catch {
+    token = '';
+    localStorage.removeItem('crm_token');
+  }
+}
+
+function initApp(username, role) {
+  userRole = role || 'admin';
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  document.getElementById('userNameDisplay').textContent = username;
+  document.getElementById('userAvatar').textContent = username[0].toUpperCase();
+  // Mostrar/ocultar itens admin-only
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = userRole === 'admin' ? '' : 'none';
+  });
+  loadDashboard();
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => navigate(item.dataset.page));
+});
+
+function navigate(page) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === page + 'Page'));
+  if (page === 'dashboard')  loadDashboard();
+  if (page === 'leads')      { leadsPage = 1; loadLeads(); }
+  if (page === 'kanban')     loadKanban();
+  if (page === 'config')     loadConfig();
+  if (page === 'attendants') loadAttendants();
+  if (page === 'users')      loadUsers();
+  if (page === 'analytics')  loadAnalytics();
+}
+
+/* ============================================================
+   CONFIG TABS
+============================================================ */
+document.querySelectorAll('.config-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+  });
+});
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+async function loadDashboard() {
+  try {
+    const stats = await api('GET', '/api/leads/stats');
+    document.getElementById('statTotal').textContent = stats.total;
+    document.getElementById('statNovo').textContent = stats.novo;
+    document.getElementById('statAtend').textContent = stats.em_atendimento;
+    document.getElementById('statConv').textContent = stats.convertido;
+    document.getElementById('statToday').textContent = stats.today;
+
+    if (stats.novo > 0) {
+      const badge = document.getElementById('newLeadsBadge');
+      badge.textContent = stats.novo;
+      badge.style.display = 'inline';
+    }
+
+    const { leads } = await api('GET', '/api/leads?limit=8');
+    const tbody = document.getElementById('recentLeadsTable');
+    if (!leads.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum lead ainda.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = leads.map(l => `
+      <tr>
+        <td><strong>${l.name}</strong></td>
+        <td><a href="tel:${l.phone}" style="color:var(--red)">${l.phone}</a></td>
+        <td>${INTEREST_LABELS[l.interest] || l.interest || '—'}</td>
+        <td>${badgeHtml(l.status)}</td>
+        <td style="color:var(--gray);font-size:.82rem">${formatDate(l.created_at)}</td>
+        <td><div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openLead(${l.id})">Ver</button>
+          <a class="btn btn-green btn-sm" href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank">WA</a>
+        </div></td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+/* ============================================================
+   LEADS
+============================================================ */
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => { leadsPage = 1; loadLeads(); }, 400);
+});
+document.getElementById('filterStatus').addEventListener('change', () => { leadsPage = 1; loadLeads(); });
+document.getElementById('filterInterest').addEventListener('change', () => { leadsPage = 1; loadLeads(); });
+
+async function loadLeads() {
+  const search   = document.getElementById('searchInput').value;
+  const status   = document.getElementById('filterStatus').value;
+  const interest = document.getElementById('filterInterest').value;
+  const params   = new URLSearchParams({ search, status, interest, page: leadsPage, limit: LIMIT });
+
+  try {
+    const data = await api('GET', `/api/leads?${params}`);
+    leadsTotal = data.total;
+
+    const tbody = document.getElementById('leadsTable');
+    if (!data.leads.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <p>Nenhum lead encontrado.</p>
+      </div></td></tr>`;
+    } else {
+      tbody.innerHTML = data.leads.map(l => `
+        <tr>
+          <td style="color:var(--gray);font-size:.8rem">#${l.id}</td>
+          <td><strong>${l.name}</strong></td>
+          <td>
+            <a href="tel:${l.phone}" style="color:var(--red)">${l.phone}</a>
+            ${l.phone_raw && l.phone_raw !== l.phone ? `<div style="font-size:.73rem;color:var(--gray);margin-top:2px" title="Como o cliente digitou">${l.phone_raw}</div>` : ''}
+          </td>
+          <td style="color:var(--gray);font-size:.85rem">${l.email || '—'}</td>
+          <td style="font-size:.85rem">${INTEREST_LABELS[l.interest] || l.interest || '—'}</td>
+          <td style="font-size:.82rem;color:var(--gray)">${l.attendant_name || '—'}</td>
+          <td>${badgeHtml(l.status)}</td>
+          <td style="color:var(--gray);font-size:.82rem;white-space:nowrap">${formatDate(l.created_at)}</td>
+          <td><div class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="openLead(${l.id})">Detalhes</button>
+            <a class="btn btn-green btn-sm" href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank">WA</a>
+          </div></td>
+        </tr>
+      `).join('');
+    }
+
+    const start = (leadsPage - 1) * LIMIT + 1;
+    const end   = Math.min(leadsPage * LIMIT, leadsTotal);
+    document.getElementById('paginationInfo').textContent =
+      leadsTotal ? `${start}–${end} de ${leadsTotal}` : '0 resultados';
+    document.getElementById('prevPage').disabled = leadsPage <= 1;
+    document.getElementById('nextPage').disabled = end >= leadsTotal;
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function changePage(delta) {
+  leadsPage = Math.max(1, leadsPage + delta);
+  loadLeads();
+}
+
+/* ============================================================
+   LEAD DETAIL MODAL
+============================================================ */
+async function openLead(id) {
+  try {
+    const { leads } = await api('GET', `/api/leads?page=1&limit=200`);
+    const lead = leads.find(l => l.id === id);
+    if (!lead) return;
+    currentLead = lead;
+
+    document.getElementById('leadDetailContent').innerHTML = `
+      <div class="detail-row"><span class="lbl">Nome</span><span class="val"><strong>${lead.name}</strong></span></div>
+      <div class="detail-row"><span class="lbl">Telefone</span><span class="val">
+        <a href="tel:${lead.phone}" style="color:var(--red)">${lead.phone}</a>
+        ${lead.phone_raw && lead.phone_raw !== lead.phone
+          ? `<span style="display:block;font-size:.78rem;color:var(--gray);margin-top:3px">Digitado: ${lead.phone_raw}</span>`
+          : ''}
+      </span></div>
+      <div class="detail-row"><span class="lbl">E-mail</span><span class="val">${lead.email || '—'}</span></div>
+      <div class="detail-row"><span class="lbl">Empreendimento</span><span class="val">${INTEREST_LABELS[lead.interest] || lead.interest || '—'}</span></div>
+      <div class="detail-row"><span class="lbl">Mensagem</span><span class="val" style="white-space:pre-wrap">${lead.message || '—'}</span></div>
+      <div class="detail-row"><span class="lbl">Recebido em</span><span class="val">${formatDate(lead.created_at)}</span></div>
+      <hr style="margin:18px 0;border:none;border-top:1px solid var(--border)">
+      <div class="field">
+        <label>Status</label>
+        <select id="leadStatusSel">
+          ${['novo','em_atendimento','convertido','perdido'].map(s =>
+            `<option value="${s}" ${lead.status === s ? 'selected' : ''}>${STATUS_LABELS[s]}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Anotações</label>
+        <textarea id="leadNotes" rows="4" placeholder="Registre aqui informações do atendimento...">${lead.notes || ''}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <a href="https://wa.me/55${lead.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-green btn-sm">Abrir WhatsApp</a>
+        <a href="tel:${lead.phone}" class="btn btn-secondary btn-sm">Ligar</a>
+      </div>
+    `;
+
+    document.getElementById('deleteLeadBtn').onclick = () => deleteLead(lead.id);
+    document.getElementById('leadModal').classList.add('open');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function closeModal() {
+  document.getElementById('leadModal').classList.remove('open');
+  currentLead = null;
+}
+
+async function saveLead() {
+  if (!currentLead) return;
+  try {
+    await api('PUT', `/api/leads/${currentLead.id}`, {
+      status: document.getElementById('leadStatusSel').value,
+      notes:  document.getElementById('leadNotes').value,
+    });
+    closeModal();
+    toast('Lead atualizado com sucesso!');
+    loadLeads();
+    loadDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteLead(id) {
+  if (!confirm('Tem certeza que deseja excluir este lead? Esta ação não pode ser desfeita.')) return;
+  try {
+    await api('DELETE', `/api/leads/${id}`);
+    closeModal();
+    toast('Lead excluído.');
+    loadLeads();
+    loadDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+document.getElementById('leadModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('leadModal')) closeModal();
+});
+
+/* ============================================================
+   EXPORT EXCEL
+============================================================ */
+async function exportExcel() {
+  try {
+    const params = new URLSearchParams({
+      status:    document.getElementById('filterStatus').value,
+      interest:  document.getElementById('filterInterest').value,
+      search:    document.getElementById('searchInput').value,
+    });
+    const res = await fetch(`/api/leads/export-excel?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Erro ao exportar'); }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `leads_centralcuryvendas_${new Date().toISOString().slice(0,10)}.xlsx`;
+    a.click();
+    toast('Planilha Excel gerada com sucesso!', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ============================================================
+   CONFIG
+============================================================ */
+async function loadConfig() {
+  try {
+    const cfg = await api('GET', '/api/config');
+
+    document.getElementById('cfg-wa-number').value  = cfg.whatsapp_number || '';
+    document.getElementById('cfg-wa-message').value = cfg.whatsapp_message || '';
+    updateWaPreviewLink(cfg.whatsapp_number, cfg.whatsapp_message);
+
+    document.getElementById('cfg-email-enabled').checked = cfg.email_enabled === 'true';
+    document.getElementById('cfg-email-to').value    = cfg.email_to || '';
+    document.getElementById('cfg-email-from').value  = cfg.email_from || '';
+    document.getElementById('cfg-smtp-host').value   = cfg.email_smtp_host || '';
+    document.getElementById('cfg-smtp-port').value   = cfg.email_smtp_port || '';
+    document.getElementById('cfg-smtp-user').value   = cfg.email_smtp_user || '';
+    document.getElementById('cfg-smtp-pass').value   = cfg.email_smtp_pass || '';
+    document.getElementById('cfg-smtp-secure').value = cfg.email_smtp_secure || 'false';
+
+    document.getElementById('cfg-webhook-enabled').checked = cfg.webhook_enabled === 'true';
+    document.getElementById('cfg-webhook-url').value    = cfg.webhook_url || '';
+    document.getElementById('cfg-webhook-secret').value = cfg.webhook_secret || '';
+
+    document.getElementById('cfg-evolution-enabled').checked  = cfg.evolution_enabled === 'true';
+    document.getElementById('cfg-evolution-url').value        = cfg.evolution_url || '';
+    document.getElementById('cfg-evolution-instance').value   = cfg.evolution_instance || '';
+    document.getElementById('cfg-evolution-apikey').value     = cfg.evolution_apikey || '';
+    document.getElementById('cfg-evolution-phone').value      = cfg.evolution_phone || '';
+    document.getElementById('cfg-evolution-message').value    = cfg.evolution_message || '';
+
+    // Rastreamento
+    document.getElementById('cfg-gads-tag-id').value  = cfg.gads_tag_id  || '';
+    document.getElementById('cfg-gads-label').value   = cfg.gads_conversion_label || '';
+    document.getElementById('cfg-gtm-id').value        = cfg.gtm_id       || '';
+    document.getElementById('cfg-custom-head').value   = cfg.custom_head_code || '';
+    document.getElementById('cfg-custom-body').value   = cfg.custom_body_code || '';
+    updateGadsPreview(cfg.gads_tag_id, cfg.gads_conversion_label);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function updateGadsPreview(tagId, label) {
+  const el = document.getElementById('gadsPreview');
+  if (!el) return;
+  if (tagId && label) el.textContent = `send_to: "${tagId}/${label}"`;
+  else if (tagId) el.textContent = `Tag: ${tagId} (sem label de conversão)`;
+  else el.textContent = '';
+}
+
+async function saveTrackingConfig() {
+  try {
+    const tagId  = document.getElementById('cfg-gads-tag-id').value.trim();
+    const label  = document.getElementById('cfg-gads-label').value.trim();
+    const gtmId  = document.getElementById('cfg-gtm-id').value.trim();
+    const head   = document.getElementById('cfg-custom-head').value;
+    const body   = document.getElementById('cfg-custom-body').value;
+
+    await api('PUT', '/api/config', {
+      gads_tag_id:           tagId,
+      gads_conversion_label: label,
+      gtm_id:                gtmId,
+      custom_head_code:      head,
+      custom_body_code:      body,
+    });
+
+    updateGadsPreview(tagId, label);
+    toast('Configurações de rastreamento salvas!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function updateWaPreviewLink(num, msg) {
+  const link = document.getElementById('waPreviewLink');
+  if (link) link.href = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+}
+
+async function saveWhatsAppConfig() {
+  const number  = document.getElementById('cfg-wa-number').value.trim();
+  const message = document.getElementById('cfg-wa-message').value.trim();
+  try {
+    await api('PUT', '/api/config', { whatsapp_number: number, whatsapp_message: message });
+    updateWaPreviewLink(number, message);
+    showMsg('waConfigMsg', '✓ Configurações salvas com sucesso!', 'success');
+    toast('Botão WhatsApp atualizado!');
+  } catch (e) { showMsg('waConfigMsg', e.message, 'error'); }
+}
+
+async function saveEmailConfig() {
+  const smtpPass = document.getElementById('cfg-smtp-pass').value;
+  try {
+    await api('PUT', '/api/config', {
+      email_enabled:    document.getElementById('cfg-email-enabled').checked ? 'true' : 'false',
+      email_to:         document.getElementById('cfg-email-to').value.trim(),
+      email_from:       document.getElementById('cfg-email-from').value.trim(),
+      email_smtp_host:  document.getElementById('cfg-smtp-host').value.trim(),
+      email_smtp_port:  document.getElementById('cfg-smtp-port').value.trim(),
+      email_smtp_user:  document.getElementById('cfg-smtp-user').value.trim(),
+      email_smtp_secure:document.getElementById('cfg-smtp-secure').value,
+    });
+    // Salvar senha separado
+    if (smtpPass && smtpPass !== '••••••••') {
+      await api('PUT', '/api/config/smtp-pass', { email_smtp_pass: smtpPass });
+    }
+    showMsg('emailConfigMsg', '✓ Configurações salvas!', 'success');
+    toast('Config de e-mail salva!');
+  } catch (e) { showMsg('emailConfigMsg', e.message, 'error'); }
+}
+
+async function saveWebhookConfig() {
+  try {
+    await api('PUT', '/api/config', {
+      webhook_enabled: document.getElementById('cfg-webhook-enabled').checked ? 'true' : 'false',
+      webhook_url:     document.getElementById('cfg-webhook-url').value.trim(),
+      webhook_secret:  document.getElementById('cfg-webhook-secret').value.trim(),
+    });
+    showMsg('webhookConfigMsg', '✓ Webhook salvo!', 'success');
+    toast('Webhook configurado!');
+  } catch (e) { showMsg('webhookConfigMsg', e.message, 'error'); }
+}
+
+async function saveWaNotifyConfig() {
+  try {
+    await api('PUT', '/api/config', {
+      evolution_enabled:  document.getElementById('cfg-evolution-enabled').checked ? 'true' : 'false',
+      evolution_url:      document.getElementById('cfg-evolution-url').value.trim(),
+      evolution_instance: document.getElementById('cfg-evolution-instance').value.trim(),
+      evolution_apikey:   document.getElementById('cfg-evolution-apikey').value.trim(),
+      evolution_phone:    document.getElementById('cfg-evolution-phone').value.trim(),
+      evolution_message:  document.getElementById('cfg-evolution-message').value,
+    });
+    showMsg('waNotifyConfigMsg', '✓ Aviso WhatsApp salvo!', 'success');
+    toast('Config WhatsApp salva!');
+  } catch (e) { showMsg('waNotifyConfigMsg', e.message, 'error'); }
+}
+
+/* ---- Tests ---- */
+async function testEmail() {
+  try {
+    // Save first
+    await saveEmailConfig();
+    const btn = event.target;
+    btn.innerHTML = '<span class="spinner"></span> Enviando...';
+    btn.disabled = true;
+    const r = await api('POST', '/api/test/email');
+    toast(r.message);
+    btn.innerHTML = 'Enviar e-mail de teste';
+    btn.disabled = false;
+  } catch (e) {
+    toast(e.message, 'error');
+    const btn = event?.target;
+    if (btn) { btn.innerHTML = 'Enviar e-mail de teste'; btn.disabled = false; }
+  }
+}
+
+async function testWebhook() {
+  try {
+    await saveWebhookConfig();
+    const r = await api('POST', '/api/test/webhook');
+    toast(r.message);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function testWhatsApp() {
+  try {
+    await saveWaNotifyConfig();
+    const r = await api('POST', '/api/test/whatsapp');
+    toast(r.message);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ---- Change password ---- */
+async function changePassword() {
+  const cur  = document.getElementById('cfg-cur-pass').value;
+  const novo = document.getElementById('cfg-new-pass').value;
+  const conf = document.getElementById('cfg-new-pass2').value;
+  if (novo !== conf) return showMsg('securityMsg', 'As senhas não coincidem.', 'error');
+  if (novo.length < 6) return showMsg('securityMsg', 'A nova senha deve ter ao menos 6 caracteres.', 'error');
+  try {
+    await api('PUT', '/api/auth/password', { current_password: cur, new_password: novo });
+    document.getElementById('cfg-cur-pass').value  = '';
+    document.getElementById('cfg-new-pass').value  = '';
+    document.getElementById('cfg-new-pass2').value = '';
+    showMsg('securityMsg', '✓ Senha alterada com sucesso!', 'success');
+    toast('Senha alterada!');
+  } catch (e) { showMsg('securityMsg', e.message, 'error'); }
+}
+
+/* ============================================================
+   ATENDENTES
+============================================================ */
+async function loadAttendants() {
+  try {
+    const list = await api('GET', '/api/attendants');
+    const tbody = document.getElementById('attendantsTable');
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum atendente cadastrado.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(a => `
+      <tr>
+        <td style="color:var(--gray);font-size:.8rem">#${a.id}</td>
+        <td><strong>${a.name}</strong></td>
+        <td><a href="https://wa.me/${a.phone.replace(/\D/g,'')}" target="_blank" style="color:var(--green)">${a.phone}</a></td>
+        <td><span class="badge ${a.active ? 'badge-conv' : 'badge-perdido'}">${a.active ? 'Ativo' : 'Inativo'}</span></td>
+        <td style="color:var(--gray);font-size:.82rem">${formatDate(a.created_at)}</td>
+        <td><div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openAttendantModal(${JSON.stringify(a).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAttendant(${a.id})">Excluir</button>
+        </div></td>
+      </tr>
+    `).join('');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openAttendantModal(att) {
+  currentAttendant = att || null;
+  document.getElementById('attendantModalTitle').textContent = att ? 'Editar Atendente' : 'Novo Atendente';
+  document.getElementById('att-name').value   = att?.name  || '';
+  document.getElementById('att-phone').value  = att?.phone || '';
+  document.getElementById('att-active').value = att ? String(att.active) : '1';
+  document.getElementById('attModalMsg').style.display = 'none';
+  document.getElementById('attendantModal').classList.add('open');
+}
+
+function closeAttendantModal() {
+  document.getElementById('attendantModal').classList.remove('open');
+  currentAttendant = null;
+}
+
+async function saveAttendant() {
+  const name   = document.getElementById('att-name').value.trim();
+  const phone  = document.getElementById('att-phone').value.trim();
+  const active = document.getElementById('att-active').value;
+  if (!name || !phone) return showMsg('attModalMsg', 'Nome e telefone são obrigatórios.', 'error');
+  try {
+    if (currentAttendant) {
+      await api('PUT', `/api/attendants/${currentAttendant.id}`, { name, phone, active: parseInt(active) });
+    } else {
+      await api('POST', '/api/attendants', { name, phone, active: parseInt(active) });
+    }
+    closeAttendantModal();
+    toast(currentAttendant ? 'Atendente atualizado!' : 'Atendente criado!');
+    loadAttendants();
+  } catch(e) { showMsg('attModalMsg', e.message, 'error'); }
+}
+
+async function deleteAttendant(id) {
+  if (!confirm('Excluir este atendente? Os leads vinculados a ele não serão excluídos.')) return;
+  try {
+    await api('DELETE', `/api/attendants/${id}`);
+    toast('Atendente excluído.');
+    loadAttendants();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+document.getElementById('attendantModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('attendantModal')) closeAttendantModal();
+});
+
+/* ============================================================
+   USUÁRIOS
+============================================================ */
+async function loadUsers() {
+  try {
+    const [users, attendants] = await Promise.all([
+      api('GET', '/api/users'),
+      api('GET', '/api/attendants'),
+    ]);
+    const tbody = document.getElementById('usersTable');
+    if (!users.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum usuário cadastrado.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td style="color:var(--gray);font-size:.8rem">#${u.id}</td>
+        <td><strong>${u.username}</strong></td>
+        <td><span class="badge ${u.role === 'admin' ? 'badge-atend' : 'badge-novo'}">${u.role === 'admin' ? 'Admin' : 'Agente'}</span></td>
+        <td style="font-size:.85rem">${u.attendant_name || '—'}</td>
+        <td style="color:var(--gray);font-size:.82rem">${formatDate(u.created_at)}</td>
+        <td><div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openUserModal(${JSON.stringify(u).replace(/"/g,'&quot;')}, ${JSON.stringify(attendants).replace(/"/g,'&quot;')})">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Excluir</button>
+        </div></td>
+      </tr>
+    `).join('');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function openUserModal(usr, preloadedAttendants) {
+  currentUser = usr || null;
+  document.getElementById('userModalTitle').textContent = usr ? 'Editar Usuário' : 'Novo Usuário';
+  document.getElementById('usr-username').value  = usr?.username || '';
+  document.getElementById('usr-password').value  = '';
+  document.getElementById('usr-role').value      = usr?.role || 'agent';
+  document.getElementById('usr-pass-hint').style.display = usr ? 'block' : 'none';
+  document.getElementById('usrModalMsg').style.display = 'none';
+
+  // Preenche select de atendentes
+  const attendants = preloadedAttendants || await api('GET', '/api/attendants').catch(() => []);
+  const sel = document.getElementById('usr-attendant');
+  sel.innerHTML = '<option value="">— Nenhum —</option>' +
+    attendants.map(a => `<option value="${a.id}" ${usr?.attendant_id == a.id ? 'selected' : ''}>${a.name}</option>`).join('');
+
+  document.getElementById('userModal').classList.add('open');
+}
+
+function closeUserModal() {
+  document.getElementById('userModal').classList.remove('open');
+  currentUser = null;
+}
+
+async function saveUser() {
+  const username    = document.getElementById('usr-username').value.trim();
+  const password    = document.getElementById('usr-password').value;
+  const role        = document.getElementById('usr-role').value;
+  const attendant_id = document.getElementById('usr-attendant').value || null;
+
+  if (!username) return showMsg('usrModalMsg', 'Nome de usuário é obrigatório.', 'error');
+  if (!currentUser && password.length < 6) return showMsg('usrModalMsg', 'Senha deve ter ao menos 6 caracteres.', 'error');
+
+  try {
+    const body = { role, attendant_id };
+    if (!currentUser) { body.username = username; body.password = password; }
+    if (currentUser && password) body.password = password;
+
+    if (currentUser) {
+      await api('PUT', `/api/users/${currentUser.id}`, body);
+    } else {
+      await api('POST', '/api/users', body);
+    }
+    closeUserModal();
+    toast(currentUser ? 'Usuário atualizado!' : 'Usuário criado!');
+    loadUsers();
+  } catch(e) { showMsg('usrModalMsg', e.message, 'error'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm('Excluir este usuário?')) return;
+  try {
+    await api('DELETE', `/api/users/${id}`);
+    toast('Usuário excluído.');
+    loadUsers();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+document.getElementById('userModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('userModal')) closeUserModal();
+});
+
+/* ============================================================
+   KANBAN
+============================================================ */
+const KB_STATUSES = ['novo', 'em_atendimento', 'convertido', 'perdido'];
+const KB_COLORS   = { novo: '#2563eb', em_atendimento: '#d97706', convertido: '#16a34a', perdido: '#dc2626' };
+const KB_DEFAULT_LABELS = { novo: 'Novo', em_atendimento: 'Em Atendimento', convertido: 'Convertido', perdido: 'Perdido' };
+
+let kbAllLeads    = [];    // cache de todos os leads
+let kbDragId      = null;  // id do lead sendo arrastado
+let kbEditStatus  = null;  // status da coluna em edição
+let kbSearchTimer = null;
+
+function getKbLabels() {
+  return Object.assign({}, KB_DEFAULT_LABELS, JSON.parse(localStorage.getItem('kb_labels') || '{}'));
+}
+
+function debounceKanban() {
+  clearTimeout(kbSearchTimer);
+  kbSearchTimer = setTimeout(renderKanban, 350);
+}
+
+async function loadKanban() {
+  document.getElementById('kanbanBoard').innerHTML =
+    '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray)">Carregando leads…</div>';
+  try {
+    // Busca todos os leads (sem paginação) para o kanban
+    const data = await api('GET', '/api/leads?limit=1000&page=1');
+    kbAllLeads = data.leads || [];
+    renderKanban();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function renderKanban() {
+  const search    = (document.getElementById('kbSearch')?.value || '').trim().toLowerCase();
+  const dateFrom  = document.getElementById('kbDateFrom')?.value;
+  const dateTo    = document.getElementById('kbDateTo')?.value;
+  const interest  = document.getElementById('kbInterest')?.value || 'all';
+
+  // Filtra
+  const filtered = kbAllLeads.filter(l => {
+    if (interest !== 'all' && l.interest !== interest) return false;
+    if (search && !l.name.toLowerCase().includes(search) && !l.phone.includes(search)) return false;
+    if (dateFrom) {
+      const d = new Date(l.created_at);
+      if (d < new Date(dateFrom + 'T00:00:00')) return false;
+    }
+    if (dateTo) {
+      const d = new Date(l.created_at);
+      if (d > new Date(dateTo + 'T23:59:59')) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('kbTotal').textContent = `${filtered.length} lead${filtered.length !== 1 ? 's' : ''}`;
+
+  // Agrupa por status
+  const groups = {};
+  KB_STATUSES.forEach(s => { groups[s] = []; });
+  filtered.forEach(l => {
+    const s = l.status || 'novo';
+    if (groups[s]) groups[s].push(l);
+    else groups['novo'].push(l);
+  });
+
+  const labels = getKbLabels();
+  const board  = document.getElementById('kanbanBoard');
+  board.innerHTML = '';
+
+  KB_STATUSES.forEach(status => {
+    const cards = groups[status];
+    const col   = document.createElement('div');
+    col.className = 'kb-col';
+    col.dataset.status = status;
+
+    // Drag-over handlers
+    col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('drag-over'); });
+    col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+    col.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      if (kbDragId === null) return;
+      const lead = kbAllLeads.find(l => l.id === kbDragId);
+      if (!lead || lead.status === status) return;
+      try {
+        await api('PUT', `/api/leads/${kbDragId}`, { status, notes: lead.notes || '' });
+        lead.status = status;
+        toast(`Lead movido para "${labels[status]}"`, 'success');
+        renderKanban();
+        loadDashboard();
+      } catch (e) { toast(e.message, 'error'); }
+    });
+
+    col.innerHTML = `
+      <div class="kb-col__header">
+        <span class="kb-col__dot" style="background:${KB_COLORS[status]}"></span>
+        <span class="kb-col__title">${labels[status]}</span>
+        <span class="kb-col__count">${cards.length}</span>
+        <button class="kb-col__edit" onclick="openEditLabel('${status}')" title="Renomear etapa">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+      <div class="kb-col__cards" id="kb-cards-${status}">
+        ${cards.length === 0
+          ? '<div class="kb-col__empty">Nenhum lead aqui</div>'
+          : cards.map(l => buildKbCard(l)).join('')}
+      </div>
+    `;
+    board.appendChild(col);
+
+    // Adiciona eventos de drag nos cards
+    col.querySelectorAll('.kb-card').forEach(card => {
+      const id = parseInt(card.dataset.id);
+      card.addEventListener('dragstart', (e) => {
+        kbDragId = id;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => {
+        kbDragId = null;
+        card.classList.remove('dragging');
+      });
+    });
+  });
+}
+
+function buildKbCard(lead) {
+  const dateStr = new Date(lead.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit' });
+  const interest = INTEREST_LABELS[lead.interest] || lead.interest || '—';
+  const waPhone  = '55' + lead.phone.replace(/\D/g, '');
+  return `
+    <div class="kb-card kb-card--${lead.status || 'novo'}" draggable="true" data-id="${lead.id}">
+      <div class="kb-card__name">${lead.name}</div>
+      <div class="kb-card__phone">${lead.phone}</div>
+      <div class="kb-card__interest">${interest}</div>
+      <div class="kb-card__footer">
+        <span class="kb-card__date">${dateStr}</span>
+        <div class="kb-card__actions">
+          <button class="kb-card__btn kb-card__btn--detail" onclick="openLead(${lead.id})">Ver</button>
+          <a class="kb-card__btn kb-card__btn--wa" href="https://wa.me/${waPhone}" target="_blank">WA</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── Label editor ───────────────────────────── */
+function openEditLabel(status) {
+  kbEditStatus = status;
+  const labels = getKbLabels();
+  document.getElementById('editLabelInput').value = labels[status] || KB_DEFAULT_LABELS[status];
+  document.getElementById('editLabelModal').classList.add('open');
+  setTimeout(() => document.getElementById('editLabelInput').focus(), 80);
+}
+
+function closeEditLabel() {
+  document.getElementById('editLabelModal').classList.remove('open');
+  kbEditStatus = null;
+}
+
+function saveKanbanLabel() {
+  if (!kbEditStatus) return;
+  const val = document.getElementById('editLabelInput').value.trim();
+  if (!val) return;
+  const labels = getKbLabels();
+  labels[kbEditStatus] = val;
+  localStorage.setItem('kb_labels', JSON.stringify(labels));
+  closeEditLabel();
+  renderKanban();
+  toast('Etapa renomeada!');
+}
+
+function resetKanbanLabel() {
+  if (!kbEditStatus) return;
+  const labels = getKbLabels();
+  delete labels[kbEditStatus];
+  localStorage.setItem('kb_labels', JSON.stringify(labels));
+  closeEditLabel();
+  renderKanban();
+  toast('Nome redefinido para o padrão.');
+}
+
+document.getElementById('editLabelModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('editLabelModal')) closeEditLabel();
+});
+
+// Atualiza kanban após salvar lead pelo modal
+const _origSaveLead = saveLead;
+saveLead = async function() {
+  await _origSaveLead();
+  // Re-sync cache local
+  if (document.getElementById('kanbanPage').classList.contains('active')) {
+    await loadKanban();
+  }
+};
+
+/* ============================================================
+   ANALYTICS
+============================================================ */
+const _anCharts = {};
+
+function _anDestroy(id) {
+  if (_anCharts[id]) { _anCharts[id].destroy(); delete _anCharts[id]; }
+}
+
+function _anColor(i) {
+  const palette = ['#7b1c2e','#1a2e4a','#2563eb','#16a34a','#d97706','#7c3aed','#db2777','#0891b2','#65a30d','#ea580c'];
+  return palette[i % palette.length];
+}
+
+function _anMergeTimeline(visitors, leads) {
+  const map = {};
+  visitors.forEach(r => { map[r.day] = { day: r.day, visitors: r.visitors, pageviews: r.pageviews, leads: 0 }; });
+  leads.forEach(r => { if (map[r.day]) map[r.day].leads = r.leads; else map[r.day] = { day: r.day, visitors: 0, pageviews: 0, leads: r.leads }; });
+  return Object.values(map).sort((a,b) => a.day.localeCompare(b.day));
+}
+
+function _anFmtDay(str) {
+  const [,m,d] = str.split('-');
+  return `${d}/${m}`;
+}
+
+async function loadAnalytics() {
+  const days = document.getElementById('anDays').value;
+  let data;
+  try {
+    data = await api('GET', `/api/analytics?days=${days}`);
+  } catch(e) {
+    toast('Erro ao carregar analytics: ' + e.message, 'error');
+    return;
+  }
+
+  // ---- Real-time ----
+  document.getElementById('anRealtimeCount').textContent = data.realtime;
+  const rtPages = (data.realtimePages || []).slice(0,3).map(p => `${p.page} (${p.count})`).join(' · ');
+  document.getElementById('anRealtimePages').textContent = rtPages || '';
+
+  // ---- KPIs ----
+  const t = data.totals;
+  document.getElementById('anKpiVisitors').textContent  = (t.total_visitors || 0).toLocaleString('pt-BR');
+  document.getElementById('anKpiPageviews').textContent = (t.total_pageviews || 0).toLocaleString('pt-BR');
+  const ppv = t.total_visitors > 0 ? (t.total_pageviews / t.total_visitors).toFixed(1) : '0.0';
+  document.getElementById('anKpiPpv').textContent  = ppv;
+  document.getElementById('anKpiLeads').textContent = (t.total_leads || 0).toLocaleString('pt-BR');
+  document.getElementById('anKpiConv').textContent  = (t.conv_rate || '0.0') + '%';
+
+  // ---- Timeline chart ----
+  _anDestroy('timeline');
+  const merged = _anMergeTimeline(data.visitorsByDay || [], data.leadsByDay || []);
+  if (merged.length) {
+    const labels = merged.map(r => _anFmtDay(r.day));
+    _anCharts['timeline'] = new Chart(document.getElementById('chartTimeline'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Visitantes', data: merged.map(r => r.visitors), backgroundColor: 'rgba(37,99,235,.18)', borderColor: '#2563eb', borderWidth: 2, type: 'line', fill: true, tension: .35, pointRadius: 3 },
+          { label: 'Pageviews',  data: merged.map(r => r.pageviews), backgroundColor: 'rgba(100,116,139,.13)', borderColor: '#94a3b8', borderWidth: 1, type: 'line', fill: false, tension: .35, pointRadius: 0 },
+          { label: 'Leads',      data: merged.map(r => r.leads),    backgroundColor: 'rgba(123,28,46,.7)', borderRadius: 3 },
+        ],
+      },
+      options: { responsive: true, interaction: { mode: 'index' }, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  } else {
+    document.getElementById('chartTimeline').closest('.an-chart-box').innerHTML = '<h4>Visitantes &amp; Leads por dia</h4><div class="an-empty">Sem dados no período. O tracker começa a coletar a partir de agora.</div>';
+  }
+
+  // ---- Fontes ----
+  _anDestroy('sources');
+  const srcData = data.sources || [];
+  if (srcData.length) {
+    _anCharts['sources'] = new Chart(document.getElementById('chartSources'), {
+      type: 'doughnut',
+      data: {
+        labels: srcData.map(r => r.source),
+        datasets: [{ data: srcData.map(r => r.visitors), backgroundColor: srcData.map((_,i) => _anColor(i)), borderWidth: 2 }],
+      },
+      options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } },
+    });
+  } else {
+    document.getElementById('chartSources').closest('.an-chart-box').innerHTML = '<h4>Fonte de tráfego</h4><div class="an-empty">Sem dados ainda.</div>';
+  }
+
+  // ---- Dispositivos ----
+  _anDestroy('devices');
+  const devData = data.devices || [];
+  const devLabels = { desktop: 'Desktop', mobile: 'Mobile', tablet: 'Tablet' };
+  if (devData.length) {
+    _anCharts['devices'] = new Chart(document.getElementById('chartDevices'), {
+      type: 'doughnut',
+      data: {
+        labels: devData.map(r => devLabels[r.device] || r.device),
+        datasets: [{ data: devData.map(r => r.visitors), backgroundColor: ['#1a2e4a','#7b1c2e','#2563eb'], borderWidth: 2 }],
+      },
+      options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } } },
+    });
+  } else {
+    document.getElementById('chartDevices').closest('.an-chart-box').innerHTML = '<h4>Dispositivos</h4><div class="an-empty">Sem dados ainda.</div>';
+  }
+
+  // ---- Leads por empreendimento ----
+  _anDestroy('interests');
+  const intData = data.leadsByInterest || [];
+  if (intData.length) {
+    const intLabels = intData.map(r => (INTEREST_LABELS[r.interest] || r.interest || 'N/A').split(' – ')[0]);
+    _anCharts['interests'] = new Chart(document.getElementById('chartInterests'), {
+      type: 'bar',
+      data: {
+        labels: intLabels,
+        datasets: [{ label: 'Leads', data: intData.map(r => r.leads), backgroundColor: intData.map((_,i) => _anColor(i)), borderRadius: 4 }],
+      },
+      options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  } else {
+    document.getElementById('chartInterests').closest('.an-chart-box').innerHTML = '<h4>Leads por empreendimento</h4><div class="an-empty">Sem leads no período.</div>';
+  }
+
+  // ---- Meios ----
+  _anDestroy('mediums');
+  const medData = (data.mediums || []).filter(r => r.medium !== 'none');
+  if (medData.length) {
+    _anCharts['mediums'] = new Chart(document.getElementById('chartMediums'), {
+      type: 'bar',
+      data: {
+        labels: medData.map(r => r.medium),
+        datasets: [{ label: 'Visitantes', data: medData.map(r => r.visitors), backgroundColor: medData.map((_,i) => _anColor(i+3)), borderRadius: 4 }],
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+    });
+  } else {
+    document.getElementById('chartMediums').closest('.an-chart-box').innerHTML = '<h4>Canais (utm_medium)</h4><div class="an-empty">Sem dados de UTM medium ainda.</div>';
+  }
+
+  // ---- Top páginas ----
+  const pagesMax = Math.max(...(data.topPages || []).map(r => r.pageviews), 1);
+  document.getElementById('anTopPages').innerHTML = (data.topPages || []).length
+    ? (data.topPages || []).map(r => `
+        <tr>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.page}">${r.page}</td>
+          <td>${r.visitors.toLocaleString('pt-BR')}</td>
+          <td>${r.pageviews.toLocaleString('pt-BR')}</td>
+          <td style="width:80px"><span class="an-bar" style="width:${Math.round(r.pageviews/pagesMax*72)}px"></span></td>
+        </tr>`).join('')
+    : '<tr><td colspan="4" class="an-empty">Sem dados ainda.</td></tr>';
+
+  // ---- Campanhas ----
+  const campMax = Math.max(...(data.campaigns || []).map(r => r.visitors), 1);
+  document.getElementById('anCampaigns').innerHTML = (data.campaigns || []).length
+    ? (data.campaigns || []).map(r => `
+        <tr>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.campaign}">${r.campaign}</td>
+          <td>${r.visitors.toLocaleString('pt-BR')}</td>
+          <td>${r.pageviews.toLocaleString('pt-BR')}</td>
+          <td style="width:80px"><span class="an-bar" style="width:${Math.round(r.visitors/campMax*72)}px;background:#2563eb"></span></td>
+        </tr>`).join('')
+    : '<tr><td colspan="4" class="an-empty">Nenhuma campanha UTM rastreada ainda.</td></tr>';
+}
+
+// Auto-refresh real-time a cada 60s quando a página analytics estiver ativa
+setInterval(() => {
+  if (document.getElementById('analyticsPage')?.classList.contains('active')) {
+    loadAnalytics();
+  }
+}, 60 * 1000);
+
+/* ============================================================
+   INIT
+============================================================ */
+checkAuth();
+</script>
+</body>
+</html>

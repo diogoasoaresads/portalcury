@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title><%= emp.seoTitle %></title>
+  <meta name="description" content="<%= emp.seoDesc %>" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.centralcuryvendas.com.br/empreendimentos/<%= emp.slug %>" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.centralcuryvendas.com.br/empreendimentos/<%= emp.slug %>" />
+  <meta property="og:title" content="<%= emp.seoTitle %>" />
+  <meta property="og:description" content="<%= emp.seoDesc %>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/em-breve.css" />
+
+  <% if (tracking.gtm_id) { %>
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','<%= tracking.gtm_id %>');</script>
+  <!-- End Google Tag Manager -->
+  <% } %>
+
+  <% if (tracking.gads_tag_id) { %>
+  <!-- Google Ads / gtag.js -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=<%= tracking.gads_tag_id %>"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','<%= tracking.gads_tag_id %>');<% if (tracking.gads_conversion_label) { %>window._GADS='<%= tracking.gads_tag_id %>/<%= tracking.gads_conversion_label %>';<% } %></script>
+  <!-- End Google Ads -->
+  <% } %>
+
+  <% if (tracking.custom_head_code) { %>
+  <%- tracking.custom_head_code %>
+  <% } %>
+</head>
+<body>
+
+  <% if (tracking.gtm_id) { %>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=<%= tracking.gtm_id %>" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  <% } %>
+  <% if (tracking.custom_body_code) { %>
+  <%- tracking.custom_body_code %>
+  <% } %>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="/" class="header__logo" aria-label="Central Cury Vendas">
+        <img src="/images/logo-cury.png" class="logo__img" alt="Central Cury Vendas" height="36">
+      </a>
+      <nav class="header__nav">
+        <a href="/">Início</a>
+        <a href="/#empreendimentos">Empreendimentos</a>
+        <a href="/#vantagens">Vantagens</a>
+        <a href="#pré-cadastro">Antecipe</a>
+      </nav>
+      <button class="header__menu-btn" id="menuBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Em Breve -->
+  <section class="eb-hero" style="background: <%= emp.heroGradient %>;" aria-label="Lançamento em breve">
+    <div class="eb-hero__overlay"></div>
+    <div class="container eb-hero__content">
+      <div class="eb-hero__left">
+        <div class="eb-hero__badges">
+          <span class="eb-badge eb-badge--coming">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Em Breve
+          </span>
+          <span class="eb-badge eb-badge--location">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <%= emp.bairro %>, <%= emp.city %>
+          </span>
+        </div>
+        <h1 class="eb-hero__title"><%= emp.name %></h1>
+        <p class="eb-hero__tagline"><%= emp.tagline %></p>
+        <p class="eb-hero__desc"><%= emp.description %></p>
+        <a href="#pré-cadastro" class="btn btn--primary btn--lg eb-hero__cta">
+          Antecipe o Lançamento
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+
+      <div class="eb-hero__right" id="pré-cadastro">
+        <div class="eb-form-card">
+          <div class="eb-form-card__header">
+            <span class="eb-form-card__eyebrow">Pré-Cadastro Gratuito</span>
+            <h2 class="eb-form-card__title">Antecipe o Lançamento</h2>
+            <p class="eb-form-card__sub">Seja o primeiro a receber informações e condições exclusivas de pré-lançamento</p>
+          </div>
+          <form class="lead-form" id="ebForm" novalidate>
+            <input type="hidden" name="interest" value="<%= emp.interestValue %>" />
+            <div class="form-group">
+              <label for="eb-name">Seu nome completo *</label>
+              <input type="text" id="eb-name" name="name" placeholder="Digite seu nome" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="eb-phone">WhatsApp / Telefone *</label>
+              <input type="tel" id="eb-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" maxlength="16" inputmode="numeric" />
+              <span class="phone-hint">DDD + número, ex: (21) 9 8888-7777</span>
+            </div>
+            <div class="form-group">
+              <label for="eb-email">E-mail</label>
+              <input type="email" id="eb-email" name="email" placeholder="seu@email.com" autocomplete="email" />
+            </div>
+            <button type="submit" class="btn btn--primary btn--full">
+              Quero Ser Avisado do Lançamento
+            </button>
+            <p class="form-card__privacy">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              Seus dados estão protegidos. Não fazemos spam.
+            </p>
+          </form>
+          <div class="eb-form-success" id="ebFormSuccess" style="display:none;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <h3>Pré-cadastro realizado!</h3>
+            <p>Você será avisado em primeira mão quando o lançamento for anunciado. Fique ligado no seu WhatsApp!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="eb-hero__wave">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#f7f8fa"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Announcement Banner -->
+  <section class="eb-announce" aria-label="Anúncio de lançamento">
+    <div class="container eb-announce__inner">
+      <div class="eb-announce__icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+      </div>
+      <div class="eb-announce__text">
+        <strong>Novidade em <%= emp.city %>!</strong>
+        A Cury prepara um novo e incrível lançamento em <strong><%= emp.bairro %></strong>.
+        Faça seu pré-cadastro e garanta condições exclusivas antes de qualquer um.
+      </div>
+      <a href="#pré-cadastro" class="btn btn--primary btn--sm">Me Cadastrar</a>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section class="eb-benefits" aria-label="Benefícios da localização">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-header__eyebrow">Por Que <%= emp.bairro %>?</span>
+        <h2 class="section-header__title">Vantagens da Localização</h2>
+        <p class="section-header__subtitle">Conheça os diferenciais que fazem de <%= emp.bairro %> uma das melhores escolhas para morar</p>
+      </div>
+
+      <div class="eb-benefits__grid">
+        <% const iconMap = {
+          beach:    '<path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+          transport:'<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>',
+          quality:  '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+          education:'<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
+          commerce: '<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>',
+          valorization: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+          metro:    '<rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>',
+          highway:  '<line x1="3" y1="12" x2="21" y2="12"/><polyline points="15 6 21 12 15 18"/>',
+          mcmv:     '<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+          community:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>',
+          growth:   '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+        }; %>
+        <% emp.benefits.forEach(function(b) { %>
+        <div class="eb-benefit-card">
+          <div class="eb-benefit-card__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <%- iconMap[b.icon] || iconMap.quality %>
+            </svg>
+          </div>
+          <h3 class="eb-benefit-card__title"><%= b.title %></h3>
+          <p class="eb-benefit-card__desc"><%= b.desc %></p>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Section -->
+  <section class="eb-trust" aria-label="Por que escolher a Cury">
+    <div class="container">
+      <div class="section-header section-header--light">
+        <span class="section-header__eyebrow">30+ Anos de História</span>
+        <h2 class="section-header__title">A Cury Que Você Já Conhece</h2>
+        <p class="section-header__subtitle">Mais de 60 mil famílias atendidas com qualidade, segurança e as melhores condições de financiamento</p>
+      </div>
+      <div class="eb-trust__grid">
+        <div class="eb-trust-item">
+          <span class="eb-trust-item__number">+30</span>
+          <span class="eb-trust-item__label">Anos de experiência</span>
+        </div>
+        <div class="eb-trust-item">
+          <span class="eb-trust-item__number">+60mil</span>
+          <span class="eb-trust-item__label">Famílias atendidas</span>
+        </div>
+        <div class="eb-trust-item">
+          <span class="eb-trust-item__number">R$55mil</span>
+          <span class="eb-trust-item__label">Subsídio disponível</span>
+        </div>
+        <div class="eb-trust-item">
+          <span class="eb-trust-item__number">360x</span>
+          <span class="eb-trust-item__label">Para financiar</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Final -->
+  <section class="eb-cta-final" aria-label="Cadastro final">
+    <div class="container eb-cta-final__inner">
+      <div class="eb-cta-final__text">
+        <h2>Não Perca o Lançamento!</h2>
+        <p>Quem se cadastra antes recebe as melhores condições, unidades com prioridade e atendimento exclusivo na hora do lançamento.</p>
+      </div>
+      <a href="#pré-cadastro" class="btn btn--primary btn--lg">
+        Fazer Pré-Cadastro Agora
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer mínimo -->
+  <footer class="footer" style="background:#1a2332; color:#a0aec0; padding:32px 0; text-align:center; font-size:.85rem;">
+    <div class="container">
+      <img src="/images/logo-cury.png" alt="Central Cury Vendas" height="28" style="opacity:.7; margin-bottom:12px; display:block; margin-left:auto; margin-right:auto;">
+      <p>Central Cury Vendas · Empreendimentos no Rio de Janeiro e Niterói</p>
+      <p style="margin-top:8px;"><a href="/" style="color:#7b1c2e;">← Ver todos os empreendimentos</a></p>
+    </div>
+  </footer>
+
+  <script>
+    // Sticky header
+    window.addEventListener('scroll', () => {
+      document.getElementById('header').classList.toggle('header--scrolled', window.scrollY > 50);
+    });
+
+    // Mobile menu
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      document.querySelector('.header__nav').classList.toggle('header__nav--open');
+    });
+
+    // Phone mask — mesma lógica do main.js
+    (function() {
+      const input = document.getElementById('eb-phone');
+      if (!input) return;
+      function normalizeDigits(raw) {
+        let d = raw.replace(/\D/g, '');
+        if (d.startsWith('0055'))                    d = d.slice(4);
+        else if (d.startsWith('55') && d.length > 11) d = d.slice(2);
+        if (d.length > 1 && d.startsWith('0'))        d = d.slice(1);
+        return d.slice(0, 11);
+      }
+      function applyMask(raw) {
+        const d = normalizeDigits(raw);
+        if (d.length <= 2)  return d.replace(/(\d{1,2})/, '($1');
+        if (d.length <= 6)  return d.replace(/(\d{2})(\d{1,4})/, '($1) $2');
+        if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
+                            return d.replace(/(\d{2})(\d{1})(\d{4})(\d{1,4})/, '($1) $2 $3-$4');
+      }
+      input.addEventListener('keydown', e => {
+        const ctrl = e.ctrlKey || e.metaKey;
+        const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
+        if (ctrl || allowed.includes(e.key)) return;
+        if (!/^\d$/.test(e.key)) e.preventDefault();
+      });
+      input.addEventListener('input', () => { input.value = applyMask(input.value); });
+      input.addEventListener('paste', e => {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text');
+        input.value = applyMask(pasted);
+      });
+    })();
+
+    // Form submit
+    document.getElementById('ebForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const btn = form.querySelector('button[type=submit]');
+      const name = form.querySelector('[name=name]').value.trim();
+      const phone = form.querySelector('[name=phone]').value.trim();
+      const interest = form.querySelector('[name=interest]').value;
+      const email = form.querySelector('[name=email]') ? form.querySelector('[name=email]').value.trim() : '';
+
+      const phoneDigits = phone.replace(/\D/g, '');
+      if (!name || phoneDigits.length < 10) {
+        alert('Por favor, preencha nome e telefone completo (DDD + número).');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+
+      try {
+        const res = await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, email, interest }),
+        });
+        if (res.ok) {
+          document.getElementById('ebForm').style.display = 'none';
+          document.getElementById('ebFormSuccess').style.display = 'flex';
+          // Google Ads conversion
+          if (typeof gtag !== 'undefined' && window._GADS) {
+            gtag('event', 'conversion', { 'send_to': window._GADS });
+          }
+        } else {
+          throw new Error('Erro no servidor');
+        }
+      } catch {
+        btn.disabled = false;
+        btn.textContent = 'Quero Ser Avisado do Lançamento';
+        alert('Ops! Tente novamente em instantes.');
+      }
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = decodeURIComponent(a.getAttribute('href').slice(1));
+        const el = document.getElementById(id);
+        if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      });
+    });
+  </script>
+  <script src="/js/analytics.js"></script>
+</body>
+</html>

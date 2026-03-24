@@ -1,0 +1,387 @@
+/* ============================================================
+   EM BREVE – Landing page de pré-lançamento
+   ============================================================ */
+
+/* ── Hero ──────────────────────────────────────────────────── */
+.eb-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 100px 0 0;
+}
+
+.eb-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(0,0,0,.15) 0%, rgba(0,0,0,.4) 100%);
+  pointer-events: none;
+}
+
+.eb-hero__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 60px;
+  align-items: center;
+  padding-bottom: 80px;
+}
+
+/* Badges */
+.eb-hero__badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.eb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-family: var(--font-heading);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.eb-badge--coming {
+  background: rgba(123, 28, 46, .2);
+  border: 1.5px solid rgba(123, 28, 46, .6);
+  color: #ffb38a;
+  animation: eb-pulse 2s ease-in-out infinite;
+}
+
+.eb-badge--location {
+  background: rgba(255,255,255,.15);
+  border: 1.5px solid rgba(255,255,255,.3);
+  color: rgba(255,255,255,.9);
+  backdrop-filter: blur(8px);
+}
+
+@keyframes eb-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(123,28,46,.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(123,28,46,0); }
+}
+
+/* Hero text */
+.eb-hero__title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.eb-hero__tagline {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: rgba(255,255,255,.85);
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+.eb-hero__desc {
+  font-size: .97rem;
+  color: rgba(255,255,255,.75);
+  line-height: 1.7;
+  margin-bottom: 36px;
+  max-width: 520px;
+}
+
+.eb-hero__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+/* Form card */
+.eb-form-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.eb-form-card__header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.eb-form-card__eyebrow {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.eb-form-card__title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-secondary);
+  margin-bottom: 8px;
+}
+
+.eb-form-card__sub {
+  font-size: .85rem;
+  color: var(--color-text-light);
+  line-height: 1.5;
+}
+
+/* Success state */
+.eb-form-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 0;
+  gap: 12px;
+}
+
+.eb-form-success h3 {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.eb-form-success p {
+  font-size: .9rem;
+  color: var(--color-text-light);
+  line-height: 1.6;
+}
+
+/* Wave */
+.eb-hero__wave {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  line-height: 0;
+}
+
+.eb-hero__wave svg {
+  width: 100%;
+  height: 80px;
+}
+
+/* ── Announcement Banner ────────────────────────────────────── */
+.eb-announce {
+  background: var(--color-secondary);
+  padding: 20px 0;
+}
+
+.eb-announce__inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.eb-announce__icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.eb-announce__text {
+  flex: 1;
+  font-size: .92rem;
+  color: rgba(255,255,255,.85);
+  line-height: 1.5;
+}
+
+.eb-announce__text strong {
+  color: #fff;
+}
+
+/* ── Benefits Section ───────────────────────────────────────── */
+.eb-benefits {
+  background: var(--color-bg);
+  padding: 80px 0;
+}
+
+.eb-benefits__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.eb-benefit-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--color-border);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.eb-benefit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(123,28,46,.3);
+}
+
+.eb-benefit-card__icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, rgba(44,10,16,.08), rgba(123,28,46,.1));
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-secondary);
+  margin-bottom: 20px;
+}
+
+.eb-benefit-card__title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 10px;
+}
+
+.eb-benefit-card__desc {
+  font-size: .88rem;
+  color: var(--color-text-light);
+  line-height: 1.65;
+}
+
+/* ── Trust Section ──────────────────────────────────────────── */
+.eb-trust {
+  background: var(--color-secondary);
+  padding: 64px 0;
+}
+
+.eb-trust .section-header--light .section-header__eyebrow { color: rgba(255,255,255,.6); }
+.eb-trust .section-header--light .section-header__title   { color: #fff; }
+.eb-trust .section-header--light .section-header__subtitle { color: rgba(255,255,255,.7); }
+
+.eb-trust__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  margin-top: 48px;
+}
+
+.eb-trust-item {
+  text-align: center;
+  padding: 28px 20px;
+  background: rgba(255,255,255,.06);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.1);
+}
+
+.eb-trust-item__number {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.eb-trust-item__label {
+  font-size: .83rem;
+  color: rgba(255,255,255,.65);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 600;
+}
+
+/* ── CTA Final ──────────────────────────────────────────────── */
+.eb-cta-final {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dk) 100%);
+  padding: 60px 0;
+}
+
+.eb-cta-final__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.eb-cta-final__text h2 {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.eb-cta-final__text p {
+  font-size: .95rem;
+  color: rgba(255,255,255,.85);
+  line-height: 1.6;
+  max-width: 540px;
+}
+
+.eb-cta-final .btn--primary {
+  background: #fff;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.eb-cta-final .btn--primary:hover {
+  background: #f0f0f0;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .eb-hero__content {
+    grid-template-columns: 1fr 400px;
+    gap: 40px;
+  }
+  .eb-benefits__grid { grid-template-columns: repeat(2, 1fr); }
+  .eb-trust__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .eb-hero {
+    min-height: auto;
+    padding: 80px 0 0;
+  }
+
+  .eb-hero__content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding-bottom: 60px;
+  }
+
+  .eb-hero__desc { max-width: 100%; }
+
+  .eb-announce__inner { gap: 12px; }
+  .eb-announce__icon { display: none; }
+
+  .eb-benefits__grid { grid-template-columns: 1fr; gap: 16px; }
+  .eb-trust__grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+  .eb-cta-final__inner {
+    flex-direction: column;
+    text-align: center;
+  }
+  .eb-cta-final__text p { max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .eb-form-card { padding: 28px 20px; }
+  .eb-trust__grid { grid-template-columns: 1fr 1fr; }
+}
