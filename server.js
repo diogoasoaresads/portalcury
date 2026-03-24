@@ -636,13 +636,14 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
 
   try {
     const body = req.body;
-    console.log('[WA-Webhook] Recebido:', JSON.stringify(body));
+    wa_debug_logs.unshift(`[${new Date().toISOString()}] Recebido: ${JSON.stringify(body).slice(0, 200)}...`);
+    if (wa_debug_logs.length > 20) wa_debug_logs.pop();
 
     const event = body?.event || body?.type || '';
-    // Aceita qualquer coisa que pareça uma mensagem ou evento upsert
     const looksLikeMessage = body?.data?.key || body?.message?.key || body?.key;
+    
     if (!event.toLowerCase().includes('message') && !looksLikeMessage) {
-      console.log('[WA-Webhook] Ignorando evento irrelevante:', event);
+      wa_debug_logs.unshift(`[${new Date().toISOString()}] Ignorado: evento irrelevante (${event})`);
       return;
     }
 
