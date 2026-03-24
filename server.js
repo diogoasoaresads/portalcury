@@ -431,12 +431,20 @@ async function evolutionCall(method, path, body, evoCfg) {
 
 // ---- Auth middleware ----
 function auth(req, res, next) {
+  let tokenStr = '';
   const header = req.headers.authorization || '';
-  if (!header.startsWith('Bearer ')) return res.status(401).json({ error: 'Não autorizado' });
+  if (header.startsWith('Bearer ')) {
+    tokenStr = header.slice(7);
+  } else if (req.query.token) {
+    tokenStr = req.query.token;
+  }
+
+  if (!tokenStr) return res.status(401).json({ error: 'Não autorizado (Token ausente)' });
+
   try {
-    req.user = jwt.verify(header.slice(7), JWT_SECRET);
+    req.user = jwt.verify(tokenStr, JWT_SECRET);
     next();
-  } catch {
+  } catch (err) {
     res.status(401).json({ error: 'Token inválido ou expirado' });
   }
 }
@@ -608,10 +616,11 @@ function fireNotifications(lead, cfg) {
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
 app.post('/webhook/wa-incoming', express.json(), (req, res) => {
-  res.sendStatus(200); // responde rápido para não timeout o Evolution
+  res.sendStatus(200); 
 
   try {
     const body = req.body;
+    console.log('[WA-Webhook] Payload:', JSON.stringify(body));
     // Evolution envia diferentes formatos; tratamos o mais comum
     const event = body?.event || body?.type || '';
     if (!['messages.upsert', 'MESSAGES_UPSERT'].includes(event) && !body?.data?.key) return;
