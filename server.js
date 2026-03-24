@@ -386,6 +386,7 @@ function upsertConversation(jid, name) {
   }
 }
 
+
 function saveMessage(convId, direction, body, messageId) {
   try {
     const info = db.prepare(`
@@ -444,18 +445,15 @@ async function evolutionCall(method, path, body, evoCfg) {
 
 // ---- Auth middleware ----
 function auth(req, res, next) {
-  let tokenStr = '';
-  const header = req.headers.authorization || '';
-  if (header.startsWith('Bearer ')) {
-    tokenStr = header.slice(7);
-  } else if (req.query.token) {
-    tokenStr = req.query.token;
+  const authHeader = req.headers.authorization;
+  const queryToken = req.query.token;
+  const token = (authHeader && authHeader.split(' ')[1]) || queryToken;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Não autorizado (Token ausente)' });
   }
-
-  if (!tokenStr) return res.status(401).json({ error: 'Não autorizado (Token ausente)' });
-
   try {
-    req.user = jwt.verify(tokenStr, JWT_SECRET);
+    req.user = jwt.verify(token, JWT_SECRET);
     next();
   } catch (err) {
     res.status(401).json({ error: 'Token inválido ou expirado' });

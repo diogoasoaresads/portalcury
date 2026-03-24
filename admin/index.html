@@ -2103,6 +2103,14 @@ function navigate(page) {
     loadWaUsers();
     initWaSSE();
   }
+  if (page === 'config') {
+    loadConfig();
+    // Atualiza link de debug com token atual
+    const debugBtn = document.querySelector('a[href*="/api/wa/debug-db"]');
+    if (debugBtn) {
+      debugBtn.href = `/api/wa/debug-db?token=${token}`;
+    }
+  }
 }
 
 /* ============================================================
