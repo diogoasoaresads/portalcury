@@ -1113,6 +1113,9 @@ h1, h2, h3, h4 {
   pointer-events: none;
   z-index: 1000;
 }
+@media (max-width: 480px) {
+  .wa-label { right: 58px; font-size: .75rem; padding: 6px 12px; }
+}
 .wa-label::after {
   content: '';
   position: absolute;
@@ -1240,7 +1243,7 @@ h1, h2, h3, h4 {
   .steps-grid { justify-content: center; }
   .step-item { max-width: 280px; }
 
-  .whatsapp-float span, .wa-label { display: none; }
+  .whatsapp-float span { display: none; }
   .whatsapp-float { padding: 16px; border-radius: 50%; }
 }
 
