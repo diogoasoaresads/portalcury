@@ -313,6 +313,7 @@ function nextAttendant(queueKey) {
 // SSE — Server-Sent Events para atendimento em tempo real
 // ============================================================
 const sseClients = new Map(); // userId → Set<res>
+let wa_debug_logs = []; // Logs temporários para diagnóstico
 
 function sseAdd(userId, res) {
   if (!sseClients.has(userId)) sseClients.set(userId, new Set());
@@ -1783,6 +1784,22 @@ app.get('/health', (_req, res) => {
     res.json({ status: 'ok', db: true, uptime: Math.floor(process.uptime()) });
   } catch {
     res.status(503).json({ status: 'error', db: false });
+  }
+});
+
+// ============================================================
+// DIAGNÓSTICO WHATSAPP
+// ============================================================
+app.get('/api/wa/debug-db', auth, (req, res) => {
+  try {
+    const counts = {
+      conversations: db.prepare('SELECT COUNT(*) as count FROM wa_conversations').get().count,
+      messages: db.prepare('SELECT COUNT(*) as count FROM wa_messages').get().count,
+      logs: wa_debug_logs
+    };
+    res.json(counts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

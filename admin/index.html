@@ -1516,7 +1516,7 @@
           <h4><span class="dot" style="background:var(--red)"></span>Diagnóstico Técnico</h4>
           <p class="hint">Use o link abaixo para verificar se o banco de dados está recebendo as mensagens da Evolution API.</p>
           <div style="margin-top:12px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="/api/wa/debug-db" target="_blank" class="btn btn-secondary btn-sm" id="waDebugLink" style="color:var(--red); border-color:var(--red)">🔍 Ver Estado do Banco de Dados (Debug)</a>
+            <button class="btn btn-secondary btn-sm" onclick="showWaLogs()" style="color:var(--red); border-color:var(--red)">🔍 Ver Logs de Conexão (Histórico)</button>
             <button class="btn btn-primary btn-sm" onclick="sendWaTest()" style="background:var(--red); border:none">🚀 Simular Mensagem de Entrada (Teste)</button>
           </div>
         </div>
@@ -2014,6 +2014,34 @@ function formatDate(str) {
 function badgeHtml(status) {
   const cls = { novo: 'badge-novo', em_atendimento: 'badge-atend', convertido: 'badge-conv', perdido: 'badge-perdido' }[status] || 'badge-novo';
   return `<span class="badge ${cls}">${STATUS_LABELS[status] || status}</span>`;
+}
+
+async function showWaLogs() {
+  try {
+    const data = await api('GET', '/api/wa/debug-db');
+    const logs = data.logs || [];
+    let html = `<b>Total Conversas:</b> ${data.conversations}<br>`;
+    html += `<b>Total Mensagens:</b> ${data.messages}<hr>`;
+    if (logs.length === 0) {
+      html += '<p>Nenhum log registrado ainda. Clique em "Simular" primeiro.</p>';
+    } else {
+      html += '<div style="max-height:300px; overflow-y:auto; font-family:monospace; font-size:12px; background:#f4f4f4; padding:10px; border-radius:4px;">';
+      logs.forEach(l => {
+        html += `<div style="margin-bottom:8px; border-bottom:1px solid #ddd; padding-bottom:4px">${l}</div>`;
+      });
+      html += '</div>';
+    }
+    
+    // Mostra num modal genérico (vou usar o toast ou um alert simples por enquanto)
+    Swal.fire({
+      title: 'Diagnóstico WhatsApp',
+      html: html,
+      width: '600px',
+      confirmButtonText: 'Fechar'
+    });
+  } catch (e) {
+    toast('Erro ao buscar logs: ' + e.message, 'error');
+  }
 }
 
 /* ============================================================
