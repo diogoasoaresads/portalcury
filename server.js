@@ -220,6 +220,8 @@ const DEFAULT_CONFIG = {
   custom_body_code: '',        // HTML/JS injetado após <body>
 
   // Atendimento WhatsApp
+  wa_atend_url:      '',       // URL específica para atendimento (opcional)
+  wa_atend_apikey:   '',       // API Key específica para atendimento (opcional)
   wa_atend_instance: '',       // Nome da instância de atendimento (separada da notificação)
   wa_atend_distribution: 'manual', // manual | round_robin
 };
@@ -404,11 +406,20 @@ async function evolutionSend(instance, apikey, url, phone, text) {
 }
 
 // Chama Evolution API genérica (GET/POST)
-async function evolutionCall(method, path, body, cfg) {
-  const url = `${(cfg.evolution_url || '').replace(/\/$/, '')}/${path}`;
+// Retorna config de Evolution para atendimento (com fallback para config geral)
+function getAtendEvoCfg(cfg) {
+  return {
+    url:      cfg.wa_atend_url      || cfg.evolution_url || '',
+    apikey:   cfg.wa_atend_apikey   || cfg.evolution_apikey || '',
+    instance: cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento',
+  };
+}
+
+async function evolutionCall(method, path, body, evoCfg) {
+  const url = `${(evoCfg.url || '').replace(/\/$/, '')}/${path}`;
   const opts = {
     method,
-    headers: { 'Content-Type': 'application/json', 'apikey': cfg.evolution_apikey || '' },
+    headers: { 'Content-Type': 'application/json', 'apikey': evoCfg.apikey || '' },
   };
   if (body) opts.body = JSON.stringify(body);
   const resp = await fetch(url, opts);
@@ -704,13 +715,13 @@ app.post('/api/wa/conversations/:id/send', auth, async (req, res) => {
   if (!conv) return res.status(404).json({ error: 'Conversa não encontrada.' });
 
   const cfg = getConfig();
-  if (!cfg.evolution_url || !cfg.evolution_instance || !cfg.evolution_apikey) {
+  const evo = getAtendEvoCfg(cfg);
+  if (!evo.url || !evo.apikey) {
     return res.status(503).json({ error: 'Evolution API não configurada.' });
   }
 
   try {
-    const instanceName = cfg.wa_atend_instance || cfg.evolution_instance;
-    await evolutionSend(instanceName, cfg.evolution_apikey, cfg.evolution_url, conv.contact_phone, text.trim());
+    await evolutionSend(evo.instance, evo.apikey, evo.url, conv.contact_phone, text.trim());
 
     const saved = saveMessage(conv.id, 'out', text.trim(), '');
 
@@ -758,10 +769,11 @@ app.patch('/api/wa/conversations/:id/read', auth, (req, res) => {
 // Conectar instância (cria se não existe) e retorna QR Code
 app.post('/api/wa/connect', auth, adminOnly, async (req, res) => {
   const cfg = getConfig();
-  if (!cfg.evolution_url || !cfg.evolution_apikey) {
-    return res.status(400).json({ error: 'Configure a URL e API Key da Evolution API primeiro (aba Aviso WhatsApp).' });
+  const evo = getAtendEvoCfg(cfg);
+  if (!evo.url || !evo.apikey) {
+    return res.status(400).json({ error: 'Configure a URL e API Key da Evolution API primeiro (nesta aba ou na aba Aviso WhatsApp).' });
   }
-  const instance = cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento';
+  const instance = evo.instance;
 
   try {
     console.log(`[WA] Tentando conectar instancia: ${instance} em ${cfg.evolution_url}`);
@@ -771,12 +783,12 @@ app.post('/api/wa/connect', auth, adminOnly, async (req, res) => {
       instanceName: instance,
       qrcode: true,
       integration: 'WHATSAPP-BAILEYS',
-    }, cfg);
+    }, evo);
     
     console.log(`[WA] Criar instancia: status=${createRes.status}`, createRes.data);
 
     // 2. Busca o QR code para conexão
-    const qr = await evolutionCall('GET', `instance/connect/${instance}`, null, cfg);
+    const qr = await evolutionCall('GET', `instance/connect/${instance}`, null, evo);
     
     if (!qr.ok) {
       console.error(`[WA] Erro ao buscar QR: status=${qr.status}`, qr.data);
@@ -796,10 +808,11 @@ app.post('/api/wa/connect', auth, adminOnly, async (req, res) => {
 // Status da instância
 app.get('/api/wa/status', auth, async (req, res) => {
   const cfg = getConfig();
-  if (!cfg.evolution_url || !cfg.evolution_apikey) return res.json({ status: 'not_configured' });
-  const instance = cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento';
+  const evo = getAtendEvoCfg(cfg);
+  if (!evo.url || !evo.apikey) return res.json({ status: 'not_configured' });
+  const instance = evo.instance;
   try {
-    const r = await evolutionCall('GET', `instance/fetchInstances?instanceName=${instance}`, null, cfg);
+    const r = await evolutionCall('GET', `instance/fetchInstances?instanceName=${instance}`, null, evo);
     const inst = Array.isArray(r.data) ? r.data[0] : r.data;
     res.json({ status: inst?.instance?.state || inst?.state || 'unknown', instance });
   } catch {
@@ -810,9 +823,10 @@ app.get('/api/wa/status', auth, async (req, res) => {
 // Desconectar instância
 app.post('/api/wa/disconnect', auth, adminOnly, async (req, res) => {
   const cfg = getConfig();
-  const instance = cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento';
+  const evo = getAtendEvoCfg(cfg);
+  const instance = evo.instance;
   try {
-    await evolutionCall('DELETE', `instance/logout/${instance}`, null, cfg);
+    await evolutionCall('DELETE', `instance/logout/${instance}`, null, evo);
     res.json({ ok: true });
   } catch (err) {
     res.status(502).json({ error: err.message });
