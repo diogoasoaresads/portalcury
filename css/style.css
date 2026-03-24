@@ -1246,7 +1246,8 @@ h1, h2, h3, h4 {
   .step-item { max-width: 280px; }
 
   .whatsapp-float span { display: none; }
-  .whatsapp-float { padding: 16px; border-radius: 50%; }
+  .whatsapp-float { padding: 16px; border-radius: 50%; overflow: visible; }
+  .wa-label { display: block !important; }
 }
 
 @media (max-width: 480px) {
