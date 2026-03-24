@@ -3722,10 +3722,10 @@ async function connectWaAtend() {
       qrEl.innerHTML = `<img src="${qrData.startsWith('data:') ? qrData : 'data:image/png;base64,' + qrData}" style="max-width:260px;border-radius:8px;border:1px solid var(--border)" alt="QR Code" />`;
       statusEl.textContent = 'Escaneie o QR Code com o WhatsApp no celular';
     } else {
-      statusEl.textContent = JSON.stringify(data.qr || data);
+      statusEl.textContent = 'Instância conectada (sem QR Code)';
     }
   } catch (err) {
-    statusEl.textContent = 'Erro: ' + err.message;
+    statusEl.textContent = 'Erro: ' + (err.message || 'Falha na conexão');
   }
 }
 

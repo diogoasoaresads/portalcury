@@ -759,23 +759,37 @@ app.patch('/api/wa/conversations/:id/read', auth, (req, res) => {
 app.post('/api/wa/connect', auth, adminOnly, async (req, res) => {
   const cfg = getConfig();
   if (!cfg.evolution_url || !cfg.evolution_apikey) {
-    return res.status(400).json({ error: 'Configure a URL e API Key da Evolution API primeiro.' });
+    return res.status(400).json({ error: 'Configure a URL e API Key da Evolution API primeiro (aba Aviso WhatsApp).' });
   }
   const instance = cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento';
 
   try {
-    // Tenta criar a instância
-    await evolutionCall('POST', `instance/create`, {
+    console.log(`[WA] Tentando conectar instancia: ${instance} em ${cfg.evolution_url}`);
+    
+    // 1. Tenta criar a instância (ignora erro se já existir)
+    const createRes = await evolutionCall('POST', `instance/create`, {
       instanceName: instance,
       qrcode: true,
       integration: 'WHATSAPP-BAILEYS',
     }, cfg);
+    
+    console.log(`[WA] Criar instancia: status=${createRes.status}`, createRes.data);
 
-    // Busca o QR code
+    // 2. Busca o QR code para conexão
     const qr = await evolutionCall('GET', `instance/connect/${instance}`, null, cfg);
+    
+    if (!qr.ok) {
+      console.error(`[WA] Erro ao buscar QR: status=${qr.status}`, qr.data);
+      return res.status(qr.status || 502).json({ 
+        error: 'Erro na Evolution API', 
+        details: qr.data?.response?.message || qr.data?.message || qr.data 
+      });
+    }
+
     res.json({ instance, qr: qr.data });
   } catch (err) {
-    res.status(502).json({ error: err.message });
+    console.error('[WA] Exception em connect:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
