@@ -906,7 +906,6 @@ h1, h2, h3, h4 {
   background: linear-gradient(135deg, #0d1f35 0%, #1a3a5c 100%);
   padding: 64px 0;
   position: relative;
-  overflow: hidden;
 }
 .cta-banner::before {
   content: '';
@@ -1086,6 +1085,7 @@ h1, h2, h3, h4 {
   font-size: .9rem;
   transition: all var(--transition);
   animation: pulse-wa 2.5s infinite;
+  overflow: visible;
 }
 .whatsapp-float:hover {
   background: #1fb855;
@@ -1101,7 +1101,9 @@ h1, h2, h3, h4 {
 /* Label above/beside button */
 .wa-label {
   position: absolute;
-  right: 64px;
+  right: calc(100% + 15px);
+  top: 50%;
+  transform: translateY(-50%);
   background: var(--color-white);
   color: var(--color-secondary);
   padding: 8px 16px;
@@ -1111,10 +1113,10 @@ h1, h2, h3, h4 {
   box-shadow: var(--shadow-md);
   animation: pulse-wa-label 2s infinite;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 2100;
 }
 @media (max-width: 480px) {
-  .wa-label { right: 58px; font-size: .75rem; padding: 6px 12px; }
+  .wa-label { font-size: .75rem; padding: 6px 12px; }
 }
 .wa-label::after {
   content: '';
