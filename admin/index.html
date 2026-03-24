@@ -1515,8 +1515,9 @@
         <div class="config-card" style="border: 1px dashed var(--red); background: rgba(220, 38, 38, 0.05);">
           <h4><span class="dot" style="background:var(--red)"></span>Diagnóstico Técnico</h4>
           <p class="hint">Use o link abaixo para verificar se o banco de dados está recebendo as mensagens da Evolution API.</p>
-          <div style="margin-top:12px">
-            <a href="/api/wa/debug-db" target="_blank" class="btn btn-secondary btn-sm" style="color:var(--red); border-color:var(--red)">🔍 Ver Estado do Banco de Dados (Debug)</a>
+          <div style="margin-top:12px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="/api/wa/debug-db" target="_blank" class="btn btn-secondary btn-sm" id="waDebugLink" style="color:var(--red); border-color:var(--red)">🔍 Ver Estado do Banco de Dados (Debug)</a>
+            <button class="btn btn-primary btn-sm" onclick="sendWaTest()" style="background:var(--red); border:none">🚀 Simular Mensagem de Entrada (Teste)</button>
           </div>
         </div>
       </div>
