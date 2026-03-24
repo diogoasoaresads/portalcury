@@ -1101,7 +1101,7 @@ h1, h2, h3, h4 {
 /* Label above/beside button */
 .wa-label {
   position: absolute;
-  right: 70px;
+  right: 64px;
   background: var(--color-white);
   color: var(--color-secondary);
   padding: 8px 16px;
@@ -1111,6 +1111,7 @@ h1, h2, h3, h4 {
   box-shadow: var(--shadow-md);
   animation: pulse-wa-label 2s infinite;
   pointer-events: none;
+  z-index: 1000;
 }
 .wa-label::after {
   content: '';
