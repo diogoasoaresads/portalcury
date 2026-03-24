@@ -2575,6 +2575,51 @@ async function testWhatsApp() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+async function sendWaTest() {
+  try {
+    const payload = {
+      event: 'messages.upsert',
+      instance: 'teste-manual',
+      data: {
+        key: { remoteJid: '5521999999999@s.whatsapp.net', fromMe: false, id: 'TESTE_MANUAL_' + Date.now() },
+        pushName: 'Teste do Usuário',
+        message: { conversation: 'Simulação de mensagem pelo botão de teste.' },
+        messageType: 'conversation'
+      }
+    };
+    const res = await fetch('/webhook/wa-incoming', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      toast('✅ Simulação enviada! Aguarde 2s e clique em "Ver Logs" para verificar.', 'success');
+    } else {
+      throw new Error('Falha ao simular: ' + res.status);
+    }
+  } catch (e) {
+    toast('Erro: ' + e.message, 'error');
+  }
+}
+
+async function showWaLogs() {
+  try {
+    const data = await api('GET', '/api/wa/debug-db');
+    const logs = data.logs || [];
+    let html = `<b>Conversas no banco:</b> ${data.conversations}<br><b>Mensagens no banco:</b> ${data.messages}<hr>`;
+    if (logs.length === 0) {
+      html += '<p>Nenhum log ainda. Clique em "Simular" primeiro e aguarde 2 segundos.</p>';
+    } else {
+      html += '<div style="max-height:300px;overflow-y:auto;font-family:monospace;font-size:11px;background:#f4f4f4;padding:10px;border-radius:4px;text-align:left">';
+      logs.forEach(l => { html += `<div style="margin-bottom:6px;border-bottom:1px solid #ddd;padding-bottom:4px">${l}</div>`; });
+      html += '</div>';
+    }
+    Swal.fire({ title: 'Diagnóstico WhatsApp', html, width: '600px', confirmButtonText: 'Fechar' });
+  } catch (e) {
+    toast('Erro ao buscar logs: ' + e.message, 'error');
+  }
+}
+
 /* ---- Change password ---- */
 async function changePassword() {
   const cur  = document.getElementById('cfg-cur-pass').value;
