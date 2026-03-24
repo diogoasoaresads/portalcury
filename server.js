@@ -154,6 +154,12 @@ db.exec(`
     status          TEXT    DEFAULT 'sent',
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS wa_logs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    msg        TEXT    DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Índices para acelerar deduplicação de leads
@@ -312,8 +318,10 @@ function nextAttendant(queueKey) {
 // ============================================================
 // SSE — Server-Sent Events para atendimento em tempo real
 // ============================================================
-const sseClients = new Map(); // userId → Set<res>
-let wa_debug_logs = []; // Logs temporários para diagnóstico
+const sseClients = new Map();
+function waLog(msg) {
+  try { db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); } catch {}
+}
 
 function sseAdd(userId, res) {
   if (!sseClients.has(userId)) sseClients.set(userId, new Set());
@@ -637,14 +645,13 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
 
   try {
     const body = req.body;
-    wa_debug_logs.unshift(`[${new Date().toISOString()}] Recebido: ${JSON.stringify(body).slice(0, 200)}...`);
-    if (wa_debug_logs.length > 20) wa_debug_logs.pop();
+    waLog(`[${new Date().toISOString()}] Recebido: ${JSON.stringify(body).slice(0, 300)}`);
 
     const event = body?.event || body?.type || '';
     const looksLikeMessage = body?.data?.key || body?.message?.key || body?.key;
     
     if (!event.toLowerCase().includes('message') && !looksLikeMessage) {
-      wa_debug_logs.unshift(`[${new Date().toISOString()}] Ignorado: não parece mensagem (event=${event})`);
+      waLog(`[${new Date().toISOString()}] Ignorado: não parece mensagem (event=${event})`);
       return;
     }
 
@@ -653,7 +660,7 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
     const fromMe = msg?.key?.fromMe || false;
 
     if (!jid || jid.includes('@g.us')) {
-      wa_debug_logs.unshift(`[${new Date().toISOString()}] Ignorado: JID inválido ou grupo (${jid})`);
+      waLog(`[${new Date().toISOString()}] Ignorado: JID inválido ou grupo (${jid})`);
       return;
     }
 
@@ -665,13 +672,13 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
     const pushName = msg?.pushName || msg?.key?.participant || '';
     const messageId = msg?.key?.id || '';
 
-    wa_debug_logs.unshift(`[${new Date().toISOString()}] Processando JID=${jid} pushName=${pushName}`);
+    waLog(`[${new Date().toISOString()}] Processando JID=${jid} pushName=${pushName}`);
 
     const conv = upsertConversation(jid, pushName);
     const direction = fromMe ? 'out' : 'in';
     const saved = saveMessage(conv.id, direction, text, messageId);
 
-    wa_debug_logs.unshift(`[${new Date().toISOString()}] ✅ Salvo! Conv=${conv.id}`);
+    waLog(`[${new Date().toISOString()}] ✅ Salvo! Conv=${conv.id}`);
 
     sseBroadcast('new_message', {
       conversation_id: conv.id,
@@ -685,7 +692,7 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
       assigned_to: conv.assigned_to,
     });
   } catch (err) {
-    wa_debug_logs.unshift(`[${new Date().toISOString()}] ❌ ERRO: ${err.message}`);
+    waLog(`[${new Date().toISOString()}] ❌ ERRO: ${err.message}`);
     console.error('[WA-Webhook] Erro processando mensagem:', err);
   }
 });
@@ -1799,7 +1806,7 @@ app.get('/api/wa/debug-db', auth, (req, res) => {
     const counts = {
       conversations: db.prepare('SELECT COUNT(*) as count FROM wa_conversations').get().count,
       messages: db.prepare('SELECT COUNT(*) as count FROM wa_messages').get().count,
-      logs: wa_debug_logs
+      logs: db.prepare('SELECT msg FROM wa_logs ORDER BY id DESC LIMIT 30').all().map(r => r.msg)
     };
     res.json(counts);
   } catch (err) {
