@@ -129,11 +129,40 @@ db.exec(`
   );
 `);
 
+// Tabelas de Atendimento WhatsApp
+db.exec(`
+  CREATE TABLE IF NOT EXISTS wa_conversations (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    remote_jid        TEXT    NOT NULL UNIQUE,
+    contact_name      TEXT    DEFAULT '',
+    contact_phone     TEXT    DEFAULT '',
+    lead_id           INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+    assigned_to       INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    status            TEXT    DEFAULT 'open',
+    unread_count      INTEGER DEFAULT 0,
+    last_message_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_message_body TEXT    DEFAULT '',
+    created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS wa_messages (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL REFERENCES wa_conversations(id) ON DELETE CASCADE,
+    direction       TEXT    NOT NULL DEFAULT 'in',
+    body            TEXT    DEFAULT '',
+    message_id      TEXT    DEFAULT '',
+    status          TEXT    DEFAULT 'sent',
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
 // Índices para acelerar deduplicação de leads
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);
   CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
   CREATE INDEX IF NOT EXISTS idx_lead_activities_lead_id ON lead_activities(lead_id);
+  CREATE INDEX IF NOT EXISTS idx_wa_conv_jid ON wa_conversations(remote_jid);
+  CREATE INDEX IF NOT EXISTS idx_wa_msg_conv ON wa_messages(conversation_id);
 `);
 
 // Migrations — add columns if they don't exist yet
@@ -189,6 +218,10 @@ const DEFAULT_CONFIG = {
   // Código personalizado nas páginas
   custom_head_code: '',        // HTML/JS injetado antes de </head>
   custom_body_code: '',        // HTML/JS injetado após <body>
+
+  // Atendimento WhatsApp
+  wa_atend_instance: '',       // Nome da instância de atendimento (separada da notificação)
+  wa_atend_distribution: 'manual', // manual | round_robin
 };
 
 const insertCfg = db.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)');
@@ -273,6 +306,117 @@ function nextAttendant(queueKey) {
   db.prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)').run(queueKey, String((idx + 1) % list.length));
   return attendant;
 }
+
+// ============================================================
+// SSE — Server-Sent Events para atendimento em tempo real
+// ============================================================
+const sseClients = new Map(); // userId → Set<res>
+
+function sseAdd(userId, res) {
+  if (!sseClients.has(userId)) sseClients.set(userId, new Set());
+  sseClients.get(userId).add(res);
+}
+
+function sseRemove(userId, res) {
+  sseClients.get(userId)?.delete(res);
+}
+
+function sseBroadcast(event, data) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const clients of sseClients.values()) {
+    for (const res of clients) {
+      try { res.write(payload); } catch {}
+    }
+  }
+}
+
+// ============================================================
+// HELPERS — WhatsApp Atendimento
+// ============================================================
+
+// Normaliza JID: "5521999999999@s.whatsapp.net" → "5521999999999"
+function jidToPhone(jid) {
+  return (jid || '').replace(/@.*$/, '').replace(/\D/g, '');
+}
+
+// Busca ou cria conversa pelo JID recebido do Evolution
+function upsertConversation(jid, name) {
+  const phone = jidToPhone(jid);
+  let conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
+  if (!conv) {
+    // Tenta vincular a um lead existente pelo telefone
+    const lead = db.prepare(`
+      SELECT * FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone," ",""),"-",""),"(",""),")",""),"+","") = ? LIMIT 1
+    `).get(phone);
+
+    const cfg = getConfig();
+    let assignedTo = null;
+    if (cfg.wa_atend_distribution === 'round_robin') {
+      // Distribui entre agentes (usuários com role 'agent' ou 'admin')
+      const agents = db.prepare("SELECT id FROM users ORDER BY id").all();
+      const idx = parseInt(db.prepare("SELECT value FROM config WHERE key='wa_queue_idx'").get()?.value || '0');
+      if (agents.length) {
+        assignedTo = agents[idx % agents.length].id;
+        db.prepare("INSERT OR REPLACE INTO config (key,value) VALUES ('wa_queue_idx',?)").run(String((idx + 1) % agents.length));
+      }
+    }
+
+    db.prepare(`
+      INSERT INTO wa_conversations (remote_jid, contact_name, contact_phone, lead_id, assigned_to)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(jid, name || phone, phone, lead?.id || null, assignedTo);
+
+    conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
+
+    // Registra atividade no lead se vinculou
+    if (lead) {
+      addActivity(lead.id, 'whatsapp', 'Conversa WhatsApp iniciada', `Contato iniciou conversa via WhatsApp`);
+    }
+  }
+  return conv;
+}
+
+// Salva mensagem e atualiza conversa
+function saveMessage(convId, direction, body, messageId) {
+  db.prepare(`
+    INSERT INTO wa_messages (conversation_id, direction, body, message_id)
+    VALUES (?, ?, ?, ?)
+  `).run(convId, direction, body, messageId || '');
+
+  const updates = direction === 'in'
+    ? `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?, unread_count = unread_count + 1`
+    : `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?`;
+
+  db.prepare(`UPDATE wa_conversations SET ${updates} WHERE id = ?`).run(body, convId);
+  return db.prepare('SELECT * FROM wa_messages ORDER BY id DESC LIMIT 1').get();
+}
+
+// Chama Evolution API para enviar mensagem
+async function evolutionSend(instance, apikey, url, phone, text) {
+  const endpoint = `${url.replace(/\/$/, '')}/message/sendText/${instance}`;
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': apikey },
+    body: JSON.stringify({ number: phone, text }),
+  });
+  if (!resp.ok) throw new Error(`Evolution API error: ${resp.status}`);
+  return resp.json();
+}
+
+// Chama Evolution API genérica (GET/POST)
+async function evolutionCall(method, path, body, cfg) {
+  const url = `${(cfg.evolution_url || '').replace(/\/$/, '')}/${path}`;
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'apikey': cfg.evolution_apikey || '' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(url, opts);
+  const json = await resp.json().catch(() => ({}));
+  return { ok: resp.ok, status: resp.status, data: json };
+}
+
+
 
 // ---- Auth middleware ----
 function auth(req, res, next) {
@@ -449,11 +593,224 @@ function fireNotifications(lead, cfg) {
 // ROUTES — PUBLIC
 // ============================================================
 
+// ============================================================
+// ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
+// ============================================================
+app.post('/webhook/wa-incoming', express.json(), (req, res) => {
+  res.sendStatus(200); // responde rápido para não timeout o Evolution
+
+  try {
+    const body = req.body;
+    // Evolution envia diferentes formatos; tratamos o mais comum
+    const event = body?.event || body?.type || '';
+    if (!['messages.upsert', 'MESSAGES_UPSERT'].includes(event) && !body?.data?.key) return;
+
+    const msg = body?.data || body?.message || body;
+    const jid  = msg?.key?.remoteJid || msg?.remoteJid || '';
+    const fromMe = msg?.key?.fromMe || false;
+
+    // Ignora grupos e mensagens enviadas por nós via outro canal
+    if (!jid || jid.includes('@g.us')) return;
+
+    const text = msg?.message?.conversation
+      || msg?.message?.extendedTextMessage?.text
+      || msg?.body
+      || '';
+
+    const pushName = msg?.pushName || msg?.key?.participant || '';
+    const messageId = msg?.key?.id || '';
+
+    const conv = upsertConversation(jid, pushName);
+    const direction = fromMe ? 'out' : 'in';
+    const saved = saveMessage(conv.id, direction, text, messageId);
+
+    // Push para o CRM via SSE
+    sseBroadcast('new_message', {
+      conversation_id: conv.id,
+      direction,
+      body: text,
+      message_id: messageId,
+      created_at: saved.created_at,
+      contact_name: conv.contact_name,
+      contact_phone: conv.contact_phone,
+      lead_id: conv.lead_id,
+      assigned_to: conv.assigned_to,
+    });
+  } catch (err) {
+    console.error('[wa-incoming]', err.message);
+  }
+});
+
+// ============================================================
+// ATENDIMENTO WHATSAPP — SSE (Server-Sent Events)
+// ============================================================
+app.get('/api/wa/events', auth, (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // para Nginx
+  res.flushHeaders();
+
+  const userId = req.user.id;
+  sseAdd(userId, res);
+
+  // heartbeat a cada 25s para manter a conexão viva
+  const hb = setInterval(() => res.write(': ping\n\n'), 25000);
+
+  req.on('close', () => {
+    clearInterval(hb);
+    sseRemove(userId, res);
+  });
+});
+
+// ============================================================
+// ATENDIMENTO WHATSAPP — Conversas e Mensagens
+// ============================================================
+
+// Listar conversas
+app.get('/api/wa/conversations', auth, (req, res) => {
+  const { status = 'open', agent } = req.query;
+  let sql = `
+    SELECT c.*, u.username AS agent_name,
+           l.name AS lead_name
+    FROM wa_conversations c
+    LEFT JOIN users u ON u.id = c.assigned_to
+    LEFT JOIN leads l ON l.id = c.lead_id
+    WHERE 1=1
+  `;
+  const params = [];
+  if (status !== 'all') { sql += ' AND c.status = ?'; params.push(status); }
+  if (agent) { sql += ' AND c.assigned_to = ?'; params.push(agent); }
+  sql += ' ORDER BY c.last_message_at DESC LIMIT 200';
+
+  const rows = db.prepare(sql).all(...params);
+  res.json(rows);
+});
+
+// Mensagens de uma conversa
+app.get('/api/wa/conversations/:id/messages', auth, (req, res) => {
+  const msgs = db.prepare(`
+    SELECT * FROM wa_messages WHERE conversation_id = ? ORDER BY id ASC LIMIT 200
+  `).all(req.params.id);
+  res.json(msgs);
+});
+
+// Enviar mensagem
+app.post('/api/wa/conversations/:id/send', auth, async (req, res) => {
+  const { text } = req.body;
+  if (!text?.trim()) return res.status(400).json({ error: 'Texto obrigatório.' });
+
+  const conv = db.prepare('SELECT * FROM wa_conversations WHERE id = ?').get(req.params.id);
+  if (!conv) return res.status(404).json({ error: 'Conversa não encontrada.' });
+
+  const cfg = getConfig();
+  if (!cfg.evolution_url || !cfg.evolution_instance || !cfg.evolution_apikey) {
+    return res.status(503).json({ error: 'Evolution API não configurada.' });
+  }
+
+  try {
+    const instanceName = cfg.wa_atend_instance || cfg.evolution_instance;
+    await evolutionSend(instanceName, cfg.evolution_apikey, cfg.evolution_url, conv.contact_phone, text.trim());
+
+    const saved = saveMessage(conv.id, 'out', text.trim(), '');
+
+    sseBroadcast('new_message', {
+      conversation_id: conv.id,
+      direction: 'out',
+      body: text.trim(),
+      created_at: saved.created_at,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[wa-send]', err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// Atribuir agente
+app.patch('/api/wa/conversations/:id/assign', auth, adminOnly, (req, res) => {
+  const { user_id } = req.body;
+  db.prepare('UPDATE wa_conversations SET assigned_to = ? WHERE id = ?').run(user_id || null, req.params.id);
+  sseBroadcast('conv_updated', { conversation_id: parseInt(req.params.id), assigned_to: user_id || null });
+  res.json({ ok: true });
+});
+
+// Fechar / reabrir conversa
+app.patch('/api/wa/conversations/:id/status', auth, (req, res) => {
+  const { status } = req.body; // 'open' | 'closed'
+  if (!['open', 'closed'].includes(status)) return res.status(400).json({ error: 'Status inválido.' });
+  db.prepare('UPDATE wa_conversations SET status = ?, unread_count = 0 WHERE id = ?').run(status, req.params.id);
+  sseBroadcast('conv_updated', { conversation_id: parseInt(req.params.id), status });
+  res.json({ ok: true });
+});
+
+// Zerar não lidos
+app.patch('/api/wa/conversations/:id/read', auth, (req, res) => {
+  db.prepare('UPDATE wa_conversations SET unread_count = 0 WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+// ============================================================
+// ATENDIMENTO WHATSAPP — Conexão com Evolution API
+// ============================================================
+
+// Conectar instância (cria se não existe) e retorna QR Code
+app.post('/api/wa/connect', auth, adminOnly, async (req, res) => {
+  const cfg = getConfig();
+  if (!cfg.evolution_url || !cfg.evolution_apikey) {
+    return res.status(400).json({ error: 'Configure a URL e API Key da Evolution API primeiro.' });
+  }
+  const instance = cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento';
+
+  try {
+    // Tenta criar a instância
+    await evolutionCall('POST', `instance/create`, {
+      instanceName: instance,
+      qrcode: true,
+      integration: 'WHATSAPP-BAILEYS',
+    }, cfg);
+
+    // Busca o QR code
+    const qr = await evolutionCall('GET', `instance/connect/${instance}`, null, cfg);
+    res.json({ instance, qr: qr.data });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// Status da instância
+app.get('/api/wa/status', auth, async (req, res) => {
+  const cfg = getConfig();
+  if (!cfg.evolution_url || !cfg.evolution_apikey) return res.json({ status: 'not_configured' });
+  const instance = cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento';
+  try {
+    const r = await evolutionCall('GET', `instance/fetchInstances?instanceName=${instance}`, null, cfg);
+    const inst = Array.isArray(r.data) ? r.data[0] : r.data;
+    res.json({ status: inst?.instance?.state || inst?.state || 'unknown', instance });
+  } catch {
+    res.json({ status: 'error' });
+  }
+});
+
+// Desconectar instância
+app.post('/api/wa/disconnect', auth, adminOnly, async (req, res) => {
+  const cfg = getConfig();
+  const instance = cfg.wa_atend_instance || cfg.evolution_instance || 'atendimento';
+  try {
+    await evolutionCall('DELETE', `instance/logout/${instance}`, null, cfg);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
 // Landing page
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // Config público (WhatsApp, rastreamento e códigos personalizados)
 app.get('/api/public-config', (_req, res) => {
+
   const cfg = getConfig();
   res.json({
     whatsapp_number:       cfg.whatsapp_number  || '',

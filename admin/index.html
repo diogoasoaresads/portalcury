@@ -426,8 +426,162 @@
     }
 
     /* ============================================================
-       KANBAN
+       ATENDIMENTO WHATSAPP
     ============================================================ */
+    .wa-shell {
+      display: flex; height: calc(100vh - 56px); /* 28px top + 28px bottom padding do .main */
+      margin: -28px; /* Anula o padding do .main para encostar nas bordas */
+      overflow: hidden;
+    }
+    .wa-sidebar {
+      width: 320px; min-width: 260px; max-width: 380px;
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      background: var(--white);
+    }
+    .wa-sidebar-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+    }
+    .wa-sidebar-title {
+      font-size: .95rem; font-weight: 700; color: var(--navy);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .wa-search-wrap {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; gap: 6px;
+    }
+    .wa-search-wrap input {
+      flex: 1; padding: 7px 12px;
+      border: 1.5px solid var(--border); border-radius: 20px;
+      font-size: .83rem; outline: none;
+    }
+    .wa-conv-list {
+      flex: 1; overflow-y: auto;
+    }
+    .wa-conv-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; cursor: pointer;
+      border-bottom: 1px solid #f8f9fa;
+      transition: background .15s;
+    }
+    .wa-conv-item:hover { background: var(--gray-lt); }
+    .wa-conv-item.active { background: #e8f5e9; }
+    .wa-conv-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg,#25D366,#128C7E);
+      color: #fff; font-weight: 700; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .wa-conv-body { flex: 1; min-width: 0; }
+    .wa-conv-name {
+      font-size: .88rem; font-weight: 600; color: var(--navy);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .wa-conv-time { font-size: .72rem; color: var(--gray); font-weight: 400; }
+    .wa-conv-preview {
+      font-size: .78rem; color: var(--gray); margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .wa-unread-badge {
+      background: #25D366; color: #fff;
+      border-radius: 100px; font-size: .68rem; font-weight: 700;
+      padding: 1px 7px; margin-top: 4px; display: inline-block;
+    }
+    .wa-chat {
+      flex: 1; display: flex; flex-direction: column;
+      background: #f0f2f5;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e0e3e7' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .wa-empty {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; color: var(--gray);
+    }
+    .wa-empty h3 { font-size: 1.1rem; color: var(--navy); }
+    .wa-empty p  { font-size: .85rem; }
+    .wa-chat-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 20px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .wa-chat-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg,#25D366,#128C7E);
+      color: #fff; font-weight: 700; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .wa-chat-name  { font-size: .92rem; font-weight: 700; color: var(--navy); }
+    .wa-chat-phone { font-size: .77rem; color: var(--gray); }
+    .wa-messages {
+      flex: 1; overflow-y: auto;
+      padding: 16px 20px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .wa-bubble {
+      max-width: 65%; padding: 8px 12px;
+      border-radius: 8px; font-size: .85rem; line-height: 1.45;
+      position: relative; word-break: break-word;
+    }
+    .wa-bubble.in {
+      background: #fff; color: #1e293b;
+      border-top-left-radius: 2px;
+      align-self: flex-start;
+      box-shadow: 0 1px 2px rgba(0,0,0,.1);
+    }
+    .wa-bubble.out {
+      background: #dcf8c6; color: #1e293b;
+      border-top-right-radius: 2px;
+      align-self: flex-end;
+      box-shadow: 0 1px 2px rgba(0,0,0,.1);
+    }
+    .wa-bubble-time {
+      font-size: .68rem; color: var(--gray);
+      text-align: right; margin-top: 3px; margin-bottom: -2px;
+    }
+    .wa-date-divider {
+      text-align: center; font-size: .72rem; color: var(--gray);
+      background: rgba(255,255,255,.7); border-radius: 20px;
+      padding: 3px 12px; margin: 10px auto; display: inline-block;
+      align-self: center;
+    }
+    .wa-input-bar {
+      display: flex; align-items: flex-end; gap: 10px;
+      padding: 12px 16px;
+      background: #f0f2f5;
+      border-top: 1px solid var(--border);
+    }
+    .wa-input {
+      flex: 1; padding: 10px 14px;
+      border: none; border-radius: 20px;
+      font-size: .88rem; background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+      outline: none; resize: none; line-height: 1.4;
+      max-height: 120px; overflow-y: auto;
+    }
+    .wa-send-btn {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: #25D366; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; border: none; cursor: pointer;
+      transition: background .2s;
+    }
+    .wa-send-btn:hover { background: #128C7E; }
+    @media (max-width: 768px) {
+      .wa-sidebar { width: 100%; max-width: 100%; }
+      .wa-chat { display: none; }
+      .wa-chat.show { display: flex; }
+    }
+
+
     .kanban-toolbar {
       display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
       padding: 14px 0; margin-bottom: 20px;
@@ -721,6 +875,11 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
         Kanban
       </div>
+      <div class="nav-item" data-page="atendimento">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Atendimento
+        <span id="waUnreadBadge" style="margin-left:auto;background:#25D366;color:#fff;border-radius:100px;font-size:.7rem;padding:2px 8px;display:none"></span>
+      </div>
       <div class="nav-item admin-only" data-page="analytics">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Analytics
@@ -898,6 +1057,81 @@
       </div>
     </section>
 
+    <!-- ===== ATENDIMENTO ===== -->
+    <section class="page" id="atendimentoPage" style="padding:0;overflow:hidden;height:calc(100vh - 0px)">
+      <div class="wa-shell">
+        <!-- Sidebar de Conversas -->
+        <div class="wa-sidebar">
+          <div class="wa-sidebar-header">
+            <div class="wa-sidebar-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Atendimento
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span id="waStatusDot" style="width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block" title="Status"></span>
+              <button class="btn btn-secondary btn-sm" onclick="loadConversations()" title="Atualizar">↺</button>
+            </div>
+          </div>
+
+          <div class="wa-search-wrap">
+            <input type="search" id="waSearch" placeholder="Buscar conversa..." oninput="filterConversations()" />
+            <select id="waStatusFilter" onchange="loadConversations()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.82rem;background:#fff">
+              <option value="open">Abertas</option>
+              <option value="closed">Fechadas</option>
+              <option value="all">Todas</option>
+            </select>
+          </div>
+
+          <div class="wa-conv-list" id="waConvList">
+            <div style="text-align:center;padding:40px 16px;color:var(--gray);font-size:.85rem">
+              Selecione "Atendimento" para carregar as conversas
+            </div>
+          </div>
+        </div>
+
+        <!-- Painel de Chat -->
+        <div class="wa-chat" id="waChat">
+          <!-- Estado vazio -->
+          <div class="wa-empty" id="waEmpty">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <h3>Selecione uma conversa</h3>
+            <p>Escolha uma conversa na lista ao lado para começar a atender</p>
+          </div>
+
+          <!-- Header do chat (oculto até selecionar conversa) -->
+          <div class="wa-chat-header" id="waChatHeader" style="display:none">
+            <div class="wa-chat-avatar" id="waChatAvatar">?</div>
+            <div class="wa-chat-info">
+              <div class="wa-chat-name" id="waChatName">—</div>
+              <div class="wa-chat-phone" id="waChatPhone">—</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-left:auto">
+              <a id="waLeadLink" href="#" onclick="goToLead(event)" style="display:none">
+                <button class="btn btn-secondary btn-sm">👤 Ver Lead</button>
+              </a>
+              <select id="waAgentSelect" class="btn btn-secondary btn-sm" onchange="assignAgent()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.82rem" title="Atribuir agente">
+                <option value="">— Agente —</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" id="waCloseBtn" onclick="toggleConvStatus()">Fechar</button>
+            </div>
+          </div>
+
+          <!-- Mensagens -->
+          <div class="wa-messages" id="waMessages" style="display:none"></div>
+
+          <!-- Input de envio -->
+          <div class="wa-input-bar" id="waInputBar" style="display:none">
+            <textarea id="waMsgInput" class="wa-input" placeholder="Digite uma mensagem..." rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWaMessage()}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+            <button class="wa-send-btn" onclick="sendWaMessage()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== CONFIG ===== -->
     <section class="page" id="configPage">
       <div class="page-header">
@@ -911,6 +1145,7 @@
         <button class="config-tab" data-tab="webhook">Webhook</button>
         <button class="config-tab" data-tab="wanotify">Aviso WhatsApp</button>
         <button class="config-tab" data-tab="tracking">Rastreamento</button>
+        <button class="config-tab" data-tab="waatend">Atendimento WA</button>
         <button class="config-tab" data-tab="security">Segurança</button>
       </div>
 
@@ -1193,6 +1428,54 @@
           </ol>
         </div>
 
+      </div>
+
+
+      <!-- Tab: Atendimento WA -->
+      <div class="config-panel" id="tab-waatend">
+        <div class="config-card">
+          <h4><span class="dot" style="background:#25D366"></span>Instância de Atendimento WhatsApp</h4>
+          <p class="hint" style="margin-bottom:20px">Configure a instância da Evolution API usada para receber e enviar mensagens de atendimento. Pode ser a mesma instância da notificação de leads ou uma separada.</p>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Nome da Instância de Atendimento</label>
+              <input type="text" id="cfg-wa-atend-instance" placeholder="Ex: cury-atendimento" />
+              <p class="hint">Deixe em branco para usar a mesma instância configurada em Aviso WhatsApp</p>
+            </div>
+            <div class="field">
+              <label>Modo de Distribuição de Conversas</label>
+              <select id="cfg-wa-atend-distribution">
+                <option value="manual">Manual — admin atribui as conversas</option>
+                <option value="round_robin">Round-Robin — distribui automaticamente em rodízio</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="waAtendConfigMsg" style="margin-top:12px"></div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="saveWaAtendConfig()">Salvar</button>
+        </div>
+
+        <div class="config-card" style="margin-top:0">
+          <h4><span class="dot" style="background:#25D366"></span>Conexão WhatsApp</h4>
+          <p class="hint" style="margin-bottom:16px">Conecte o número WhatsApp escaneando o QR Code abaixo. A Evolution API e a URL/APIKey devem estar configuradas na aba "Aviso WhatsApp".</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-primary" onclick="connectWaAtend()" style="background:#25D366;border-color:#25D366">📱 Gerar QR Code</button>
+            <button class="btn btn-secondary" onclick="disconnectWaAtend()">Desconectar</button>
+            <span id="waAtendStatusText" style="font-size:.85rem;color:var(--gray)">—</span>
+          </div>
+          <div id="waQrCode" style="margin-top:20px"></div>
+        </div>
+
+        <div class="config-card" style="background:#f8fafc;border:1px solid var(--border);box-shadow:none">
+          <h4><span class="dot" style="background:#2563eb"></span>Como configurar o webhook no Evolution</h4>
+          <ol style="margin-top:12px;padding-left:20px;font-size:.875rem;color:var(--gray);line-height:1.8">
+            <li>No painel da Evolution API, edite a instância de atendimento</li>
+            <li>Em <strong>Webhook</strong>, ative e cole a URL: <code id="waWebhookUrl"></code></li>
+            <li>Marque o evento <code>MESSAGES_UPSERT</code></li>
+            <li>Salve — as mensagens chegam automaticamente ao CRM</li>
+          </ol>
+        </div>
       </div>
 
       <!-- Tab: Segurança -->
@@ -1741,6 +2024,8 @@ function initApp(username, role) {
     el.style.display = userRole === 'admin' ? '' : 'none';
   });
   loadDashboard();
+  loadWaUsers();
+  initWaSSE();
 }
 
 /* ============================================================
@@ -1753,13 +2038,18 @@ document.querySelectorAll('.nav-item').forEach(item => {
 function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === page + 'Page'));
-  if (page === 'dashboard')  loadDashboard();
-  if (page === 'leads')      { leadsPage = 1; loadLeads(); }
-  if (page === 'kanban')     loadKanban();
-  if (page === 'analytics')  loadAnalytics();
-  if (page === 'config')     loadConfig();
-  if (page === 'attendants') loadAttendants();
-  if (page === 'users')      loadUsers();
+  if (page === 'dashboard')   loadDashboard();
+  if (page === 'leads')       { leadsPage = 1; loadLeads(); }
+  if (page === 'kanban')      loadKanban();
+  if (page === 'analytics')   loadAnalytics();
+  if (page === 'config')      loadConfig();
+  if (page === 'attendants')  loadAttendants();
+  if (page === 'users')       loadUsers();
+  if (page === 'atendimento') {
+    loadConversations();
+    loadWaUsers();
+    initWaSSE();
+  }
 }
 
 /* ============================================================
@@ -2047,6 +2337,15 @@ async function loadConfig() {
     document.getElementById('cfg-meta-event').value    = cfg.meta_conversion_event || 'Lead';
     document.getElementById('cfg-custom-head').value   = cfg.custom_head_code || '';
     document.getElementById('cfg-custom-body').value   = cfg.custom_body_code || '';
+    
+    // Atendimento WA
+    if (document.getElementById('cfg-wa-atend-instance')) {
+      document.getElementById('cfg-wa-atend-instance').value     = cfg.wa_atend_instance || '';
+      document.getElementById('cfg-wa-atend-distribution').value = cfg.wa_atend_distribution || 'manual';
+      fillWaWebhookUrl();
+      checkWaStatus();
+    }
+
     updateGadsPreview(cfg.gads_tag_id, cfg.gads_conversion_label);
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -3082,10 +3381,367 @@ document.querySelectorAll('.an-period-btn').forEach(btn => {
   });
 });
 
+
+/* ============================================================
+   ATENDIMENTO WHATSAPP
+============================================================ */
+let waConversations   = [];
+let waCurrentConvId   = null;
+let waCurrentConvData = null;
+let waCurrentStatus   = 'open';
+let waUsers           = [];
+let waSseSource       = null;
+
+// ── Conecta SSE assim que faz login ──────────────────────────
+function initWaSSE() {
+  if (waSseSource) return; // já conectado
+  waSseSource = new EventSource('/api/wa/events?token=' + (localStorage.getItem('token') || ''));
+
+  // Hack: SSE com Authorization header não é suportado no browser; usamos fetch + ReadableStream
+  waSseSource.close();
+  waSseSource = null;
+  _startWaSSE();
+}
+
+async function _startWaSSE() {
+  const token = localStorage.getItem('token');
+  try {
+    const resp = await fetch('/api/wa/events', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    if (!resp.ok || !resp.body) return;
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+
+      let event = '', data = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) event = line.slice(7).trim();
+        else if (line.startsWith('data: ')) {
+          data = line.slice(6).trim();
+          if (event === 'new_message') {
+            try { handleWaSseMessage(JSON.parse(data)); } catch {}
+          } else if (event === 'conv_updated') {
+            try { handleWaSseConvUpdate(JSON.parse(data)); } catch {}
+          }
+          event = ''; data = '';
+        }
+      }
+    }
+  } catch {}
+  // reconecta em 5s se cair
+  setTimeout(_startWaSSE, 5000);
+}
+
+function handleWaSseMessage(msg) {
+  // Atualiza badge global na sidebar
+  if (msg.direction === 'in') {
+    const badge = document.getElementById('waUnreadBadge');
+    const current = parseInt(badge.textContent || '0') + 1;
+    badge.textContent = current;
+    badge.style.display = 'inline-block';
+  }
+
+  // Se a conversa está aberta no painel, acrescenta a mensagem
+  if (waCurrentConvId === msg.conversation_id) {
+    appendWaBubble(msg);
+    // Zera não lidos no servidor
+    api('PATCH', `/api/wa/conversations/${msg.conversation_id}/read`);
+  } else {
+    // Atualiza preview na lista
+    const conv = waConversations.find(c => c.id === msg.conversation_id);
+    if (conv) {
+      conv.last_message_body = msg.body;
+      if (msg.direction === 'in') conv.unread_count = (conv.unread_count || 0) + 1;
+      renderConvList();
+    } else {
+      loadConversations(); // nova conversa, recarrega a lista
+    }
+  }
+}
+
+function handleWaSseConvUpdate(data) {
+  const conv = waConversations.find(c => c.id === data.conversation_id);
+  if (conv) Object.assign(conv, data);
+  renderConvList();
+  if (waCurrentConvId === data.conversation_id && data.status) {
+    const btn = document.getElementById('waCloseBtn');
+    if (btn) btn.textContent = data.status === 'closed' ? 'Reabrir' : 'Fechar';
+  }
+}
+
+// ── Carregar conversas ────────────────────────────────────────
+async function loadConversations() {
+  const status = document.getElementById('waStatusFilter')?.value || 'open';
+  waCurrentStatus = status;
+  try {
+    const data = await api('GET', `/api/wa/conversations?status=${status}`);
+    waConversations = data;
+    renderConvList();
+    updateWaUnreadBadge();
+    checkWaStatus();
+  } catch {}
+}
+
+function renderConvList() {
+  const list = document.getElementById('waConvList');
+  const q = (document.getElementById('waSearch')?.value || '').toLowerCase();
+  const filtered = waConversations.filter(c =>
+    !q ||
+    (c.contact_name || '').toLowerCase().includes(q) ||
+    (c.contact_phone || '').toLowerCase().includes(q)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--gray);font-size:.85rem">Nenhuma conversa ${waCurrentStatus === 'open' ? 'aberta' : 'nessa categoria'}</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(c => {
+    const initials = (c.contact_name || c.contact_phone || '?').slice(0,2).toUpperCase();
+    const time = c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
+    const preview = c.last_message_body ? c.last_message_body.slice(0, 40) + (c.last_message_body.length > 40 ? '…' : '') : 'Sem mensagens';
+    const isActive = c.id === waCurrentConvId;
+
+    return `<div class="wa-conv-item${isActive ? ' active' : ''}" onclick="openConversation(${c.id})">
+      <div class="wa-conv-avatar">${initials}</div>
+      <div class="wa-conv-body">
+        <div class="wa-conv-name">
+          <span>${escHtml(c.contact_name || c.contact_phone)}</span>
+          <span class="wa-conv-time">${time}</span>
+        </div>
+        <div class="wa-conv-preview">${escHtml(preview)}</div>
+        ${c.unread_count > 0 ? `<span class="wa-unread-badge">${c.unread_count}</span>` : ''}
+        ${c.lead_name ? `<div style="font-size:.7rem;color:var(--green);margin-top:2px">👤 ${escHtml(c.lead_name)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterConversations() { renderConvList(); }
+
+function updateWaUnreadBadge() {
+  const total = waConversations.reduce((s,c) => s + (c.unread_count||0), 0);
+  const badge = document.getElementById('waUnreadBadge');
+  if (badge) {
+    badge.textContent = total || '';
+    badge.style.display = total > 0 ? 'inline-block' : 'none';
+  }
+}
+
+// ── Abrir conversa ────────────────────────────────────────────
+async function openConversation(convId) {
+  waCurrentConvId = convId;
+  waCurrentConvData = waConversations.find(c => c.id === convId) || {};
+
+  // Marca como lido
+  waConversations.forEach(c => { if (c.id === convId) c.unread_count = 0; });
+  renderConvList();
+  updateWaUnreadBadge();
+  api('PATCH', `/api/wa/conversations/${convId}/read`);
+
+  // Atualiza header
+  const conv = waCurrentConvData;
+  document.getElementById('waChatHeader').style.display = 'flex';
+  document.getElementById('waEmpty').style.display = 'none';
+  document.getElementById('waMessages').style.display = 'flex';
+  document.getElementById('waInputBar').style.display = 'flex';
+
+  const name = conv.contact_name || conv.contact_phone || 'Contato';
+  document.getElementById('waChatAvatar').textContent = name.slice(0,2).toUpperCase();
+  document.getElementById('waChatName').textContent = name;
+  document.getElementById('waChatPhone').textContent = conv.contact_phone || conv.remote_jid || '';
+
+  // Lead link
+  const leadLink = document.getElementById('waLeadLink');
+  if (conv.lead_id) {
+    leadLink.style.display = 'inline';
+    leadLink.dataset.leadId = conv.lead_id;
+  } else {
+    leadLink.style.display = 'none';
+  }
+
+  // Botão fechar/reabrir
+  document.getElementById('waCloseBtn').textContent = conv.status === 'closed' ? 'Reabrir' : 'Fechar';
+
+  // Carrega usuários no select de atribuição
+  populateAgentSelect(conv.assigned_to);
+
+  // Carrega mensagens
+  const msgs = await api('GET', `/api/wa/conversations/${convId}/messages`);
+  renderMessages(msgs);
+}
+
+function renderMessages(msgs) {
+  const container = document.getElementById('waMessages');
+  container.innerHTML = '';
+  let lastDate = '';
+
+  msgs.forEach(m => {
+    const d = new Date(m.created_at);
+    const dateStr = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+    if (dateStr !== lastDate) {
+      lastDate = dateStr;
+      const div = document.createElement('div');
+      div.className = 'wa-date-divider';
+      div.textContent = dateStr;
+      container.appendChild(div);
+    }
+    appendWaBubble(m, container);
+  });
+
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendWaBubble(msg, container) {
+  if (!container) container = document.getElementById('waMessages');
+  const div = document.createElement('div');
+  div.className = `wa-bubble ${msg.direction}`;
+  const time = new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  div.innerHTML = `${escHtml(msg.body)}<div class="wa-bubble-time">${time}${msg.direction === 'out' ? ' ✓✓' : ''}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+// ── Enviar mensagem ───────────────────────────────────────────
+async function sendWaMessage() {
+  if (!waCurrentConvId) return;
+  const input = document.getElementById('waMsgInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  try {
+    await api('POST', `/api/wa/conversations/${waCurrentConvId}/send`, { text });
+  } catch (err) {
+    showToast('Erro ao enviar: ' + err.message, 'error');
+  }
+}
+
+// ── Atribuir agente ───────────────────────────────────────────
+function populateAgentSelect(assignedTo) {
+  const sel = document.getElementById('waAgentSelect');
+  sel.innerHTML = '<option value="">— Agente —</option>' +
+    waUsers.map(u => `<option value="${u.id}"${u.id == assignedTo ? ' selected' : ''}>${escHtml(u.username)}</option>`).join('');
+}
+
+async function assignAgent() {
+  if (!waCurrentConvId) return;
+  const userId = document.getElementById('waAgentSelect').value || null;
+  await api('PATCH', `/api/wa/conversations/${waCurrentConvId}/assign`, { user_id: userId });
+  showToast('Agente atribuído', 'success');
+}
+
+// ── Fechar / reabrir conversa ─────────────────────────────────
+async function toggleConvStatus() {
+  if (!waCurrentConvId) return;
+  const currentStatus = waCurrentConvData?.status || 'open';
+  const newStatus = currentStatus === 'open' ? 'closed' : 'open';
+  await api('PATCH', `/api/wa/conversations/${waCurrentConvId}/status`, { status: newStatus });
+  waCurrentConvData = { ...waCurrentConvData, status: newStatus };
+  document.getElementById('waCloseBtn').textContent = newStatus === 'closed' ? 'Reabrir' : 'Fechar';
+  showToast(newStatus === 'closed' ? 'Conversa fechada' : 'Conversa reaberta', 'success');
+}
+
+// ── Ver lead vinculado ────────────────────────────────────────
+function goToLead(e) {
+  e.preventDefault();
+  const leadId = document.getElementById('waLeadLink').dataset.leadId;
+  if (!leadId) return;
+  // Navega para a aba de leads e abre o lead
+  document.querySelector('[data-page="leads"]').click();
+  setTimeout(() => openLead && openLead(parseInt(leadId)), 400);
+}
+
+// ── Status da instância WhatsApp ──────────────────────────────
+async function checkWaStatus() {
+  const dot = document.getElementById('waStatusDot');
+  if (!dot) return;
+  try {
+    const data = await api('GET', '/api/wa/status');
+    const connected = data.status === 'open' || data.status === 'connected';
+    dot.style.background = connected ? '#25D366' : (data.status === 'not_configured' ? '#ccc' : '#f59e0b');
+    dot.title = `WhatsApp: ${data.status}`;
+  } catch {
+    dot.style.background = '#dc2626';
+  }
+}
+
+// ── Carrega usuários (agentes) do sistema ─────────────────────
+async function loadWaUsers() {
+  try {
+    const data = await api('GET', '/api/users');
+    waUsers = data;
+  } catch {}
+}
+
+// ── Config da Instância de Atendimento ─────────────────────────
+async function saveWaAtendConfig() {
+  try {
+    const val = {
+      wa_atend_instance:      document.getElementById('cfg-wa-atend-instance')?.value || '',
+      wa_atend_distribution:  document.getElementById('cfg-wa-atend-distribution')?.value || 'manual',
+    };
+    await api('POST', '/api/config', val);
+    showMsg('waAtendConfigMsg', 'Configurações salvas!', 'success');
+    checkWaStatus();
+  } catch (err) {
+    showMsg('waAtendConfigMsg', 'Erro: ' + err.message, 'error');
+  }
+}
+
+async function connectWaAtend() {
+  const statusEl  = document.getElementById('waAtendStatusText');
+  const qrEl      = document.getElementById('waQrCode');
+  statusEl.textContent = 'Gerando QR Code...';
+  qrEl.innerHTML = '';
+  try {
+    const data = await api('POST', '/api/wa/connect', {});
+    const qrData = data.qr?.base64 || data.qr?.code;
+    if (qrData) {
+      qrEl.innerHTML = `<img src="${qrData.startsWith('data:') ? qrData : 'data:image/png;base64,' + qrData}" style="max-width:260px;border-radius:8px;border:1px solid var(--border)" alt="QR Code" />`;
+      statusEl.textContent = 'Escaneie o QR Code com o WhatsApp no celular';
+    } else {
+      statusEl.textContent = JSON.stringify(data.qr || data);
+    }
+  } catch (err) {
+    statusEl.textContent = 'Erro: ' + err.message;
+  }
+}
+
+async function disconnectWaAtend() {
+  const statusEl = document.getElementById('waAtendStatusText');
+  try {
+    await api('POST', '/api/wa/disconnect', {});
+    statusEl.textContent = 'Desconectado';
+    document.getElementById('waQrCode').innerHTML = '';
+    checkWaStatus();
+  } catch (err) {
+    statusEl.textContent = 'Erro: ' + err.message;
+  }
+}
+
+// Preenche URL do webhook na aba de config (chamado pelo loadConfig)
+function fillWaWebhookUrl() {
+  const el = document.getElementById('waWebhookUrl');
+  if (el) el.textContent = `${location.origin}/webhook/wa-incoming`;
+}
+
 /* ============================================================
    INIT
 ============================================================ */
 checkAuth();
+
 </script>
 </body>
 </html>
