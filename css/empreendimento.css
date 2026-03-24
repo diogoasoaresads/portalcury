@@ -1,5 +1,5 @@
 /* ============================================
-   CENTRAL CURY VENDAS – ESTILOS DE PÁGINA DE EMPREENDIMENTO
+   PORTAL CURY – ESTILOS DE PÁGINA DE EMPREENDIMENTO
    ============================================ */
 
 /* Breadcrumb */
@@ -41,7 +41,7 @@
 .emp-hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(74,15,27,.88) 0%, rgba(0,0,0,.5) 60%, rgba(200,169,110,.25) 100%);
+  background: linear-gradient(135deg, rgba(0,68,125,.88) 0%, rgba(0,0,0,.5) 60%, rgba(234,114,61,.25) 100%);
 }
 .emp-hero__content {
   position: relative;
@@ -84,7 +84,7 @@
 }
 .emp-hero__price {
   display: inline-block;
-  background: rgba(123,28,46,.85);
+  background: rgba(234,114,61,.85);
   color: #fff;
   font-size: 1rem;
   font-weight: 700;
@@ -167,7 +167,7 @@
   content: 'Ver mais';
   position: absolute;
   inset: 0;
-  background: rgba(44,10,16,.7);
+  background: rgba(0,68,125,.7);
   display: flex;
   align-items: center;
   justify-content: center;

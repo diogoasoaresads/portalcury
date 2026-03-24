@@ -1,5 +1,5 @@
 /* ============================================
-   CENTRAL CURY VENDAS – MAIN JAVASCRIPT
+   PORTAL CURY – MAIN JAVASCRIPT
    ============================================ */
 
 (function () {
@@ -7,8 +7,14 @@
 
   /* ---- Sticky Header ---- */
   const header = document.getElementById('header');
+
+  /* ---- Hero Parallax ---- */
+  const heroBgParallax = document.querySelector('.hero__bg-parallax');
   window.addEventListener('scroll', () => {
     header.classList.toggle('scrolled', window.scrollY > 60);
+    if (heroBgParallax) {
+      heroBgParallax.style.transform = `translateY(${window.scrollY * 0.22}px)`;
+    }
   }, { passive: true });
 
   /* ---- Mobile Menu ---- */
@@ -64,8 +70,6 @@
         'Caminhos da Guanabara':        'caminhos-guanabara',
         'Farol da Guanabara':           'farol-guanabara',
         'Residencial Pixinguinha':      'residencial-pixinguinha',
-        'Américas 19':                  'americas-19',
-        'Metropolitan Dream':           'metropolitan-dream',
       };
 
       // Pre-fill both forms
@@ -78,69 +82,38 @@
 
   /* ---- Phone Mask ---- */
   function phoneMask(input) {
-    // Teclado numérico no mobile
-    input.setAttribute('inputmode', 'numeric');
-    input.setAttribute('autocomplete', 'tel');
-
-    // Normaliza dígitos: remove DDI (55/0055) e zero de DDD (ex: 021 → 21)
-    function normalizeDigits(raw) {
-      let d = raw.replace(/\D/g, '');
-      if (d.startsWith('0055'))                   d = d.slice(4);   // 0055 21...
-      else if (d.startsWith('55') && d.length > 11) d = d.slice(2); // 55 21...
-      if (d.length > 1 && d.startsWith('0'))       d = d.slice(1);  // 021... → 21...
-      return d.slice(0, 11);
-    }
-
-    function applyMask(raw) {
-      const d = normalizeDigits(raw);
-      if (d.length <= 2)  return d.replace(/(\d{1,2})/, '($1');
-      if (d.length <= 6)  return d.replace(/(\d{2})(\d{1,4})/, '($1) $2');
-      if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
-                          return d.replace(/(\d{2})(\d{1})(\d{4})(\d{1,4})/, '($1) $2 $3-$4');
-    }
-
-    // Bloqueia teclas não numéricas (permite controles)
-    input.addEventListener('keydown', e => {
-      const ctrl = e.ctrlKey || e.metaKey;
-      const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
-      if (ctrl || allowed.includes(e.key)) return;
-      if (!/^\d$/.test(e.key)) e.preventDefault();
-    });
-
-    // Reaplica máscara a cada input — salva dígitos brutos (pré-normalização) em dataset
     input.addEventListener('input', () => {
-      input.dataset.rawPhone = input.value.replace(/\D/g, ''); // dígitos antes de normalizar
-      input.value = applyMask(input.value);
+      let v = input.value.replace(/\D/g, '').substring(0, 11);
+      if (v.length <= 10) {
+        v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+      } else {
+        v = v.replace(/(\d{2})(\d{1})(\d{4})(\d{0,4})/, '($1) $2 $3-$4');
+      }
+      input.value = v;
     });
-
-    // Colar: salva raw dos dígitos colados e normaliza
-    input.addEventListener('paste', e => {
-      e.preventDefault();
-      const pasted = (e.clipboardData || window.clipboardData).getData('text');
-      input.dataset.rawPhone = pasted.replace(/\D/g, '');
-      input.value = applyMask(pasted);
-    });
-  }
-
-  // Valida se o telefone tem dígitos suficientes (10 = fixo, 11 = celular)
-  function isPhoneValid(input) {
-    const digits = input.value.replace(/\D/g, '');
-    return digits.length === 10 || digits.length === 11;
   }
 
   document.querySelectorAll('input[type="tel"]').forEach(phoneMask);
 
+  /* ---- Currency Mask for FGTS valor ---- */
+  function currencyMask(input) {
+    input.addEventListener('input', () => {
+      let v = input.value.replace(/\D/g, '');
+      if (!v) { input.value = ''; return; }
+      v = (parseInt(v, 10) / 100).toFixed(2);
+      input.value = 'R$ ' + v.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    });
+  }
+  document.querySelectorAll('[name="fgts_valor"]').forEach(currencyMask);
+
   /* ---- Form Validation & Submission ---- */
   function validateForm(form) {
     let valid = true;
-    form.querySelectorAll('[required]').forEach(field => {
+    const required = form.querySelectorAll('[required]');
+    required.forEach(field => {
       field.classList.remove('error');
-      field.removeAttribute('data-error');
-      let fieldValid = !!field.value.trim();
-      if (fieldValid && field.type === 'tel') fieldValid = isPhoneValid(field);
-      if (!fieldValid) {
+      if (!field.value.trim()) {
         field.classList.add('error');
-        if (field.type === 'tel') field.setAttribute('data-error', 'DDD + número inválido');
         valid = false;
       }
     });
@@ -187,10 +160,24 @@
         document.head.appendChild(style);
       }
 
-      const data = Object.fromEntries(new FormData(form).entries());
-      // Inclui o telefone exatamente como o cliente digitou (pré-normalização)
-      const telInput = form.querySelector('input[type="tel"]');
-      if (telInput) data.phone_raw = telInput.dataset.rawPhone || data.phone;
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      // Collect multi-value checkboxes and extra fields, append to message
+      const regions   = formData.getAll('regions');
+      const fgts      = data.fgts       || '';
+      const fgtsValor = data.fgts_valor || '';
+      const renda     = data.renda      || '';
+      let extra = '';
+      if (regions.length > 0) extra += `Regiões: ${regions.join(', ')}. `;
+      if (fgts)               extra += `FGTS/Entrada: ${fgts}. `;
+      if (fgtsValor)          extra += `Valor: ${fgtsValor}. `;
+      if (renda)              extra += `Renda familiar: ${renda}.`;
+      if (extra) data.message = extra.trim() + (data.message ? ' | ' + data.message : '');
+      delete data.regions;
+      delete data.fgts;
+      delete data.fgts_valor;
+      delete data.renda;
 
       try {
         const res = await fetch('/api/leads', {
@@ -358,25 +345,14 @@
     const waForm = modal.querySelector('#waLeadForm');
     waForm && waForm.addEventListener('submit', async e => {
       e.preventDefault();
-      const nameInput  = modal.querySelector('#wa-name');
-      const phoneInput = modal.querySelector('#wa-phone');
-      const name  = nameInput.value.trim();
-      const phone = phoneInput.value.trim();
+      const name = modal.querySelector('#wa-name').value.trim();
+      const phone = modal.querySelector('#wa-phone').value.trim();
 
-      // Validação com as mesmas regras do formulário principal
-      let valid = true;
-      nameInput.style.borderColor  = '';
-      phoneInput.style.borderColor = '';
-      phoneInput.removeAttribute('title');
-      if (!name)  { nameInput.style.borderColor  = '#e53e3e'; valid = false; }
-      if (!isPhoneValid(phoneInput)) {
-        phoneInput.style.borderColor = '#e53e3e';
-        phoneInput.setAttribute('title', 'DDD + número inválido (mín. 10 dígitos)');
-        valid = false;
+      if (!name || !phone) {
+        if (!name) modal.querySelector('#wa-name').style.borderColor = '#e53e3e';
+        if (!phone) modal.querySelector('#wa-phone').style.borderColor = '#e53e3e';
+        return;
       }
-      if (!valid) return;
-
-      const phone_raw = phoneInput.dataset.rawPhone || phone;
 
       const btn = waForm.querySelector('button[type="submit"]');
       btn.disabled = true;
@@ -387,7 +363,7 @@
         const resp = await fetch('/api/leads/wa', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, phone_raw }),
+          body: JSON.stringify({ name, phone }),
         });
         const json = await resp.json();
         if (json.wa_url) waRedirectUrl = json.wa_url;
@@ -395,14 +371,23 @@
 
       closeWaModal();
       waForm.reset();
-      modal.querySelector('#wa-name').style.borderColor  = '';
+      modal.querySelector('#wa-name').style.borderColor = '';
       modal.querySelector('#wa-phone').style.borderColor = '';
-      delete modal.querySelector('#wa-phone').dataset.rawPhone;
       btn.disabled = false;
       btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Continuar para o WhatsApp';
 
       window.open(waRedirectUrl, '_blank', 'noopener');
     });
   })();
+
+  /* ---- Clique na foto do card ---- */
+  document.querySelectorAll('.emp-card').forEach(card => {
+    const imgWrap = card.querySelector('.emp-card__img-wrap');
+    const link = card.querySelector('a.btn');
+    if (imgWrap && link) {
+      imgWrap.style.cursor = 'pointer';
+      imgWrap.addEventListener('click', () => { window.location.href = link.href; });
+    }
+  });
 
 })();

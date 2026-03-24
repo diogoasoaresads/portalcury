@@ -7,10 +7,10 @@
   <title><%= emp.seoTitle %></title>
   <meta name="description" content="<%= emp.seoDesc %>" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.centralcuryvendas.com.br/empreendimentos/<%= emp.slug %>" />
+  <link rel="canonical" href="https://www.portalcury.com.br/empreendimentos/<%= emp.slug %>" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.centralcuryvendas.com.br/empreendimentos/<%= emp.slug %>" />
+  <meta property="og:url" content="https://www.portalcury.com.br/empreendimentos/<%= emp.slug %>" />
   <meta property="og:title" content="<%= emp.seoTitle %>" />
   <meta property="og:description" content="<%= emp.seoDesc %>" />
 
@@ -51,8 +51,8 @@
   <!-- Header -->
   <header class="header" id="header">
     <div class="container header__inner">
-      <a href="/" class="header__logo" aria-label="Central Cury Vendas">
-        <img src="/images/logo-cury.png" class="logo__img" alt="Central Cury Vendas" height="36">
+      <a href="/" class="header__logo" aria-label="Portal Cury">
+        <img src="/images/logo-cury.png" class="logo__img" alt="Portal Cury" height="36">
       </a>
       <nav class="header__nav">
         <a href="/">Início</a>
@@ -105,12 +105,39 @@
             </div>
             <div class="form-group">
               <label for="eb-phone">WhatsApp / Telefone *</label>
-              <input type="tel" id="eb-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" maxlength="16" inputmode="numeric" />
-              <span class="phone-hint">DDD + número, ex: (21) 9 8888-7777</span>
+              <input type="tel" id="eb-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" />
             </div>
             <div class="form-group">
               <label for="eb-email">E-mail</label>
               <input type="email" id="eb-email" name="email" placeholder="seu@email.com" autocomplete="email" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="eb-fgts">FGTS ou entrada?</label>
+                <select id="eb-fgts" name="fgts">
+                  <option value="">Selecione</option>
+                  <option value="FGTS disponível">FGTS disponível</option>
+                  <option value="Tenho entrada">Tenho entrada</option>
+                  <option value="FGTS + entrada">FGTS + entrada</option>
+                  <option value="Ainda não tenho">Ainda não tenho</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="eb-renda">Renda familiar mensal</label>
+                <select id="eb-renda" name="renda">
+                  <option value="">Selecione</option>
+                  <option value="R$ 3.000 a R$ 5.000">R$ 3.000 a R$ 5.000</option>
+                  <option value="R$ 5.001 a R$ 8.000">R$ 5.001 a R$ 8.000</option>
+                  <option value="R$ 8.001 a R$ 12.000">R$ 8.001 a R$ 12.000</option>
+                  <option value="R$ 12.001 a R$ 20.000">R$ 12.001 a R$ 20.000</option>
+                  <option value="R$ 20.001 a R$ 30.000">R$ 20.001 a R$ 30.000</option>
+                  <option value="Acima de R$ 30.000">Acima de R$ 30.000</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="eb-fgts-valor">Valor estimado (FGTS + entrada)</label>
+              <input type="text" id="eb-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
             </div>
             <button type="submit" class="btn btn--primary btn--full">
               Quero Ser Avisado do Lançamento
@@ -235,9 +262,9 @@
   <!-- Footer mínimo -->
   <footer class="footer" style="background:#1a2332; color:#a0aec0; padding:32px 0; text-align:center; font-size:.85rem;">
     <div class="container">
-      <img src="/images/logo-cury.png" alt="Central Cury Vendas" height="28" style="opacity:.7; margin-bottom:12px; display:block; margin-left:auto; margin-right:auto;">
-      <p>Central Cury Vendas · Empreendimentos no Rio de Janeiro e Niterói</p>
-      <p style="margin-top:8px;"><a href="/" style="color:#7b1c2e;">← Ver todos os empreendimentos</a></p>
+      <img src="/images/logo-cury.png" alt="Portal Cury" height="28" style="opacity:.7; margin-bottom:12px; display:block; margin-left:auto; margin-right:auto;">
+      <p>Portal Cury · Empreendimentos no Rio de Janeiro e Niterói</p>
+      <p style="margin-top:8px;"><a href="/" style="color:#ea723d;">← Ver todos os empreendimentos</a></p>
     </div>
   </footer>
 
@@ -252,51 +279,49 @@
       document.querySelector('.header__nav').classList.toggle('header__nav--open');
     });
 
-    // Phone mask — mesma lógica do main.js
-    (function() {
-      const input = document.getElementById('eb-phone');
-      if (!input) return;
-      function normalizeDigits(raw) {
-        let d = raw.replace(/\D/g, '');
-        if (d.startsWith('0055'))                    d = d.slice(4);
-        else if (d.startsWith('55') && d.length > 11) d = d.slice(2);
-        if (d.length > 1 && d.startsWith('0'))        d = d.slice(1);
-        return d.slice(0, 11);
-      }
-      function applyMask(raw) {
-        const d = normalizeDigits(raw);
-        if (d.length <= 2)  return d.replace(/(\d{1,2})/, '($1');
-        if (d.length <= 6)  return d.replace(/(\d{2})(\d{1,4})/, '($1) $2');
-        if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{1,4})/, '($1) $2-$3');
-                            return d.replace(/(\d{2})(\d{1})(\d{4})(\d{1,4})/, '($1) $2 $3-$4');
-      }
-      input.addEventListener('keydown', e => {
-        const ctrl = e.ctrlKey || e.metaKey;
-        const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Tab','Home','End'];
-        if (ctrl || allowed.includes(e.key)) return;
-        if (!/^\d$/.test(e.key)) e.preventDefault();
+    // Phone mask
+    const phoneInput = document.getElementById('eb-phone');
+    if (phoneInput) {
+      phoneInput.addEventListener('input', (e) => {
+        let v = e.target.value.replace(/\D/g, '').substring(0, 11);
+        if (v.length >= 7) v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+        else if (v.length >= 3) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+        else if (v.length >= 1) v = `(${v}`;
+        e.target.value = v;
       });
-      input.addEventListener('input', () => { input.value = applyMask(input.value); });
-      input.addEventListener('paste', e => {
-        e.preventDefault();
-        const pasted = (e.clipboardData || window.clipboardData).getData('text');
-        input.value = applyMask(pasted);
+    }
+
+    // Currency mask for FGTS valor
+    const fgtsValorInput = document.getElementById('eb-fgts-valor');
+    if (fgtsValorInput) {
+      fgtsValorInput.addEventListener('input', () => {
+        let v = fgtsValorInput.value.replace(/\D/g, '');
+        if (!v) { fgtsValorInput.value = ''; return; }
+        v = (parseInt(v, 10) / 100).toFixed(2);
+        fgtsValorInput.value = 'R$ ' + v.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
       });
-    })();
+    }
 
     // Form submit
     document.getElementById('ebForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
       const btn = form.querySelector('button[type=submit]');
-      const name = form.querySelector('[name=name]').value.trim();
-      const phone = form.querySelector('[name=phone]').value.trim();
-      const interest = form.querySelector('[name=interest]').value;
-      const email = form.querySelector('[name=email]') ? form.querySelector('[name=email]').value.trim() : '';
+      const name      = form.querySelector('[name=name]').value.trim();
+      const phone     = form.querySelector('[name=phone]').value.trim();
+      const interest  = form.querySelector('[name=interest]').value;
+      const email     = form.querySelector('[name=email]') ? form.querySelector('[name=email]').value.trim() : '';
+      const fgts      = form.querySelector('[name=fgts]') ? form.querySelector('[name=fgts]').value : '';
+      const fgtsValor = form.querySelector('[name=fgts_valor]') ? form.querySelector('[name=fgts_valor]').value.trim() : '';
+      const renda     = form.querySelector('[name=renda]') ? form.querySelector('[name=renda]').value : '';
 
-      const phoneDigits = phone.replace(/\D/g, '');
-      if (!name || phoneDigits.length < 10) {
-        alert('Por favor, preencha nome e telefone completo (DDD + número).');
+      let message = '';
+      if (fgts)      message += `FGTS/Entrada: ${fgts}. `;
+      if (fgtsValor) message += `Valor: ${fgtsValor}. `;
+      if (renda)     message += `Renda familiar: ${renda}.`;
+
+      if (!name || !phone) {
+        alert('Por favor, preencha nome e telefone.');
         return;
       }
 
@@ -307,7 +332,7 @@
         const res = await fetch('/api/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, email, interest }),
+          body: JSON.stringify({ name, phone, email, interest, message: message.trim() }),
         });
         if (res.ok) {
           document.getElementById('ebForm').style.display = 'none';
@@ -335,6 +360,5 @@
       });
     });
   </script>
-  <script src="/js/analytics.js"></script>
 </body>
 </html>

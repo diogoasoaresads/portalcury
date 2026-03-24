@@ -8,7 +8,7 @@
 module.exports = {
   apps: [
     {
-      name: 'centralcuryvendas',
+      name: 'portalcury',
       script: 'server.js',
       instances: 1,
       autorestart: true,
@@ -17,10 +17,6 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production',
         PORT: 3000,
-        // Aponte para um diretório fora da pasta do projeto para que o banco
-        // sobreviva a git pulls e atualizações. Crie o diretório antes:
-        //   sudo mkdir -p /var/lib/centralcuryvendas && sudo chown $USER /var/lib/centralcuryvendas
-        DATA_DIR: '/var/lib/centralcuryvendas',
       },
       // Logs
       out_file: './logs/out.log',

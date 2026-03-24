@@ -51,8 +51,8 @@
 }
 
 .eb-badge--coming {
-  background: rgba(123, 28, 46, .2);
-  border: 1.5px solid rgba(123, 28, 46, .6);
+  background: rgba(234, 114, 61, .2);
+  border: 1.5px solid rgba(234, 114, 61, .6);
   color: #ffb38a;
   animation: eb-pulse 2s ease-in-out infinite;
 }
@@ -65,8 +65,8 @@
 }
 
 @keyframes eb-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(123,28,46,.4); }
-  50%       { box-shadow: 0 0 0 8px rgba(123,28,46,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(234,114,61,.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(234,114,61,0); }
 }
 
 /* Hero text */
@@ -234,13 +234,13 @@
 .eb-benefit-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md);
-  border-color: rgba(123,28,46,.3);
+  border-color: rgba(234,114,61,.3);
 }
 
 .eb-benefit-card__icon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, rgba(44,10,16,.08), rgba(123,28,46,.1));
+  background: linear-gradient(135deg, rgba(0,68,125,.08), rgba(234,114,61,.1));
   border-radius: 14px;
   display: flex;
   align-items: center;

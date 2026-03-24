@@ -1,5 +1,5 @@
 /* ============================================================
-   CENTRAL CURY VENDAS – GALLERY & LIGHTBOX JS
+   PORTAL CURY – GALLERY & LIGHTBOX JS
    ============================================================ */
 (function () {
   'use strict';

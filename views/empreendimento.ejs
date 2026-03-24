@@ -7,10 +7,10 @@
   <title><%= emp.seoTitle %></title>
   <meta name="description" content="<%= emp.seoDesc %>" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://www.centralcuryvendas.com.br/empreendimentos/<%= emp.slug %>" />
+  <link rel="canonical" href="https://www.portalcury.com.br/empreendimentos/<%= emp.slug %>" />
 
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.centralcuryvendas.com.br/empreendimentos/<%= emp.slug %>" />
+  <meta property="og:url" content="https://www.portalcury.com.br/empreendimentos/<%= emp.slug %>" />
   <meta property="og:title" content="<%= emp.seoTitle %>" />
   <meta property="og:description" content="<%= emp.seoDesc %>" />
   <meta property="og:image" content="<%= emp.heroImage %>" />
@@ -31,7 +31,7 @@
       "addressCountry": "BR"
     },
     "image": "<%= emp.heroImage %>",
-    "url": "https://www.centralcuryvendas.com.br/empreendimentos/<%= emp.slug %>"
+    "url": "https://www.portalcury.com.br/empreendimentos/<%= emp.slug %>"
   }
   </script>
 
@@ -72,8 +72,8 @@
   <!-- Header -->
   <header class="header" id="header">
     <div class="container header__inner">
-      <a href="/" class="header__logo" aria-label="Central Cury Vendas">
-        <img src="/images/logo-cury.png" class="logo__img" alt="Central Cury Vendas" height="36">
+      <a href="/" class="header__logo" aria-label="Portal Cury">
+        <img src="/images/logo-cury.png" class="logo__img" alt="Portal Cury" height="36">
       </a>
       <nav class="header__nav">
         <a href="/">Início</a>
@@ -147,12 +147,39 @@
             </div>
             <div class="form-group">
               <label for="h-phone">WhatsApp / Telefone *</label>
-              <input type="tel" id="h-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" maxlength="16" />
-              <span class="phone-hint">DDD + número, ex: (21) 9 8888-7777</span>
+              <input type="tel" id="h-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" />
             </div>
             <div class="form-group">
               <label for="h-email">E-mail</label>
               <input type="email" id="h-email" name="email" placeholder="seu@email.com" autocomplete="email" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="h-fgts">FGTS ou entrada?</label>
+                <select id="h-fgts" name="fgts">
+                  <option value="">Selecione</option>
+                  <option value="FGTS disponível">FGTS disponível</option>
+                  <option value="Tenho entrada">Tenho entrada</option>
+                  <option value="FGTS + entrada">FGTS + entrada</option>
+                  <option value="Ainda não tenho">Ainda não tenho</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="h-renda">Renda familiar mensal</label>
+                <select id="h-renda" name="renda">
+                  <option value="">Selecione</option>
+                  <option value="R$ 3.000 a R$ 5.000">R$ 3.000 a R$ 5.000</option>
+                  <option value="R$ 5.001 a R$ 8.000">R$ 5.001 a R$ 8.000</option>
+                  <option value="R$ 8.001 a R$ 12.000">R$ 8.001 a R$ 12.000</option>
+                  <option value="R$ 12.001 a R$ 20.000">R$ 12.001 a R$ 20.000</option>
+                  <option value="R$ 20.001 a R$ 30.000">R$ 20.001 a R$ 30.000</option>
+                  <option value="Acima de R$ 30.000">Acima de R$ 30.000</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="h-fgts-valor">Valor estimado (FGTS + entrada)</label>
+              <input type="text" id="h-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
             </div>
             <button type="submit" class="btn btn--primary btn--full">Quero Minha Simulação Grátis</button>
             <p class="form-card__privacy">
@@ -269,16 +296,43 @@
             </div>
             <div class="form-group">
               <label for="sb-phone">WhatsApp / Telefone *</label>
-              <input type="tel" id="sb-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" maxlength="16" />
-              <span class="phone-hint">DDD + número, ex: (21) 9 8888-7777</span>
+              <input type="tel" id="sb-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" />
             </div>
             <div class="form-group">
               <label for="sb-email">E-mail</label>
               <input type="email" id="sb-email" name="email" placeholder="seu@email.com" autocomplete="email" />
             </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="sb-fgts">FGTS ou entrada?</label>
+                <select id="sb-fgts" name="fgts">
+                  <option value="">Selecione</option>
+                  <option value="FGTS disponível">FGTS disponível</option>
+                  <option value="Tenho entrada">Tenho entrada</option>
+                  <option value="FGTS + entrada">FGTS + entrada</option>
+                  <option value="Ainda não tenho">Ainda não tenho</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="sb-renda">Renda familiar mensal</label>
+                <select id="sb-renda" name="renda">
+                  <option value="">Selecione</option>
+                  <option value="R$ 3.000 a R$ 5.000">R$ 3.000 a R$ 5.000</option>
+                  <option value="R$ 5.001 a R$ 8.000">R$ 5.001 a R$ 8.000</option>
+                  <option value="R$ 8.001 a R$ 12.000">R$ 8.001 a R$ 12.000</option>
+                  <option value="R$ 12.001 a R$ 20.000">R$ 12.001 a R$ 20.000</option>
+                  <option value="R$ 20.001 a R$ 30.000">R$ 20.001 a R$ 30.000</option>
+                  <option value="Acima de R$ 30.000">Acima de R$ 30.000</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="sb-fgts-valor">Valor estimado (FGTS + entrada)</label>
+              <input type="text" id="sb-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
+            </div>
             <div class="form-group">
               <label for="sb-msg">Mensagem</label>
-              <textarea id="sb-msg" name="message" rows="3" placeholder="Tenho FGTS disponível, quero simular..."></textarea>
+              <textarea id="sb-msg" name="message" rows="2" placeholder="Alguma dúvida ou informação adicional?"></textarea>
             </div>
             <button type="submit" class="btn btn--primary btn--full btn--lg">Solicitar Atendimento</button>
             <a href="https://wa.me/5521967019390?text=Olá!%20Tenho%20interesse%20no%20<%= encodeURIComponent(emp.name) %>" target="_blank" rel="noopener" class="btn btn--whatsapp btn--full" style="margin-top:10px;text-decoration:none">
@@ -329,7 +383,7 @@
     <div class="container footer__inner">
       <div class="footer__brand">
         <a href="/" class="header__logo footer__logo">
-          <img src="/images/logo-cury.png" class="logo__img" alt="Central Cury Vendas" height="36">
+          <img src="/images/logo-cury.png" class="logo__img" alt="Portal Cury" height="36">
         </a>
         <p>Realizando o sonho da casa própria há mais de 30 anos no Rio de Janeiro e Niterói.</p>
       </div>
@@ -347,14 +401,14 @@
       <div class="footer__links">
         <h4>Atendimento</h4>
         <ul>
-          <li><a href="/#vantagens">Vantagens MCMV</a></li>
+          <li><a href="/#vantagens">Vantagens Exclusivas</a></li>
           <li><a href="/#contato">Fale Conosco</a></li>
         </ul>
       </div>
     </div>
     <div class="footer__bottom">
       <div class="container">
-        <p>&copy; 2025 Central Cury Vendas – Todos os direitos reservados. CRECI RJ: 00000-J</p>
+        <p>&copy; 2025 Portal Cury – Todos os direitos reservados. CRECI RJ: 00000-J</p>
         <p class="footer__disclaimer">Imagens meramente ilustrativas. Condições sujeitas à aprovação de crédito.</p>
         <p class="footer__disclaimer" style="margin-top:6px">Site desenvolvido por <a href="https://agenciaqao.com.br" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">agenciaqao.com.br</a></p>
       </div>
@@ -382,10 +436,9 @@
           <input type="text" id="wa-name" name="name" placeholder="Seu nome completo *" required autocomplete="name"
             style="width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:1rem;box-sizing:border-box" />
         </div>
-        <div style="margin-bottom:18px">
-          <input type="tel" id="wa-phone" name="phone" placeholder="(21) 9 0000-0000 *" required autocomplete="tel" maxlength="16"
+        <div style="margin-bottom:12px">
+          <input type="tel" id="wa-phone" name="phone" placeholder="Seu WhatsApp *" required autocomplete="tel"
             style="width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:1rem;box-sizing:border-box" />
-          <span style="display:block;font-size:.73rem;color:#94a3b8;margin-top:4px">DDD + número, ex: (21) 9 8888-7777</span>
         </div>
         <button type="submit" style="width:100%;padding:13px;background:#25d366;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -424,6 +477,48 @@
   })();
   </script>
   <% } %>
-  <script src="/js/analytics.js"></script>
+  <script>
+  /* ── Rastreamento de tráfego ─────────────────────────── */
+  (function(){
+    if (!sessionStorage.getItem('sid')) {
+      sessionStorage.setItem('sid', 'sid_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
+    }
+    const sid = sessionStorage.getItem('sid');
+    const p = new URLSearchParams(location.search);
+    const utms = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'];
+    const saved = JSON.parse(sessionStorage.getItem('utms') || '{}');
+    let hasUtm = false;
+    utms.forEach(k => { if (p.has(k)) { saved[k] = p.get(k); hasUtm = true; } });
+    if (hasUtm) sessionStorage.setItem('utms', JSON.stringify(saved));
+    const utm = JSON.parse(sessionStorage.getItem('utms') || '{}');
+    function detectDevice() {
+      const ua = navigator.userAgent;
+      if (/tablet|ipad|playbook|silk|(android(?!.*mobile))/i.test(ua)) return 'tablet';
+      if (/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/i.test(ua)) return 'mobile';
+      return 'desktop';
+    }
+    function detectBrowser() {
+      const ua = navigator.userAgent;
+      if (/edg\//i.test(ua)) return 'Edge';
+      if (/opr\//i.test(ua)) return 'Opera';
+      if (/chrome/i.test(ua)) return 'Chrome';
+      if (/safari/i.test(ua) && !/chrome/i.test(ua)) return 'Safari';
+      if (/firefox/i.test(ua)) return 'Firefox';
+      return 'Outro';
+    }
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sid,
+        page: location.pathname + location.search,
+        utm_source: utm.utm_source || '', utm_medium: utm.utm_medium || '',
+        utm_campaign: utm.utm_campaign || '', utm_content: utm.utm_content || '',
+        utm_term: utm.utm_term || '', referrer: document.referrer || '',
+        device: detectDevice(), browser: detectBrowser(),
+      })
+    }).catch(() => {});
+  })();
+  </script>
 </body>
 </html>
