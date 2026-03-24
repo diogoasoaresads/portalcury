@@ -636,8 +636,10 @@ app.post('/webhook/wa-incoming', express.json(), (req, res) => {
     console.log('[WA-Webhook] Recebido:', JSON.stringify(body));
 
     const event = body?.event || body?.type || '';
-    if (!event.toLowerCase().includes('messages.upsert') && !body?.data?.key) {
-      console.log('[WA-Webhook] Ignorando evento:', event);
+    // Aceita qualquer coisa que pareça uma mensagem ou evento upsert
+    const looksLikeMessage = body?.data?.key || body?.message?.key || body?.key;
+    if (!event.toLowerCase().includes('message') && !looksLikeMessage) {
+      console.log('[WA-Webhook] Ignorando evento irrelevante:', event);
       return;
     }
 
@@ -857,6 +859,18 @@ app.post('/api/wa/disconnect', auth, adminOnly, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(502).json({ error: err.message });
+  }
+});
+
+// Debug para o desenvolvedor ver se tem dados
+app.get('/api/wa/debug-db', auth, adminOnly, (req, res) => {
+  try {
+    const convs = db.prepare('SELECT count(*) as count FROM wa_conversations').get();
+    const msgs = db.prepare('SELECT count(*) as count FROM wa_messages').get();
+    const lastMsg = db.prepare('SELECT * FROM wa_messages ORDER BY id DESC LIMIT 1').get();
+    res.json({ conversations: convs.count, messages: msgs.count, lastMessage: lastMsg });
+  } catch (err) {
+    res.json({ error: err.message });
   }
 });
 

@@ -156,10 +156,14 @@
     .logout-btn:hover { color: rgba(255,255,255,.9); }
 
     /* Main content */
-    .main { margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-width: 0; }
+    .main { 
+      margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-width: 0;
+      display: flex; flex-direction: column; min-height: 100vh;
+    }
 
     .page { display: none; }
     .page.active { display: block; }
+    #atendimentoPage.active { display: flex; }
 
     /* Page header */
     .page-header { margin-bottom: 24px; }
@@ -441,7 +445,7 @@
        ATENDIMENTO WHATSAPP
     ============================================================ */
     .wa-shell {
-      display: flex; height: calc(100vh - 80px); /* Ajustado para caber no main */
+      display: flex; flex: 1;
       margin: 0; 
       overflow: hidden;
       background: #fff;
@@ -1079,7 +1083,7 @@
     </section>
 
     <!-- ===== ATENDIMENTO ===== -->
-    <section class="page" id="atendimentoPage" style="padding:0; overflow:hidden;">
+    <section class="page" id="atendimentoPage" style="padding:0; flex: 1; display: none; flex-direction: column; overflow:hidden;">
       <div class="wa-shell">
         <!-- Sidebar de Conversas -->
         <div class="wa-sidebar">
