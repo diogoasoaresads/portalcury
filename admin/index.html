@@ -2240,7 +2240,7 @@ async function loadDashboard() {
         <td style="color:var(--gray);font-size:.82rem">${formatDate(l.created_at)}</td>
         <td><div class="actions">
           <button class="btn btn-secondary btn-sm" onclick="openLead(${l.id})">Ver</button>
-          <a class="btn btn-green btn-sm" href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank">WA</a>
+          <button class="btn btn-green btn-sm" onclick="openChatForLead('${l.phone}', '${escHtml(l.name)}')">WA</button>
         </div></td>
       </tr>
     `).join('');
@@ -2289,7 +2289,7 @@ async function loadLeads() {
           <td style="color:var(--gray);font-size:.82rem;white-space:nowrap">${formatDate(l.created_at)}</td>
           <td><div class="actions">
             <button class="btn btn-secondary btn-sm" onclick="openLead(${l.id})">Detalhes</button>
-            <a class="btn btn-green btn-sm" href="https://wa.me/55${l.phone.replace(/\D/g,'')}" target="_blank">WA</a>
+            <button class="btn btn-green btn-sm" onclick="openChatForLead('${l.phone}', '${escHtml(l.name)}')">WA</button>
           </div></td>
         </tr>
       `).join('');
@@ -2371,7 +2371,7 @@ async function openLead(id) {
         <textarea id="leadNotes" rows="4" placeholder="Registre aqui informações do atendimento...">${escHtml(lead.notes || '')}</textarea>
       </div>
       <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-        <a href="https://wa.me/55${lead.phone.replace(/\D/g,'')}" target="_blank" class="btn btn-green btn-sm">Abrir WhatsApp</a>
+        <button onclick="openChatForLead('${lead.phone}', '${escHtml(lead.name)}')" class="btn btn-green btn-sm">Abrir Chat Interno</button>
         <a href="tel:${escHtml(lead.phone)}" class="btn btn-secondary btn-sm">Ligar</a>
       </div>
       ${timelineHtml}
@@ -3777,6 +3777,25 @@ async function sendWaMessage() {
     await api('POST', `/api/wa/conversations/${waCurrentConvId}/send`, { text });
   } catch (err) {
     showToast('Erro ao enviar: ' + err.message, 'error');
+  }
+}
+
+// V18: Abre chat interno para um lead específico
+async function openChatForLead(phone, name) {
+  try {
+    showToast('Localizando conversa...', 'info');
+    const conv = await api('POST', '/api/wa/conversations/upsert', { phone, name });
+    
+    // 1. Troca para a aba Atendimento
+    navigate('atendimento');
+    
+    // 2. Aguarda um pouco para a aba carregar e entao seleciona a conversa
+    setTimeout(() => {
+      selectConversation(conv.id);
+      showToast('Chat aberto!', 'success');
+    }, 300);
+  } catch (err) {
+    showToast('Erro ao abrir chat: ' + err.message, 'error');
   }
 }
 

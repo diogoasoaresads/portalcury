@@ -804,6 +804,17 @@ app.get('/api/wa/events', auth, (req, res) => {
 // ATENDIMENTO WHATSAPP — Conversas e Mensagens
 // ============================================================
 
+// Upsert conversa (cria se não existe, p/ abrir chat via Lead)
+app.post('/api/wa/conversations/upsert', auth, (req, res) => {
+  const { phone, name } = req.body;
+  if (!phone) return res.status(400).json({ error: 'Telefone obrigatório.' });
+  try {
+    const jid = phone.includes('@') ? phone : `${phone.replace(/\D/g,'')}@s.whatsapp.net`;
+    const conv = upsertConversation(jid, name || '');
+    res.json(conv);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // Listar conversas
 app.get('/api/wa/conversations', auth, (req, res) => {
   const { status = 'open', agent } = req.query;
