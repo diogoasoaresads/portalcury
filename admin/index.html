@@ -3784,22 +3784,30 @@ async function sendWaMessage() {
 
 // V18: Abre chat interno para um lead específico
 async function openChatForLead(phone, name) {
+  console.log('[DEBUG] openChatForLead disparado:', { phone, name });
   try {
     showToast('Localizando conversa...', 'info');
+    console.log('[DEBUG] Chamando /api/wa/conversations/upsert...');
     const conv = await api('POST', '/api/wa/conversations/upsert', { phone, name });
+    console.log('[DEBUG] Conversa upsertada/localizada:', conv);
     
     // 1. Troca para a aba Atendimento
+    console.log('[DEBUG] Navegando para atendimento...');
     navigate('atendimento');
     
-    // 2. Força recarregamento das conversas para garantir que o ID novo/existente esteja na lista local
+    // 2. Força recarregamento das conversas
+    console.log('[DEBUG] Recarregando lista de conversas...');
     await loadConversations();
     
     // 3. Seleciona a conversa
+    console.log('[DEBUG] Agendando seleção da conversa ID:', conv.id);
     setTimeout(() => {
+      console.log('[DEBUG] Executando openConversation para ID:', conv.id);
       openConversation(conv.id);
       showToast('Chat aberto!', 'success');
-    }, 100);
+    }, 200);
   } catch (err) {
+    console.error('[DEBUG] ERRO em openChatForLead:', err);
     showToast('Erro ao abrir chat: ' + err.message, 'error');
   }
 }
