@@ -645,12 +645,12 @@ function fireNotifications(lead, cfg) {
 // ============================================================
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
-app.post('/webhook/wa-incoming', express.json(), (req, res) => {
+app.get('/webhook/wa-incoming', (req, res) => {
   const now = new Date().toISOString();
-  waLog(`[${now}] WEBHOOK TRIGGER!`);
-  res.sendStatus(200); 
+  waLog(`[${now}] WEBHOOK TRIGGER (GET)! Query: ${JSON.stringify(req.query)}`);
+  res.send('OK - LOGADO');
   try {
-    const body = req.body || {};
+    const body = req.query || {};
     waLog(`[${now}] Body: ${JSON.stringify(body).slice(0, 500)}`);
 
     const event = body?.event || body?.type || '';

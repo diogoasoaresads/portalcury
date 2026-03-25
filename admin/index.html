@@ -2608,10 +2608,8 @@ async function sendWaTest() {
       }
     };
     
-    const res = await fetch('/webhook/wa-incoming', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const res = await fetch('/webhook/wa-incoming?test=true&msg=simulacao_get', {
+      method: 'GET'
     });
     
     if (res.ok) {
