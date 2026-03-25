@@ -129,11 +129,26 @@ db.exec(`
   );
 `);
 
-// Índices para acelerar deduplicação de leads
+// Tabela de notificações do CRM (sino)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    type       TEXT    DEFAULT 'lead_novo',
+    title      TEXT    DEFAULT '',
+    body       TEXT    DEFAULT '',
+    lead_id    INTEGER,
+    read       INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+
+// Índices para acelerar deduplicação de leads e notificações
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);
   CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
+  CREATE INDEX IF NOT EXISTS idx_leads_phone_norm ON leads(phone_norm);
   CREATE INDEX IF NOT EXISTS idx_lead_activities_lead_id ON lead_activities(lead_id);
+  CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
 `);
 
 // Migrations — add columns if they don't exist yet
@@ -257,6 +272,13 @@ function findDuplicateLead(phone, email) {
   }
 
   return null;
+}
+
+// ---- Notificações do CRM ----
+function insertNotification(type, title, body, lead_id) {
+  db.prepare(`
+    INSERT INTO notifications (type, title, body, lead_id) VALUES (?, ?, ?, ?)
+  `).run(type, title, body || '', lead_id || null);
 }
 
 // ---- Registro de atividades no lead ----
@@ -509,6 +531,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     addActivity(existing.id, 'novo_contato', 'Novo contato recebido (landing page)', bodyLines);
 
     const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
+    insertNotification('lead_duplicado', `🔁 ${lead.name} voltou a contatar`, `Telefone: ${lead.phone}${lead.interest ? ` · ${lead.interest}` : ''}`, lead.id);
     fireNotifications(lead, getConfig());
     return res.json({ success: true, id: lead.id, duplicate: true });
   }
@@ -533,6 +556,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 
   addActivity(lead.id, 'novo_contato', 'Lead recebido (landing page)', bodyLines);
 
+  insertNotification('lead_novo', `🟢 Novo lead: ${lead.name}`, `Telefone: ${lead.phone}${lead.interest ? ` · ${lead.interest}` : ''}`, lead.id);
   fireNotifications(lead, getConfig());
   res.json({ success: true, id: lead.id, duplicate: false });
   } catch (err) {
@@ -568,6 +592,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     addActivity(existing.id, 'novo_contato', 'Novo contato recebido (WhatsApp)', bodyLines);
 
     const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
+    insertNotification('lead_wa_duplicado', `🔁 ${lead.name} voltou (WhatsApp)`, `Telefone: ${lead.phone}`, lead.id);
     fireNotifications(lead, cfg);
 
     const attendant = db.prepare('SELECT * FROM attendants WHERE id = ?').get(existing.attendant_id);
@@ -594,6 +619,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 
   addActivity(lead.id, 'novo_contato', 'Lead recebido (WhatsApp)', bodyLines);
 
+  insertNotification('lead_wa', `📱 Lead WhatsApp: ${lead.name}`, `Telefone: ${lead.phone}`, lead.id);
   fireNotifications(lead, cfg);
 
   const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
@@ -870,6 +896,28 @@ app.put('/api/leads/:id', auth, (req, res) => {
 
 app.delete('/api/leads/:id', auth, (req, res) => {
   db.prepare('DELETE FROM leads WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// ============================================================
+// ROUTES — NOTIFICATIONS
+// ============================================================
+app.get('/api/notifications', auth, (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit || '60'), 100);
+  const notifications = db.prepare(`
+    SELECT * FROM notifications ORDER BY created_at DESC LIMIT ?
+  `).all(limit);
+  const unread = db.prepare('SELECT COUNT(*) as n FROM notifications WHERE read = 0').get().n;
+  res.json({ notifications, unread });
+});
+
+app.put('/api/notifications/read-all', auth, (_req, res) => {
+  db.prepare('UPDATE notifications SET read = 1 WHERE read = 0').run();
+  res.json({ success: true });
+});
+
+app.delete('/api/notifications', auth, adminOnly, (_req, res) => {
+  db.prepare('DELETE FROM notifications').run();
   res.json({ success: true });
 });
 

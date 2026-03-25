@@ -155,6 +155,91 @@
       font-size: .82rem; cursor: pointer; transition: color .2s; }
     .logout-btn:hover { color: rgba(255,255,255,.9); }
 
+    /* ---- Sino de notificações ---- */
+    .bell-btn {
+      margin-left: auto; position: relative; width: 34px; height: 34px;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.6); cursor: pointer; flex-shrink: 0;
+      transition: background .2s, color .2s;
+    }
+    .bell-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .bell-btn.active { background: rgba(255,255,255,.12); color: #fff; }
+    .bell-badge {
+      position: absolute; top: 3px; right: 3px;
+      min-width: 16px; height: 16px; border-radius: 100px;
+      background: var(--red); color: #fff;
+      font-size: .62rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 3px; line-height: 1; pointer-events: none;
+      animation: bell-pop .3s ease;
+    }
+    @keyframes bell-pop {
+      0%   { transform: scale(0); }
+      70%  { transform: scale(1.25); }
+      100% { transform: scale(1); }
+    }
+
+    /* ---- Painel de notificações ---- */
+    .notif-panel {
+      position: fixed; left: var(--sidebar-w); top: 0;
+      width: 320px; height: 100vh;
+      background: var(--white); border-right: 1px solid var(--border);
+      box-shadow: 4px 0 20px rgba(0,0,0,.12);
+      z-index: 99; display: none; flex-direction: column;
+      animation: slide-in-notif .2s ease;
+    }
+    .notif-panel.open { display: flex; }
+    @keyframes slide-in-notif {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .notif-panel-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 16px 18px; border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .notif-panel-header h3 { font-size: .95rem; font-weight: 700; color: var(--navy); flex: 1; }
+    .notif-mark-read {
+      font-size: .75rem; color: var(--gray); cursor: pointer;
+      padding: 4px 8px; border-radius: 6px; transition: background .15s;
+    }
+    .notif-mark-read:hover { background: var(--gray-lt); color: var(--navy); }
+    .notif-clear {
+      font-size: .75rem; color: #ef4444; cursor: pointer;
+      padding: 4px 8px; border-radius: 6px; transition: background .15s;
+    }
+    .notif-clear:hover { background: #fef2f2; }
+    .notif-list { flex: 1; overflow-y: auto; }
+    .notif-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 200px; color: var(--gray); font-size: .875rem; gap: 8px;
+    }
+    .notif-item {
+      display: flex; gap: 12px; padding: 14px 18px;
+      border-bottom: 1px solid var(--border); cursor: pointer;
+      transition: background .15s; position: relative;
+    }
+    .notif-item:hover { background: var(--gray-lt); }
+    .notif-item.unread { background: #f0f7ff; }
+    .notif-item.unread:hover { background: #e6f2ff; }
+    .notif-item.unread::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--red); border-radius: 0 2px 2px 0;
+    }
+    .notif-icon-wrap {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .notif-icon-wrap.lead_novo        { background: #dcfce7; }
+    .notif-icon-wrap.lead_duplicado   { background: #dbeafe; }
+    .notif-icon-wrap.lead_wa          { background: #dcfce7; }
+    .notif-icon-wrap.lead_wa_duplicado{ background: #dbeafe; }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: .85rem; font-weight: 600; color: var(--navy); line-height: 1.3; }
+    .notif-sub   { font-size: .75rem; color: var(--gray); margin-top: 3px; }
+    .notif-time  { font-size: .7rem; color: var(--gray); flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
+
     /* Main content */
     .main { margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-width: 0; }
 
@@ -704,11 +789,27 @@
 <div id="appPage">
 <div class="layout">
 
+  <!-- Painel de Notificações -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-panel-header">
+      <h3>🔔 Notificações</h3>
+      <span class="notif-mark-read" onclick="markAllNotifRead()" title="Marcar todas como lidas">✓ Lidas</span>
+      <span class="notif-clear" onclick="clearAllNotif()" title="Limpar todas">🗑</span>
+    </div>
+    <div class="notif-list" id="notifList">
+      <div class="notif-empty">Nenhuma notificação.</div>
+    </div>
+  </div>
+
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="icon">C</div>
       <span>Portal <strong>Cury</strong></span>
+      <button class="bell-btn" id="bellBtn" onclick="toggleNotifPanel()" title="Notificações">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="bell-badge" id="bellBadge" style="display:none">0</span>
+      </button>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-item active" data-page="dashboard">
@@ -1667,6 +1768,118 @@ function badgeHtml(status) {
 }
 
 /* ============================================================
+   NOTIFICAÇÕES (sino)
+============================================================ */
+const NOTIF_ICONS = {
+  lead_novo:         '🟢',
+  lead_duplicado:    '🔵',
+  lead_wa:           '📱',
+  lead_wa_duplicado: '🔵',
+};
+
+let notifPanelOpen = false;
+let notifLastCount = 0;
+
+function timeAgo(dateStr) {
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 60)  return 'agora';
+  if (diff < 3600) return `${Math.floor(diff/60)}min atrás`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h atrás`;
+  return `${Math.floor(diff/86400)}d atrás`;
+}
+
+async function loadNotifications() {
+  try {
+    const { notifications, unread } = await api('GET', '/api/notifications?limit=60');
+    const badge = document.getElementById('bellBadge');
+    if (unread > 0) {
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.style.display = 'flex';
+      // Animação no sino se chegou nova notificação
+      if (unread > notifLastCount) {
+        const btn = document.getElementById('bellBtn');
+        btn.style.animation = 'none';
+        btn.offsetHeight; // reflow
+        btn.style.animation = '';
+      }
+    } else {
+      badge.style.display = 'none';
+    }
+    notifLastCount = unread;
+
+    if (notifPanelOpen) renderNotifList(notifications);
+  } catch {}
+}
+
+function renderNotifList(notifications) {
+  const list = document.getElementById('notifList');
+  if (!notifications.length) {
+    list.innerHTML = '<div class="notif-empty"><span style="font-size:2rem">🔔</span>Sem notificações ainda.</div>';
+    return;
+  }
+  list.innerHTML = notifications.map(n => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="openLeadFromNotif(${n.lead_id})">
+      <div class="notif-icon-wrap ${n.type}">${NOTIF_ICONS[n.type] || '📌'}</div>
+      <div class="notif-body">
+        <div class="notif-title">${escHtml(n.title.replace(/^[🟢🔵📱🔁]+\s*/, ''))}</div>
+        <div class="notif-sub">${escHtml(n.body)}</div>
+      </div>
+      <span class="notif-time">${timeAgo(n.created_at)}</span>
+    </div>
+  `).join('');
+}
+
+function toggleNotifPanel() {
+  notifPanelOpen = !notifPanelOpen;
+  document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
+  document.getElementById('bellBtn').classList.toggle('active', notifPanelOpen);
+  if (notifPanelOpen) loadNotifications();
+}
+
+async function markAllNotifRead() {
+  try {
+    await api('PUT', '/api/notifications/read-all');
+    await loadNotifications();
+    const list = document.getElementById('notifList');
+    list.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+    toast('Todas as notificações marcadas como lidas.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function clearAllNotif() {
+  if (!confirm('Limpar todas as notificações?')) return;
+  try {
+    await api('DELETE', '/api/notifications');
+    document.getElementById('notifList').innerHTML = '<div class="notif-empty"><span style="font-size:2rem">🔔</span>Sem notificações ainda.</div>';
+    document.getElementById('bellBadge').style.display = 'none';
+    notifLastCount = 0;
+    toast('Notificações limpas.');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function openLeadFromNotif(leadId) {
+  if (!leadId) return;
+  toggleNotifPanel();
+  showPage('leads');
+  setTimeout(() => openLead(leadId), 200);
+}
+
+// Fecha painel ao clicar fora
+document.addEventListener('click', e => {
+  if (!notifPanelOpen) return;
+  const panel = document.getElementById('notifPanel');
+  const bell  = document.getElementById('bellBtn');
+  if (!panel.contains(e.target) && !bell.contains(e.target)) {
+    notifPanelOpen = false;
+    panel.classList.remove('open');
+    bell.classList.remove('active');
+  }
+});
+
+// Polling: verifica novas notificações a cada 30s
+setInterval(loadNotifications, 30_000);
+
+/* ============================================================
    AUTH
 ============================================================ */
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -1728,6 +1941,7 @@ function initApp(username, role) {
     el.style.display = userRole === 'admin' ? '' : 'none';
   });
   loadDashboard();
+  loadNotifications();
 }
 
 /* ============================================================
