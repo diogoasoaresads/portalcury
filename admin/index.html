@@ -159,19 +159,21 @@
     /* Main content */
     .main { 
       margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-width: 0;
-      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+      display: flex; flex-direction: column; height: 100vh; overflow-y: hidden;
     }
 
-    .page { display: none; height: 100%; overflow: hidden; }
+    .page { display: none; height: 100%; min-height: 0; }
     .page.active { display: block; }
     #atendimentoPage.active { 
        display: flex; 
+       flex: 1;
        height: 100%;
+       min-height: 0;
        overflow: hidden; 
     }
 
     /* Page header */
-    .page-header { margin-bottom: 24px; }
+    .page-header { margin-bottom: 24px; flex-shrink: 0; }
     .page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--navy); }
     .page-header p  { color: var(--gray); font-size: .9rem; margin-top: 4px; }
 
@@ -455,7 +457,8 @@
       background: #fff;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      height: calc(100vh - 110px) !important; /* V13: Travamento absoluto */
+      height: 100% !important; /* V14: Ocupa o container flex */
+      min-height: 0;
       overflow: hidden !important; 
     }
     .wa-sidebar {

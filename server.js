@@ -431,7 +431,7 @@ const waDedupeCache = new Map();
 
 function saveMessage(convId, direction, body, messageId) {
   try {
-    const dedupeKey = `${convId}_${direction}_${(body || '').trim()}`;
+    const dedupeKey = `${convId}_${direction}_${(body || '').trim().toLowerCase()}`;
     
     // De-duplicação em RAM (10 segundos - V13)
     if (waDedupeCache.has(dedupeKey)) {
@@ -765,7 +765,7 @@ app.all('/api/wa/receiver-v3', (req, res) => {
       direction,
       body: text,
       message_id: messageId,
-      created_at: saved.created_at,
+      created_at: new Date().toISOString(),
       contact_name: conv.contact_name,
       contact_phone: conv.contact_phone,
       lead_id: conv.lead_id,
@@ -826,7 +826,9 @@ app.get('/api/wa/conversations', auth, (req, res) => {
 // Mensagens de uma conversa
 app.get('/api/wa/conversations/:id/messages', auth, (req, res) => {
   const msgs = db.prepare(`
-    SELECT * FROM wa_messages WHERE conversation_id = ? ORDER BY id ASC LIMIT 200
+    SELECT id, conversation_id, direction, body, message_id, status,
+           strftime('%Y-%m-%dT%H:%M:%SZ', created_at) as created_at
+    FROM wa_messages WHERE conversation_id = ? ORDER BY id ASC LIMIT 200
   `).all(req.params.id);
   res.json(msgs);
 });
