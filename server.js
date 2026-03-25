@@ -319,13 +319,11 @@ function nextAttendant(queueKey) {
 // SSE — Server-Sent Events para atendimento em tempo real
 // ============================================================
 const sseClients = new Map();
+const BUILD_TS = '25-03-25 00:58'; // Timestamp para validar deploy
 function waLog(msg) {
-  try { 
-    console.log(`[WA-LOG] ${msg}`);
-    db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); 
-  } catch (e) {
-    console.error('[WA-LOG-FAIL]', e.message);
-  }
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
+  try { console.log(`[WA-LOG] ${msg}`); db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); } catch (e) { console.error('[DB-LOG-ERR]', e.message); }
+  try { fs.appendFileSync(path.join(dataDir, 'debug_wa.txt'), line); } catch (e) { console.error('[FILE-LOG-ERR]', e.message); }
 }
 
 function sseAdd(userId, res) {
@@ -648,12 +646,11 @@ function fireNotifications(lead, cfg) {
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
 app.post('/webhook/wa-incoming', express.json(), (req, res) => {
-  const body = req.body;
-  waLog(`[${new Date().toISOString()}] Webhook Recebido (Body length: ${JSON.stringify(body).length})`);
   res.sendStatus(200); 
-
   try {
-    waLog(`[${new Date().toISOString()}] Recebido: ${JSON.stringify(body).slice(0, 300)}`);
+    const body = req.body || {};
+    waLog(`TRIGGER Webhook. Body size: ${JSON.stringify(body).length}`);
+    waLog(`Recebido: ${JSON.stringify(body).slice(0, 300)}`);
 
     const event = body?.event || body?.type || '';
     const looksLikeMessage = body?.data?.key || body?.message?.key || body?.key;
@@ -1833,6 +1830,7 @@ app.get('/api/wa/check-health', auth, (req, res) => {
     
     res.json({
       status: 'ok',
+      build: BUILD_TS,
       database: {
         path: dbPath,
         size: stats.size,

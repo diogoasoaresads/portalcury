@@ -2049,6 +2049,7 @@ async function showWaHealth() {
         <b>Banco:</b> ${data.database.path}<br>
         <b>Tamanho:</b> ${Math.round(data.database.size / 1024)} KB<br>
         <b>Escrita:</b> ${data.database.writable ? '✅ OK' : '❌ Bloqueada'}<br>
+        <b>Build:</b> <span style="color:var(--red); font-weight:bold;">${data.build || 'Desconhecida'}</span><br>
         <b>Ambiente:</b> ${data.env}
       </div>`,
       confirmButtonText: 'OK'
