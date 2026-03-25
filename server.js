@@ -176,10 +176,17 @@ db.exec(`
   // Adiciona UNIQUE index para message_id
   'CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != \'\'' ,
   'ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
-  'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
   'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
   'ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP',
+  'ALTER TABLE leads ADD COLUMN phone_norm TEXT DEFAULT \'\'',
 ].forEach(sql => { try { db.exec(sql); } catch {} });
+
+// Backfill phone_norm para leads antigos
+db.transaction(() => {
+  const leads = db.prepare('SELECT id, phone FROM leads WHERE phone_norm IS NULL OR phone_norm = \'\'').all();
+  const update = db.prepare('UPDATE leads SET phone_norm = ? WHERE id = ?');
+  leads.forEach(l => update.run(l.phone.replace(/\D/g, ''), l.id));
+})();
 
 // ---- Default config values ----
 const DEFAULT_CONFIG = {
@@ -285,9 +292,10 @@ function normalizePhone(p) {
 function findDuplicateLead(phone, email) {
   const phoneNorm = normalizePhone(phone);
 
-  // Busca por telefone (compara dígitos para ignorar formatação)
-  const byPhone = db.prepare('SELECT * FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone," ",""),"-",""),"(",""),")",""),"+","") = ? LIMIT 1').get(phoneNorm);
-  if (byPhone) return byPhone;
+  if (phoneNorm) {
+    const byPhone = db.prepare('SELECT * FROM leads WHERE phone_norm = ? LIMIT 1').get(phoneNorm);
+    if (byPhone) return byPhone;
+  }
 
   // Busca por e-mail (case-insensitive, só se fornecido)
   const emailNorm = (email || '').trim().toLowerCase();
@@ -1017,126 +1025,140 @@ app.get('/api/public-config', (_req, res) => {
 
 // Receber lead do formulário (fila form)
 app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
-  const { name, phone, email = '', interest = '', message = '' } = req.body;
-  if (!name?.trim() || !phone?.trim()) {
-    return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
-  }
+  try {
+    const { name, phone, email = '', interest = '', message = '' } = req.body;
+    if (!name?.trim() || !phone?.trim()) {
+      return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
+    }
 
-  const existing = findDuplicateLead(phone, email);
+    const phoneNorm = normalizePhone(phone);
+    const existing = findDuplicateLead(phone, email);
 
-  if (existing) {
-    // Lead já existe — atualiza dados e registra nova atividade
-    db.prepare(`
-      UPDATE leads SET
-        name       = ?,
-        email      = CASE WHEN ? != '' THEN ? ELSE email END,
-        interest   = CASE WHEN ? != '' THEN ? ELSE interest END,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(
-      name.trim(),
-      email.trim(), email.trim(),
-      interest.trim(), interest.trim(),
-      existing.id
-    );
+    if (existing) {
+      // Lead já existe — atualiza dados e registra nova atividade
+      db.prepare(`
+        UPDATE leads SET
+          name        = ?,
+          email       = CASE WHEN ? != '' THEN ? ELSE email END,
+          interest    = CASE WHEN ? != '' THEN ? ELSE interest END,
+          phone_norm  = ?,
+          updated_at  = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(
+        name.trim(),
+        email.trim(), email.trim(),
+        interest.trim(), interest.trim(),
+        phoneNorm,
+        existing.id
+      );
+
+      const bodyLines = [
+        `Nome: ${name.trim()}`,
+        `Telefone: ${phone.trim()}`,
+        email.trim()    ? `E-mail: ${email.trim()}`       : null,
+        interest.trim() ? `Empreendimento: ${interest.trim()}` : null,
+        message.trim()  ? `Mensagem: ${message.trim()}`   : null,
+        `Fonte: landing_page`,
+      ].filter(Boolean).join('\n');
+
+      addActivity(existing.id, 'novo_contato', 'Novo contato recebido (landing page)', bodyLines);
+
+      const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
+      fireNotifications(lead, getConfig());
+      return res.json({ success: true, id: lead.id, duplicate: true });
+    }
+
+    // Lead novo
+    const attendant = nextAttendant('form_queue_idx');
+    const r = db.prepare(`
+      INSERT INTO leads (name, phone, phone_norm, email, interest, message, source, attendant_id)
+      VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?)
+    `).run(name.trim(), phone.trim(), phoneNorm, email.trim(), interest.trim(), message.trim(), attendant?.id || null);
+
+    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
     const bodyLines = [
-      `Nome: ${name.trim()}`,
-      `Telefone: ${phone.trim()}`,
-      email.trim()    ? `E-mail: ${email.trim()}`       : null,
-      interest.trim() ? `Empreendimento: ${interest.trim()}` : null,
-      message.trim()  ? `Mensagem: ${message.trim()}`   : null,
+      `Nome: ${lead.name}`,
+      `Telefone: ${lead.phone}`,
+      lead.email    ? `E-mail: ${lead.email}`             : null,
+      lead.interest ? `Empreendimento: ${lead.interest}`  : null,
+      lead.message  ? `Mensagem: ${lead.message}`         : null,
       `Fonte: landing_page`,
     ].filter(Boolean).join('\n');
 
-    addActivity(existing.id, 'novo_contato', 'Novo contato recebido (landing page)', bodyLines);
+    addActivity(lead.id, 'novo_contato', 'Lead received (landing page)', bodyLines);
 
-    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
     fireNotifications(lead, getConfig());
-    return res.json({ success: true, id: lead.id, duplicate: true });
+    res.json({ success: true, id: lead.id, duplicate: false });
+  } catch (err) {
+    console.error('[API-LEADS] Fatal error:', err);
+    res.status(500).json({ error: 'Erro interno ao processar lead. Tente novamente mais tarde.' });
   }
-
-  // Lead novo
-  const attendant = nextAttendant('form_queue_idx');
-  const r = db.prepare(`
-    INSERT INTO leads (name, phone, email, interest, message, source, attendant_id)
-    VALUES (?, ?, ?, ?, ?, 'landing_page', ?)
-  `).run(name.trim(), phone.trim(), email.trim(), interest.trim(), message.trim(), attendant?.id || null);
-
-  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
-
-  const bodyLines = [
-    `Nome: ${lead.name}`,
-    `Telefone: ${lead.phone}`,
-    lead.email    ? `E-mail: ${lead.email}`             : null,
-    lead.interest ? `Empreendimento: ${lead.interest}`  : null,
-    lead.message  ? `Mensagem: ${lead.message}`         : null,
-    `Fonte: landing_page`,
-  ].filter(Boolean).join('\n');
-
-  addActivity(lead.id, 'novo_contato', 'Lead recebido (landing page)', bodyLines);
-
-  fireNotifications(lead, getConfig());
-  res.json({ success: true, id: lead.id, duplicate: false });
 });
 
 // Receber lead do WhatsApp (fila WA) — retorna URL do próximo atendente
 app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
-  const { name, phone, message = '' } = req.body;
-  if (!name?.trim() || !phone?.trim()) {
-    return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
-  }
+  try {
+    const { name, phone, message = '' } = req.body;
+    if (!name?.trim() || !phone?.trim()) {
+      return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
+    }
 
-  const cfg = getConfig();
-  const existing = findDuplicateLead(phone, '');
+    const cfg = getConfig();
+    const phoneNorm = normalizePhone(phone);
+    const existing = findDuplicateLead(phone, '');
 
-  if (existing) {
-    // Lead já existe — atualiza nome e registra atividade
-    db.prepare(`
-      UPDATE leads SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-    `).run(name.trim(), existing.id);
+    if (existing) {
+      // Lead já existe — atualiza nome, phone_norm e registra atividade
+      db.prepare(`
+        UPDATE leads SET name = ?, phone_norm = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+      `).run(name.trim(), phoneNorm, existing.id);
+
+      const bodyLines = [
+        `Nome: ${name.trim()}`,
+        `Telefone: ${phone.trim()}`,
+        message.trim() ? `Mensagem: ${message.trim()}` : null,
+        `Fonte: whatsapp`,
+      ].filter(Boolean).join('\n');
+
+      addActivity(existing.id, 'novo_contato', 'Novo contato recebido (WhatsApp)', bodyLines);
+
+      const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
+      fireNotifications(lead, cfg);
+
+      const attendant = db.prepare('SELECT * FROM attendants WHERE id = ?').get(existing.attendant_id);
+      const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
+      const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
+      return res.json({ success: true, id: lead.id, duplicate: true, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
+    }
+
+    // Lead novo
+    const attendant = nextAttendant('wa_queue_idx');
+    const r = db.prepare(`
+      INSERT INTO leads (name, phone, phone_norm, message, source, attendant_id)
+      VALUES (?, ?, ?, ?, 'whatsapp', ?)
+    `).run(name.trim(), phone.trim(), phoneNorm, message.trim(), attendant?.id || null);
+
+    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
     const bodyLines = [
-      `Nome: ${name.trim()}`,
-      `Telefone: ${phone.trim()}`,
-      message.trim() ? `Mensagem: ${message.trim()}` : null,
+      `Nome: ${lead.name}`,
+      `Telefone: ${lead.phone}`,
+      lead.message ? `Mensagem: ${lead.message}` : null,
       `Fonte: whatsapp`,
     ].filter(Boolean).join('\n');
 
-    addActivity(existing.id, 'novo_contato', 'Novo contato recebido (WhatsApp)', bodyLines);
+    addActivity(lead.id, 'novo_contato', 'Lead recebido (WhatsApp)', bodyLines);
 
-    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
     fireNotifications(lead, cfg);
 
-    const attendant = db.prepare('SELECT * FROM attendants WHERE id = ?').get(existing.attendant_id);
     const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
     const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
-    return res.json({ success: true, id: lead.id, duplicate: true, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
+    res.json({ success: true, id: lead.id, duplicate: false, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
+  } catch (err) {
+    console.error('[API-LEADS-WA] Fatal error:', err);
+    res.status(500).json({ error: 'Erro ao processar redirecionamento WhatsApp.' });
   }
-
-  // Lead novo
-  const attendant = nextAttendant('wa_queue_idx');
-  const r = db.prepare(`
-    INSERT INTO leads (name, phone, message, source, attendant_id)
-    VALUES (?, ?, ?, 'whatsapp', ?)
-  `).run(name.trim(), phone.trim(), message.trim(), attendant?.id || null);
-
-  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
-
-  const bodyLines = [
-    `Nome: ${lead.name}`,
-    `Telefone: ${lead.phone}`,
-    lead.message ? `Mensagem: ${lead.message}` : null,
-    `Fonte: whatsapp`,
-  ].filter(Boolean).join('\n');
-
-  addActivity(lead.id, 'novo_contato', 'Lead recebido (WhatsApp)', bodyLines);
-
-  fireNotifications(lead, cfg);
-
-  const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
-  const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
-  res.json({ success: true, id: lead.id, duplicate: false, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
 });
 
 // ============================================================
