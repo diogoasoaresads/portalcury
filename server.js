@@ -424,22 +424,25 @@ function upsertConversation(jid, name) {
 
 function saveMessage(convId, direction, body, messageId) {
   try {
+    if (messageId) {
+      const exists = db.prepare('SELECT id FROM wa_messages WHERE message_id = ?').get(messageId);
+      if (exists) return null; 
+    }
     const info = db.prepare(`
       INSERT INTO wa_messages (conversation_id, direction, body, message_id)
       VALUES (?, ?, ?, ?)
     `).run(convId, direction, body, messageId || '');
 
-    const updates = direction === 'in'
+    const updates = (direction === 'in')
       ? `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?, unread_count = unread_count + 1`
       : `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?`;
 
     db.prepare(`UPDATE wa_conversations SET ${updates} WHERE id = ?`).run(body, convId);
-    console.log(`[WA] Msg Salva ID=${info.lastInsertRowid} na Conv=${convId}`);
     return db.prepare('SELECT * FROM wa_messages WHERE id = ?').get(info.lastInsertRowid);
   } catch (err) {
     waLog(`[${new Date().toISOString()}] ❌ ERRO saveMessage: ${err.message}`);
     console.error('[WA] Erro em saveMessage:', err);
-    throw err;
+    return null;
   }
 }
 
@@ -701,8 +704,10 @@ app.all('/api/wa/receiver-v3', (req, res) => {
     const conv = upsertConversation(jid, pushName);
     const direction = fromMe ? 'out' : 'in';
     const saved = saveMessage(conv.id, direction, text, messageId);
-
-    waLog(`[${new Date().toISOString()}] ✅ Salvo! Conv=${conv.id}`);
+    if (!saved) {
+      waLog(`[${new Date().toISOString()}] Ignorado: mensagem duplicada (ID=${messageId})`);
+      return;
+    }
 
     sseBroadcast('new_message', {
       conversation_id: conv.id,
