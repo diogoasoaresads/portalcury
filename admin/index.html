@@ -889,7 +889,7 @@
       <div class="icon">C</div>
       <span>Cury <strong>Meu Apê</strong></span>
     </div>
-    <div style="background:#ef4444; color:#fff; font-size:10px; font-weight:bold; text-align:center; padding:5px; margin:0 20px 15px; border-radius:4px; letter-spacing:1px; animation: pulse 2s infinite; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">V2 - DEBUG ATIVO (RECARREGUE SE NÃO VIR)</div>
+    <div style="background:#22c55e; color:#fff; font-size:10px; font-weight:bold; text-align:center; padding:5px; margin:0 20px 15px; border-radius:4px; letter-spacing:1px; animation: pulse 1s infinite; box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);">V3 - MEMORY BYPASS ATIVO</div>
     <nav class="sidebar-nav">
       <div class="nav-item active" data-page="dashboard">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
@@ -2027,19 +2027,22 @@ function badgeHtml(status) {
 async function showWaLogs() {
   try {
     const data = await api('GET', '/api/wa/debug-db');
-    const logs = data.logs || [];
-    let html = `<b>Total Conversas:</b> ${data.conversations}<br>`;
-    html += `<b>Total Mensagens:</b> ${data.messages}<hr>`;
+    const logs = data.memoryLogs || []; // Prioridade para memória RAM
+    const dbLogs = data.dbLogs || [];
+    let html = `<b>Total Conversas (DB):</b> ${data.conversations}<br>`;
+    html += `<b>Total Mensagens (DB):</b> ${data.messages}<hr>`;
+    html += `<b style="color:var(--green)">MENSAGENS EM TEMPO REAL (RAM):</b><br>`;
     if (logs.length === 0) {
-      html += '<p>Nenhum log registrado ainda. Clique em "Simular" primeiro.</p>';
+      html += '<p>Nenhuma mensagem capturada na RAM ainda. Clique em "Simular" agora.</p>';
     } else {
-      html += '<div style="max-height:300px; overflow-y:auto; font-family:monospace; font-size:11px; background:#f4f4f4; padding:10px; border-radius:4px; text-align:left">';
-      logs.forEach(l => {
-        html += `<div style="margin-bottom:6px; border-bottom:1px solid #ddd; padding-bottom:4px">${l}</div>`;
-      });
+      html += '<div style="max-height:250px; overflow-y:auto; font-family:monospace; font-size:11px; background:#e8f5e9; padding:10px; border-radius:4px; text-align:left; border: 1px solid var(--green);">';
+      logs.forEach(l => { html += `<div style="margin-bottom:6px; border-bottom:1px solid #c8e6c9; padding-bottom:4px">${l}</div>`; });
       html += '</div>';
     }
-    Swal.fire({ title: 'Logs de Conexão WhatsApp', html: html, width: '680px', confirmButtonText: 'Fechar' });
+    if (dbLogs.length > 0) {
+       html += `<hr><b>Últimos do Banco (Histórico):</b><div style="font-size:10px; color:var(--gray)">${dbLogs.slice(0,5).join('<br>')}</div>`;
+    }
+    Swal.fire({ title: 'Diagnóstico V3 (Tempo Real)', html: html, width: '700px', confirmButtonText: 'Fechar' });
   } catch (e) { toast('Erro ao buscar logs: ' + e.message, 'error'); }
 }
 

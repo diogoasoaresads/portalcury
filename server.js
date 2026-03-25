@@ -315,15 +315,17 @@ function nextAttendant(queueKey) {
   return attendant;
 }
 
-// ============================================================
-// SSE — Server-Sent Events para atendimento em tempo real
-// ============================================================
 const sseClients = new Map();
-const BUILD_TS = '25-03-25 00:58'; // Timestamp para validar deploy
+const BUILD_TS = '25-03-25 01:28'; 
+global.waMemoryLogs = []; // Bypass de banco de dados
 function waLog(msg) {
-  const line = `[${new Date().toISOString()}] ${msg}\n`;
-  try { console.log(`[WA-LOG] ${msg}`); db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); } catch (e) { console.error('[DB-LOG-ERR]', e.message); }
-  try { fs.appendFileSync(path.join(dataDir, 'debug_wa.txt'), line); } catch (e) { console.error('[FILE-LOG-ERR]', e.message); }
+  const line = `[${new Date().toISOString()}] ${msg}`;
+  try { 
+    console.log(`[WA-LOG] ${msg}`); 
+    global.waMemoryLogs.push(line);
+    if (global.waMemoryLogs.length > 50) global.waMemoryLogs.shift();
+    db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); 
+  } catch (e) { waMemoryLogs.push(`❌ ERRO DB: ${e.message}`); }
 }
 
 function sseAdd(userId, res) {
@@ -1812,7 +1814,8 @@ app.get('/api/wa/debug-db', auth, (req, res) => {
     const counts = {
       conversations: db.prepare('SELECT COUNT(*) as count FROM wa_conversations').get().count,
       messages: db.prepare('SELECT COUNT(*) as count FROM wa_messages').get().count,
-      logs: db.prepare('SELECT msg FROM wa_logs ORDER BY id DESC LIMIT 50').all().map(r => r.msg)
+      dbLogs: db.prepare('SELECT msg FROM wa_logs ORDER BY id DESC LIMIT 20').all().map(r => r.msg),
+      memoryLogs: global.waMemoryLogs || []
     };
     res.json(counts);
   } catch (err) {
