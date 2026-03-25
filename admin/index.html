@@ -1513,6 +1513,8 @@
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
             <button class="btn btn-primary" onclick="connectWaAtend()" style="background:#25D366;border-color:#25D366">📱 Gerar QR Code</button>
             <button class="btn btn-secondary" onclick="disconnectWaAtend()">Desconectar</button>
+            <button class="btn btn-secondary" onclick="syncWaHistory()" id="btnSyncWa" style="border-color:var(--blue); color:var(--blue)">🔄 Sincronizar (30 dias)</button>
+            <button class="btn btn-secondary" onclick="clearWaHistory()" style="border-color:var(--red); color:var(--red)">🗑️ Limpar Histórico Local</button>
             <span id="waAtendStatusText" style="font-size:.85rem;color:var(--gray)">—</span>
           </div>
           <div id="waQrCode" style="margin-top:20px"></div>
@@ -3917,6 +3919,37 @@ async function disconnectWaAtend() {
     checkWaStatus();
   } catch (err) {
     statusEl.textContent = 'Erro: ' + err.message;
+  }
+}
+
+async function clearWaHistory() {
+  if (!confirm('ATENÇÃO: Isso apagará todas as conversas e mensagens LOCAIS do CRM. As mensagens no seu celular continuam seguras. Deseja continuar?')) return;
+  try {
+    const res = await api('POST', '/api/wa/clear-history');
+    toast(res.message, 'success');
+    loadConversations(); // recarrega lista vazia
+  } catch (err) {
+    toast('Erro: ' + err.message, 'error');
+  }
+}
+
+async function syncWaHistory() {
+  const btn = document.getElementById('btnSyncWa');
+  const oldTxt = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Sincronizando...';
+  
+  toast('Iniciando sincronização retroativa (30 dias). Isso pode levar alguns minutos...', 'info');
+  
+  try {
+    const res = await api('POST', '/api/wa/sync-history');
+    toast(res.message, 'success');
+    loadConversations(); // recarrega lista com novidades
+  } catch (err) {
+    toast('Erro na sincronização: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldTxt;
   }
 }
 

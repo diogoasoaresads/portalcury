@@ -2005,6 +2005,121 @@ app.get('/api/wa/check-health', auth, (req, res) => {
   }
 });
 
+app.post('/api/wa/clear-history', auth, (req, res) => {
+  try {
+    db.transaction(() => {
+      db.prepare('DELETE FROM wa_messages').run();
+      db.prepare('DELETE FROM wa_conversations').run();
+      db.prepare('DELETE FROM wa_logs').run();
+    })();
+    res.json({ success: true, message: 'Histórico local apagado com sucesso.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/wa/sync-history', auth, async (req, res) => {
+  try {
+    const cfg = getConfig();
+    const url = cfg.wa_atend_url || cfg.evolution_url;
+    const key = cfg.wa_atend_apikey || cfg.evolution_apikey;
+    const inst = cfg.wa_atend_instance || cfg.evolution_instance;
+
+    if (!url || !key || !inst) throw new Error('Configuração Evolution API incompleta.');
+
+    // Busca conversas recentes
+    const resp = await fetch(`${url}/chat/findConversations/${inst}`, {
+      headers: { 'apikey': key }
+    });
+    if (!resp.ok) throw new Error(`Erro Evolution API (${resp.status}): ${await resp.text()}`);
+    
+    const conversations = await resp.json();
+    let syncedCount = 0;
+
+    for (const conv of conversations) {
+      if (!conv.id) continue;
+      
+      // Upsert na conversa local
+      const remoteJid = conv.id;
+      const phone = remoteJid.split('@')[0];
+      
+      const existing = db.prepare('SELECT id FROM wa_conversations WHERE remote_jid = ?').get(remoteJid);
+      let convId;
+      
+      if (!existing) {
+        const lead = findDuplicateLead(phone, '');
+        const info = db.prepare(`
+          INSERT INTO wa_conversations (remote_jid, contact_name, contact_phone, lead_id, last_message_body, last_message_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(
+          remoteJid, 
+          conv.name || phone, 
+          phone, 
+          lead?.id || null, 
+          '', 
+          new Date().toISOString()
+        );
+        convId = info.lastInsertRowid;
+      } else {
+        convId = existing.id;
+      }
+
+      // Busca mensagens da conversa (últimos dias)
+      const msgResp = await fetch(`${url}/chat/findMessages/${inst}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': key },
+        body: JSON.stringify({
+          where: {
+            key: { remoteJid: remoteJid }
+          },
+          take: 50 // Pega as 50 últimas
+        })
+      });
+
+      if (msgResp.ok) {
+        const msgs = await msgResp.json();
+        const records = Array.isArray(msgs) ? msgs : (msgs.messages || []);
+        
+        db.transaction(() => {
+          for (const m of records) {
+            const msgId = m.key?.id;
+            if (!msgId) continue;
+            
+            // Verifica data (30 dias)
+            const msgDate = new Date((m.messageTimestamp || m.created_at) * 1000);
+            const limitDate = new Date();
+            limitDate.setDate(limitDate.getDate() - 30);
+            
+            if (msgDate < limitDate) continue;
+
+            const existingMsg = db.prepare('SELECT id FROM wa_messages WHERE message_id = ?').get(msgId);
+            if (!existingMsg) {
+              const body = m.message?.conversation || m.message?.extendedTextMessage?.text || (m.pushName ? '[Mídia/Outro]' : '');
+              if (!body) continue;
+
+              db.prepare(`
+                INSERT INTO wa_messages (conversation_id, direction, body, message_id, created_at)
+                VALUES (?, ?, ?, ?, ?)
+              `).run(
+                convId,
+                m.key?.fromMe ? 'out' : 'in',
+                body,
+                msgId,
+                msgDate.toISOString()
+              );
+              syncedCount++;
+            }
+          }
+        })();
+      }
+    }
+
+    res.json({ success: true, message: `Sincronização concluída. ${syncedCount} mensagens novas importadas.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============================================================
 // START
 // ============================================================
