@@ -140,7 +140,16 @@ db.exec(`
 ['ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
  'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
  'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
+ 'ALTER TABLE leads ADD COLUMN phone_norm TEXT NOT NULL DEFAULT \'\'',
 ].forEach(sql => { try { db.exec(sql); } catch {} });
+
+// Backfill phone_norm para leads já existentes (roda apenas uma vez)
+{
+  const _normPhone = p => (p || '').replace(/\D/g, '');
+  const _toFill = db.prepare("SELECT id, phone FROM leads WHERE phone_norm = '' OR phone_norm IS NULL").all();
+  const _upd    = db.prepare("UPDATE leads SET phone_norm = ? WHERE id = ?");
+  for (const l of _toFill) _upd.run(_normPhone(l.phone), l.id);
+}
 
 // ---- Default config values ----
 const DEFAULT_CONFIG = {
@@ -232,18 +241,18 @@ function normalizePhone(p) {
   return (p || '').replace(/\D/g, '');
 }
 
-// Usa índices do banco para busca eficiente — sem carregar todos os leads em memória
+// Usa coluna phone_norm (dígitos puros) indexada para busca sem SQL complexo
 function findDuplicateLead(phone, email) {
   const phoneNorm = normalizePhone(phone);
 
-  // Busca por telefone (compara dígitos para ignorar formatação)
-  const byPhone = db.prepare('SELECT * FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone," ",""),"-",""),"(",""),")",""),"+","") = ? LIMIT 1').get(phoneNorm);
+  // Busca por telefone normalizado
+  const byPhone = db.prepare('SELECT * FROM leads WHERE phone_norm = ? LIMIT 1').get(phoneNorm);
   if (byPhone) return byPhone;
 
   // Busca por e-mail (case-insensitive, só se fornecido)
   const emailNorm = (email || '').trim().toLowerCase();
   if (emailNorm) {
-    const byEmail = db.prepare('SELECT * FROM leads WHERE LOWER(TRIM(email)) = ? AND email != "" LIMIT 1').get(emailNorm);
+    const byEmail = db.prepare("SELECT * FROM leads WHERE LOWER(TRIM(email)) = ? AND email != '' LIMIT 1").get(emailNorm);
     if (byEmail) return byEmail;
   }
 
@@ -464,6 +473,7 @@ app.get('/api/public-config', (_req, res) => {
 
 // Receber lead do formulário (fila form)
 app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
+  try {
   const { name, phone, email = '', interest = '', message = '' } = req.body;
   if (!name?.trim() || !phone?.trim()) {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
@@ -506,9 +516,9 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   // Lead novo
   const attendant = nextAttendant('form_queue_idx');
   const r = db.prepare(`
-    INSERT INTO leads (name, phone, email, interest, message, source, attendant_id)
-    VALUES (?, ?, ?, ?, ?, 'landing_page', ?)
-  `).run(name.trim(), phone.trim(), email.trim(), interest.trim(), message.trim(), attendant?.id || null);
+    INSERT INTO leads (name, phone, phone_norm, email, interest, message, source, attendant_id)
+    VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?)
+  `).run(name.trim(), phone.trim(), normalizePhone(phone), email.trim(), interest.trim(), message.trim(), attendant?.id || null);
 
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
@@ -525,10 +535,15 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 
   fireNotifications(lead, getConfig());
   res.json({ success: true, id: lead.id, duplicate: false });
+  } catch (err) {
+    console.error('[POST /api/leads]', err);
+    res.status(500).json({ error: 'Erro ao registrar lead. Tente novamente.' });
+  }
 });
 
 // Receber lead do WhatsApp (fila WA) — retorna URL do próximo atendente
 app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
+  try {
   const { name, phone, message = '' } = req.body;
   if (!name?.trim() || !phone?.trim()) {
     return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
@@ -564,9 +579,9 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   // Lead novo
   const attendant = nextAttendant('wa_queue_idx');
   const r = db.prepare(`
-    INSERT INTO leads (name, phone, message, source, attendant_id)
-    VALUES (?, ?, ?, 'whatsapp', ?)
-  `).run(name.trim(), phone.trim(), message.trim(), attendant?.id || null);
+    INSERT INTO leads (name, phone, phone_norm, message, source, attendant_id)
+    VALUES (?, ?, ?, ?, 'whatsapp', ?)
+  `).run(name.trim(), phone.trim(), normalizePhone(phone), message.trim(), attendant?.id || null);
 
   const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
@@ -584,6 +599,10 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
   const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
   res.json({ success: true, id: lead.id, duplicate: false, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
+  } catch (err) {
+    console.error('[POST /api/leads/wa]', err);
+    res.status(500).json({ error: 'Erro ao registrar lead. Tente novamente.' });
+  }
 });
 
 // ============================================================
