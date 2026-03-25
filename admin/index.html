@@ -159,10 +159,10 @@
     /* Main content */
     .main { 
       margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-width: 0;
-      display: flex; flex-direction: column; height: 100vh; overflow-y: hidden;
+      display: flex; flex-direction: column; min-height: 100vh;
     }
 
-    .page { display: none; height: 100%; min-height: 0; }
+    .page { display: none; width: 100%; }
     .page.active { display: block; }
     #atendimentoPage.active { 
        display: flex; 
