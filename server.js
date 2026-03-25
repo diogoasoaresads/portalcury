@@ -72,12 +72,14 @@ db.exec(`
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     name         TEXT    NOT NULL,
     phone        TEXT    NOT NULL,
+    phone_norm   TEXT,
     email        TEXT    DEFAULT '',
     interest     TEXT    DEFAULT '',
     message      TEXT    DEFAULT '',
     status       TEXT    DEFAULT 'novo',
     notes        TEXT    DEFAULT '',
     source       TEXT    DEFAULT 'landing_page',
+    attendant_id INTEGER REFERENCES attendants(id),
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -180,7 +182,15 @@ const startupStart = Date.now();
   'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
   'ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP',
   'ALTER TABLE leads ADD COLUMN phone_norm TEXT',
-].forEach(sql => { try { db.exec(sql); } catch {} });
+].forEach(sql => {
+  try {
+    db.exec(sql);
+  } catch (e) {
+    if (!e.message.includes('duplicate column name') && !e.message.includes('already exists')) {
+      console.warn(`[MIGRATION] Pulo/Erro em "${sql.slice(0, 50)}...":`, e.message);
+    }
+  }
+});
 
 // Backfill phone_norm para leads antigos — OTIMIZADO
 try {
@@ -1107,7 +1117,11 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     res.json({ success: true, id: lead.id, duplicate: false });
   } catch (err) {
     console.error('[API-LEADS] Fatal error:', err);
-    res.status(500).json({ error: 'Erro interno ao processar lead. Tente novamente mais tarde.' });
+    console.error('Request Body:', req.body);
+    res.status(500).json({ 
+      error: 'Erro interno ao processar lead. Tente novamente mais tarde.',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined 
+    });
   }
 });
 
@@ -1172,6 +1186,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     res.json({ success: true, id: lead.id, duplicate: false, wa_url: `https://wa.me/${waPhone}?text=${waMsg}` });
   } catch (err) {
     console.error('[API-LEADS-WA] Fatal error:', err);
+    console.error('Request Body:', req.body);
     res.status(500).json({ error: 'Erro ao processar redirecionamento WhatsApp.' });
   }
 });
