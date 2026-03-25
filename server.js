@@ -1834,10 +1834,11 @@ app.get('/health', (_req, res) => {
 // ============================================================
 // DIAGNÓSTICO WHATSAPP
 // ============================================================
-app.get('/api/wa/audit-db', auth, (req, res) => {
+app.get('/api/wa/audit-db', (req, res) => {
+  if (req.query.secret !== 'qao_audit') return res.status(401).send('Acesso Negado');
   try {
     const indexes = db.prepare("SELECT name, sql FROM sqlite_master WHERE type='index' AND tbl_name='wa_messages'").all();
-    const lastMsgs = db.prepare("SELECT id, message_id, body, created_at FROM wa_messages ORDER BY id DESC LIMIT 20").all();
+    const lastMsgs = db.prepare("SELECT id, message_id, body, created_at FROM wa_messages ORDER BY id DESC LIMIT 40").all();
     const dups = db.prepare("SELECT message_id, COUNT(*) as c FROM wa_messages WHERE message_id != '' GROUP BY message_id HAVING c > 1").all();
     res.json({ indexes, lastMsgs, dups });
   } catch (err) {
