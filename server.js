@@ -693,6 +693,8 @@ app.all('/api/wa/receiver-v3', (req, res) => {
     // Extração robusta de ID (Tenta todos os caminhos conhecidos)
     const messageId = msg?.key?.id || msg?.id || body?.data?.key?.id || body?.message?.key?.id || '';
 
+    waLog(`[REQ] MSG RECV - ID: ${messageId} | JID: ${jid}`);
+
     if (!jid || jid.includes('@g.us')) {
       waLog(`[${new Date().toISOString()}] Ignorado: JID inválido ou grupo (${jid})`);
       return;
@@ -709,9 +711,11 @@ app.all('/api/wa/receiver-v3', (req, res) => {
     const direction = fromMe ? 'out' : 'in';
     const saved = saveMessage(conv.id, direction, text, messageId);
     if (!saved) {
-      waLog(`[${new Date().toISOString()}] Ignorado: mensagem duplicada (ID=${messageId})`);
+      waLog(`[SKIP] Duplicada ignorada! ID: ${messageId}`);
       return;
     }
+
+    waLog(`[OK] Salva com sucesso! ID: ${messageId} | Conv: ${conv.id}`);
 
     sseBroadcast('new_message', {
       conversation_id: conv.id,
