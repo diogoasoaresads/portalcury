@@ -3640,10 +3640,10 @@ async function loadConversations() {
     waConversations = data;
     renderConvList();
     updateWaUnreadBadge();
-    checkWaStatus();
+    checkStatus();
   } catch (err) {
     console.error('[DEBUG] Falha ao carregar conversas:', err);
-    showToast('Erro ao listar conversas: ' + err.message, 'error');
+    toast('Erro ao listar conversas: ' + err.message, 'error');
   }
 }
 
@@ -3789,7 +3789,7 @@ async function sendWaMessage() {
 async function openChatForLead(phone, name) {
   console.log('[DEBUG] openChatForLead disparado:', { phone, name });
   try {
-    showToast('Localizando conversa...', 'info');
+    toast('Localizando conversa...', 'info');
     console.log('[DEBUG] Chamando /api/wa/conversations/upsert...');
     const conv = await api('POST', '/api/wa/conversations/upsert', { phone, name });
     console.log('[DEBUG] Conversa upsertada/localizada:', conv);
@@ -3807,11 +3807,11 @@ async function openChatForLead(phone, name) {
     setTimeout(() => {
       console.log('[DEBUG] Executando openConversation para ID:', conv.id);
       openConversation(conv.id);
-      showToast('Chat aberto!', 'success');
+      toast('Chat aberto!', 'success');
     }, 200);
   } catch (err) {
     console.error('[DEBUG] ERRO em openChatForLead:', err);
-    showToast('Erro ao abrir chat: ' + err.message, 'error');
+    toast('Erro ao abrir chat: ' + err.message, 'error');
   }
 }
 
