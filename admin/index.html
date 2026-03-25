@@ -1518,6 +1518,7 @@
           <p class="hint">Use o link abaixo para verificar se o banco de dados está recebendo as mensagens da Evolution API.</p>
           <div style="margin-top:12px; display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn btn-secondary btn-sm" onclick="showWaLogs()" style="color:var(--red); border-color:var(--red)">🔍 Ver Logs de Conexão (Histórico)</button>
+            <button class="btn btn-secondary btn-sm" onclick="showWaHealth()" style="color:var(--gray); border-color:var(--gray)">🏥 Ver Saúde do Sistema</button>
             <button class="btn btn-primary btn-sm" onclick="sendWaTest()" style="background:var(--red); border:none">🚀 Simular Mensagem de Entrada (Teste)</button>
           </div>
         </div>
@@ -2026,22 +2027,34 @@ async function showWaLogs() {
     if (logs.length === 0) {
       html += '<p>Nenhum log registrado ainda. Clique em "Simular" primeiro.</p>';
     } else {
-      html += '<div style="max-height:300px; overflow-y:auto; font-family:monospace; font-size:12px; background:#f4f4f4; padding:10px; border-radius:4px;">';
+      html += '<div style="max-height:300px; overflow-y:auto; font-family:monospace; font-size:11px; background:#f4f4f4; padding:10px; border-radius:4px; text-align:left">';
       logs.forEach(l => {
-        html += `<div style="margin-bottom:8px; border-bottom:1px solid #ddd; padding-bottom:4px">${l}</div>`;
+        html += `<div style="margin-bottom:6px; border-bottom:1px solid #ddd; padding-bottom:4px">${l}</div>`;
       });
       html += '</div>';
     }
-    
-    // Mostra num modal genérico (vou usar o toast ou um alert simples por enquanto)
+    Swal.fire({ title: 'Logs de Conexão WhatsApp', html: html, width: '680px', confirmButtonText: 'Fechar' });
+  } catch (e) { toast('Erro ao buscar logs: ' + e.message, 'error'); }
+}
+
+async function showWaHealth() {
+  try {
+    Swal.fire({ title: 'Verificando...', text: 'Validando o banco de dados...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+    const data = await api('GET', '/api/wa/check-health');
     Swal.fire({
-      title: 'Diagnóstico WhatsApp',
-      html: html,
-      width: '600px',
-      confirmButtonText: 'Fechar'
+      title: 'Saúde do Sistema',
+      icon: 'success',
+      html: `<div style="text-align:left">
+        <b>Status:</b> ${data.status}<br>
+        <b>Banco:</b> ${data.database.path}<br>
+        <b>Tamanho:</b> ${Math.round(data.database.size / 1024)} KB<br>
+        <b>Escrita:</b> ${data.database.writable ? '✅ OK' : '❌ Bloqueada'}<br>
+        <b>Ambiente:</b> ${data.env}
+      </div>`,
+      confirmButtonText: 'OK'
     });
   } catch (e) {
-    toast('Erro ao buscar logs: ' + e.message, 'error');
+    Swal.fire({ title: 'Erro de Saúde', icon: 'error', text: e.message });
   }
 }
 
@@ -2576,7 +2589,6 @@ async function testWhatsApp() {
 }
 
 async function sendWaTest() {
-  console.log('Iniciando sendWaTest...');
   try {
     const payload = {
       event: 'messages.upsert',
@@ -2589,26 +2601,18 @@ async function sendWaTest() {
       }
     };
     
-    // Alerta de debug 1
-    console.log('Enviando fetch para /webhook/wa-incoming...');
-    
     const res = await fetch('/webhook/wa-incoming', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     
-    // Alerta de debug 2
-    console.log('Resposta recebida:', res.status);
-    
     if (res.ok) {
-      toast('✅ Simulação enviada! Aguarde 2s e clique em "Ver Logs" para verificar.', 'success');
+      toast('✅ Simulação enviada! Aguarde 2s e clique em "Ver Logs".', 'success');
     } else {
-      alert('ERRO NA RESPOSTA: ' + res.status);
       throw new Error('Falha ao simular: ' + res.status);
     }
   } catch (e) {
-    alert('ERRO NO CATCH: ' + e.message);
     toast('Erro: ' + e.message, 'error');
   }
 }

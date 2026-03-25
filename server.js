@@ -320,7 +320,12 @@ function nextAttendant(queueKey) {
 // ============================================================
 const sseClients = new Map();
 function waLog(msg) {
-  try { db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); } catch {}
+  try { 
+    console.log(`[WA-LOG] ${msg}`);
+    db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); 
+  } catch (e) {
+    console.error('[WA-LOG-FAIL]', e.message);
+  }
 }
 
 function sseAdd(userId, res) {
@@ -395,6 +400,7 @@ function upsertConversation(jid, name) {
     }
     return conv;
   } catch (err) {
+    waLog(`[${new Date().toISOString()}] ❌ ERRO upsertConversation: ${err.message}`);
     console.error('[WA] Erro em upsertConversation:', err);
     throw err;
   }
@@ -416,6 +422,7 @@ function saveMessage(convId, direction, body, messageId) {
     console.log(`[WA] Msg Salva ID=${info.lastInsertRowid} na Conv=${convId}`);
     return db.prepare('SELECT * FROM wa_messages WHERE id = ?').get(info.lastInsertRowid);
   } catch (err) {
+    waLog(`[${new Date().toISOString()}] ❌ ERRO saveMessage: ${err.message}`);
     console.error('[WA] Erro em saveMessage:', err);
     throw err;
   }
@@ -641,11 +648,11 @@ function fireNotifications(lead, cfg) {
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
 app.post('/webhook/wa-incoming', express.json(), (req, res) => {
-  waLog(`[${new Date().toISOString()}] TRIGGER Webhook: INÍCIO DA FUNÇÃO`);
-  res.sendStatus(200); // Responde imediatamente
+  const body = req.body;
+  waLog(`[${new Date().toISOString()}] Webhook Recebido (Body length: ${JSON.stringify(body).length})`);
+  res.sendStatus(200); 
 
   try {
-    const body = req.body;
     waLog(`[${new Date().toISOString()}] Recebido: ${JSON.stringify(body).slice(0, 300)}`);
 
     const event = body?.event || body?.type || '';
@@ -1807,11 +1814,38 @@ app.get('/api/wa/debug-db', auth, (req, res) => {
     const counts = {
       conversations: db.prepare('SELECT COUNT(*) as count FROM wa_conversations').get().count,
       messages: db.prepare('SELECT COUNT(*) as count FROM wa_messages').get().count,
-      logs: db.prepare('SELECT msg FROM wa_logs ORDER BY id DESC LIMIT 30').all().map(r => r.msg)
+      logs: db.prepare('SELECT msg FROM wa_logs ORDER BY id DESC LIMIT 50').all().map(r => r.msg)
     };
     res.json(counts);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/wa/check-health', auth, (req, res) => {
+  try {
+    const dbPath = path.join(dataDir, 'portalcury.db');
+    const stats = fs.statSync(dbPath);
+    
+    // Teste de escrita real
+    const testMsg = `HealthCheck ${new Date().toISOString()}`;
+    db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(testMsg);
+    
+    res.json({
+      status: 'ok',
+      database: {
+        path: dbPath,
+        size: stats.size,
+        writable: true
+      },
+      env: process.env.NODE_ENV || 'development'
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      status: 'error', 
+      message: err.message,
+      stack: err.stack 
+    });
   }
 });
 
