@@ -646,11 +646,12 @@ function fireNotifications(lead, cfg) {
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
 app.post('/webhook/wa-incoming', express.json(), (req, res) => {
+  const now = new Date().toISOString();
+  waLog(`[${now}] WEBHOOK TRIGGER!`);
   res.sendStatus(200); 
   try {
     const body = req.body || {};
-    waLog(`TRIGGER Webhook. Body size: ${JSON.stringify(body).length}`);
-    waLog(`Recebido: ${JSON.stringify(body).slice(0, 300)}`);
+    waLog(`[${now}] Body: ${JSON.stringify(body).slice(0, 500)}`);
 
     const event = body?.event || body?.type || '';
     const looksLikeMessage = body?.data?.key || body?.message?.key || body?.key;
