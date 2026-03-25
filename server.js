@@ -426,8 +426,30 @@ function upsertConversation(jid, name) {
 }
 
 
+// Cache para de-duplicação em RAM (V12)
+const waDedupeCache = new Map();
+
 function saveMessage(convId, direction, body, messageId) {
   try {
+    const now = Date.now();
+    const dedupeKey = `${convId}_${direction}_${body}`;
+    
+    // De-duplicação em RAM (5 segundos) - A mais certeira e rápida
+    if (waDedupeCache.has(dedupeKey)) {
+      if (now - waDedupeCache.get(dedupeKey) < 5000) {
+        waLog(`[RAM-SKIP] Duplicada rápida ignorada: ${dedupeKey}`);
+        return null;
+      }
+    }
+    waDedupeCache.set(dedupeKey, now);
+
+    // Limpeza do cache para evitar memory leak
+    if (waDedupeCache.size > 2000) {
+      for (const [k, t] of waDedupeCache.entries()) {
+        if (now - t > 10000) waDedupeCache.delete(k);
+      }
+    }
+
     // 1. De-duplicação por ID Único (Evolutio ID)
     if (messageId) {
       const exists = db.prepare('SELECT id FROM wa_messages WHERE message_id = ?').get(messageId);
