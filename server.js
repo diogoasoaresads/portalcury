@@ -383,7 +383,7 @@ function upsertConversation(jid, name) {
     if (!conv) {
       console.log(`[WA] Criando nova conversa para ${jid} (Name: ${name})`);
       const lead = db.prepare(`
-        SELECT id FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone," ",""),"-",""),"(",""),")",""),"+","") = ? LIMIT 1
+        SELECT id FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone,' ',''),'-',''),'(',''),')',''),'+','') = ? LIMIT 1
       `).get(phone);
 
       const cfg = getConfig();
