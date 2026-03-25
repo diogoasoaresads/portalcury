@@ -431,13 +431,12 @@ const waDedupeCache = new Map();
 
 function saveMessage(convId, direction, body, messageId) {
   try {
-    const now = Date.now();
-    const dedupeKey = `${convId}_${direction}_${body}`;
+    const dedupeKey = `${convId}_${direction}_${(body || '').trim()}`;
     
-    // De-duplicação em RAM (5 segundos) - A mais certeira e rápida
+    // De-duplicação em RAM (10 segundos - V13)
     if (waDedupeCache.has(dedupeKey)) {
-      if (now - waDedupeCache.get(dedupeKey) < 5000) {
-        waLog(`[RAM-SKIP] Duplicada rápida ignorada: ${dedupeKey}`);
+      if (now - waDedupeCache.get(dedupeKey) < 10000) {
+        waLog(`[RAM-SKIP] Duplicada ignorada: ${dedupeKey}`);
         return null;
       }
     }
@@ -706,6 +705,13 @@ function fireNotifications(lead, cfg) {
 // ============================================================
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
+app.get('/api/wa/debug-logs', auth, (req, res) => {
+  try {
+    const logs = db.prepare('SELECT * FROM wa_logs ORDER BY id DESC LIMIT 100').all();
+    res.json(logs);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.all('/api/wa/receiver-v3', (req, res) => {
   const now = new Date().toISOString();
   const method = req.method;

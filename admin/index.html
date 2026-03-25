@@ -159,12 +159,16 @@
     /* Main content */
     .main { 
       margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-width: 0;
-      display: flex; flex-direction: column; min-height: 100vh;
+      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
     }
 
-    .page { display: none; }
+    .page { display: none; height: 100%; overflow: hidden; }
     .page.active { display: block; }
-    #atendimentoPage.active { display: flex; }
+    #atendimentoPage.active { 
+       display: flex; 
+       height: 100%;
+       overflow: hidden; 
+    }
 
     /* Page header */
     .page-header { margin-bottom: 24px; }
@@ -448,11 +452,11 @@
     .wa-shell {
       display: flex; flex: 1;
       margin: 0; 
-      overflow: hidden;
       background: #fff;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      height: calc(100vh - 140px);
+      height: calc(100vh - 110px) !important; /* V13: Travamento absoluto */
+      overflow: hidden !important; 
     }
     .wa-sidebar {
       width: 320px; min-width: 260px; max-width: 380px;
@@ -543,7 +547,7 @@
     .wa-chat-name  { font-size: .92rem; font-weight: 700; color: var(--navy); }
     .wa-chat-phone { font-size: .77rem; color: var(--gray); }
     .wa-messages {
-      flex: 1; overflow-y: auto;
+      flex: 1; overflow-y: scroll !important; /* V13: Barra persistente e scroll forçado */
       padding: 16px 20px;
       display: flex; flex-direction: column; gap: 4px;
       background: #f0f2f5;
