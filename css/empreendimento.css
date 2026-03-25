@@ -66,6 +66,7 @@
   text-transform: uppercase;
 }
 .badge--launch { background: var(--color-primary); color: #fff; }
+.badge--ready  { background: #16a34a; color: #fff; }
 .badge--mcmv   { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); backdrop-filter: blur(4px); }
 .badge--bairro { background: rgba(0,0,0,.4); color: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.15); backdrop-filter: blur(4px); }
 

@@ -694,6 +694,10 @@ h1, h2, h3, h4 {
   color: #fff;
   animation: eb-pulse-card 2s ease-in-out infinite;
 }
+.emp-card__badge--ready {
+  background: #16a34a;
+  color: #fff;
+}
 @keyframes eb-pulse-card {
   0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,.4); }
   50%       { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
