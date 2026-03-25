@@ -3594,7 +3594,16 @@ function handleWaSseMessage(msg) {
 
   // Se a conversa está aberta no painel, acrescenta a mensagem
   if (waCurrentConvId === msg.conversation_id) {
-    appendWaBubble(msg);
+    // V17: Evita duplicação visual se a msg já existe (eco de SSE/Webhook)
+    const exists = waMessages.some(m => 
+      m.direction === msg.direction && 
+      (m.body || '').trim() === (msg.body || '').trim() &&
+      Math.abs(new Date(m.created_at) - new Date(msg.created_at)) < 20000
+    );
+    if (!exists) {
+      waMessages.push(msg); // Mantem array atualizado
+      appendWaBubble(msg);
+    }
     // Zera não lidos no servidor
     api('PATCH', `/api/wa/conversations/${msg.conversation_id}/read`);
   } else {
@@ -3725,6 +3734,7 @@ async function openConversation(convId) {
 function renderMessages(msgs) {
   const container = document.getElementById('waMessages');
   container.innerHTML = '';
+  waMessages = msgs; // V17: Guarda cache p/ de-dupe visual SSE
   let lastDate = '';
 
   msgs.forEach(m => {
