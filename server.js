@@ -168,13 +168,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
   CREATE INDEX IF NOT EXISTS idx_lead_activities_lead_id ON lead_activities(lead_id);
   CREATE INDEX IF NOT EXISTS idx_wa_conv_jid ON wa_conversations(remote_jid);
-  CREATE INDEX IF NOT EXISTS idx_wa_msg_conv ON wa_messages(conversation_id);
+  CREATE INDEX IF NOT EXISTS idx_wa_msg_id ON wa_messages(message_id);
 `);
 
-// Migrations — add columns if they don't exist yet
-['ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
- 'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
- 'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
+// Migrations
+[
+  // Adiciona UNIQUE index para message_id (ignorando vazios se possível, mas SQLite simples basta UNIQUE)
+  // Como message_id pode ser vazio em falhas, fazemos um índice filtrado se suportado ou apenas garantimos no código
+  'CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != \'\'' ,
+  'ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
+  'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
+  'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
 ].forEach(sql => { try { db.exec(sql); } catch {} });
 
 // ---- Default config values ----
@@ -682,9 +686,12 @@ app.all('/api/wa/receiver-v3', (req, res) => {
       return;
     }
 
-    const msg = body?.data || body?.message || body;
-    const jid  = msg?.key?.remoteJid || msg?.remoteJid || '';
-    const fromMe = msg?.key?.fromMe || false;
+    const msg = body?.data || body?.message || (Array.isArray(body?.data) ? body.data[0] : body);
+    const jid = msg?.key?.remoteJid || msg?.remoteJid || msg?.key?.participant || '';
+    const fromMe = msg?.key?.fromMe || msg?.fromMe || false;
+
+    // Extração robusta de ID (Tenta todos os caminhos conhecidos)
+    const messageId = msg?.key?.id || msg?.id || body?.data?.key?.id || body?.message?.key?.id || '';
 
     if (!jid || jid.includes('@g.us')) {
       waLog(`[${new Date().toISOString()}] Ignorado: JID inválido ou grupo (${jid})`);
@@ -697,9 +704,6 @@ app.all('/api/wa/receiver-v3', (req, res) => {
       || '';
 
     const pushName = msg?.pushName || msg?.key?.participant || '';
-    const messageId = msg?.key?.id || '';
-
-    waLog(`[${new Date().toISOString()}] Processando JID=${jid} pushName=${pushName}`);
 
     const conv = upsertConversation(jid, pushName);
     const direction = fromMe ? 'out' : 'in';
