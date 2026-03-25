@@ -173,12 +173,12 @@ db.exec(`
 
 // Migrations
 [
-  // Adiciona UNIQUE index para message_id (ignorando vazios se possível, mas SQLite simples basta UNIQUE)
-  // Como message_id pode ser vazio em falhas, fazemos um índice filtrado se suportado ou apenas garantimos no código
+  // Adiciona UNIQUE index para message_id
   'CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != \'\'' ,
   'ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
   'ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
   'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
+  'ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP',
 ].forEach(sql => { try { db.exec(sql); } catch {} });
 
 // ---- Default config values ----
@@ -479,6 +479,13 @@ function saveMessage(convId, direction, body, messageId) {
       : `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?`;
 
     db.prepare(`UPDATE wa_conversations SET ${updates} WHERE id = ?`).run(body, convId);
+    
+    // V19: Atualiza o lead vinculado para que ele suba no topo da lista principal
+    const c = db.prepare('SELECT lead_id FROM wa_conversations WHERE id = ?').get(convId);
+    if (c?.lead_id) {
+      db.prepare('UPDATE leads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(c.lead_id);
+    }
+
     return db.prepare('SELECT * FROM wa_messages WHERE id = ?').get(info.lastInsertRowid);
   } catch (err) {
     waLog(`[${new Date().toISOString()}] ❌ ERRO saveMessage: ${err.message}`);
@@ -1185,7 +1192,7 @@ app.get('/api/leads', auth, (req, res) => {
     SELECT l.*, a.name as attendant_name,
       (SELECT COUNT(*) FROM lead_activities la WHERE la.lead_id = l.id AND la.type = 'novo_contato') as contacts_count
     FROM leads l LEFT JOIN attendants a ON l.attendant_id = a.id
-    ${where} ORDER BY l.created_at DESC LIMIT ? OFFSET ?
+    ${where} ORDER BY l.updated_at DESC LIMIT ? OFFSET ?
   `).all(...params, parseInt(limit), offset);
 
   res.json({ leads, total, page: parseInt(page), limit: parseInt(limit) });
@@ -1215,7 +1222,7 @@ app.get('/api/leads/export-excel', auth, async (req, res) => {
   const leads = db.prepare(`
     SELECT l.*, a.name as attendant_name
     FROM leads l LEFT JOIN attendants a ON l.attendant_id = a.id
-    ${where} ORDER BY l.created_at DESC
+    ${where} ORDER BY l.updated_at DESC
   `).all(...params);
 
   const INTEREST_LABELS = {
