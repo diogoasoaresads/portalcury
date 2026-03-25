@@ -172,21 +172,36 @@ db.exec(`
 `);
 
 // Migrations
+console.log('[STARTUP] Executando migrações...');
+const startupStart = Date.now();
 [
-  // Adiciona UNIQUE index para message_id
   'CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != \'\'' ,
   'ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
   'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
   'ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP',
-  'ALTER TABLE leads ADD COLUMN phone_norm TEXT DEFAULT \'\'',
+  'ALTER TABLE leads ADD COLUMN phone_norm TEXT',
 ].forEach(sql => { try { db.exec(sql); } catch {} });
 
-// Backfill phone_norm para leads antigos
-db.transaction(() => {
-  const leads = db.prepare('SELECT id, phone FROM leads WHERE phone_norm IS NULL OR phone_norm = \'\'').all();
-  const update = db.prepare('UPDATE leads SET phone_norm = ? WHERE id = ?');
-  leads.forEach(l => update.run(l.phone.replace(/\D/g, ''), l.id));
-})();
+// Backfill phone_norm para leads antigos — OTIMIZADO
+try {
+  const needsBackfill = db.prepare("SELECT COUNT(*) as count FROM leads WHERE phone_norm IS NULL OR phone_norm = ''").get().count;
+  if (needsBackfill > 0) {
+    console.log(`[STARTUP] Backfilling ${needsBackfill} leads...`);
+    db.transaction(() => {
+      const leads = db.prepare("SELECT id, phone FROM leads WHERE phone_norm IS NULL OR phone_norm = '' LIMIT 5000").all();
+      const update = db.prepare('UPDATE leads SET phone_norm = ? WHERE id = ?');
+      leads.forEach(l => update.run((l.phone || '').replace(/\D/g, ''), l.id));
+    })();
+    console.log('[STARTUP] Chote de backfill (5k) concluído.');
+  }
+} catch (e) {
+  console.error('[STARTUP] Erro no backfill:', e.message);
+}
+
+// Cria índice apenas após o campo estar preenchido/existente para não travar
+try { db.exec('CREATE INDEX IF NOT EXISTS idx_leads_phone_norm ON leads(phone_norm)'); } catch {}
+
+console.log(`[STARTUP] Migrações e Backfill concluídos em ${Date.now() - startupStart}ms`);
 
 // ---- Default config values ----
 const DEFAULT_CONFIG = {
