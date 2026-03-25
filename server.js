@@ -428,10 +428,25 @@ function upsertConversation(jid, name) {
 
 function saveMessage(convId, direction, body, messageId) {
   try {
+    // 1. De-duplicação por ID Único (Evolutio ID)
     if (messageId) {
       const exists = db.prepare('SELECT id FROM wa_messages WHERE message_id = ?').get(messageId);
       if (exists) return null; 
     }
+
+    // 2. De-duplicação por Janela de Tempo (2 segundos) - Caso o ID mude mas o conteúdo seja o mesmo
+    // Ignora se a mesma mensagem na mesma conversa e direção chegou há menos de 2 segundos
+    const recent = db.prepare(`
+      SELECT id FROM wa_messages 
+      WHERE conversation_id = ? 
+        AND direction = ? 
+        AND body = ? 
+        AND created_at >= DATETIME('now', '-2 seconds')
+      LIMIT 1
+    `).get(convId, direction, body);
+    
+    if (recent) return null;
+
     const info = db.prepare(`
       INSERT INTO wa_messages (conversation_id, direction, body, message_id)
       VALUES (?, ?, ?, ?)
