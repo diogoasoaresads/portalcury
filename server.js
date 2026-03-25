@@ -316,16 +316,31 @@ function nextAttendant(queueKey) {
 }
 
 const sseClients = new Map();
-const BUILD_TS = '25-03-25 01:28'; 
-global.waMemoryLogs = []; // Bypass de banco de dados
+const BUILD_TS = '25-03-25 01:50'; 
+global.waMemoryLogs = [];
+
 function waLog(msg) {
   const line = `[${new Date().toISOString()}] ${msg}`;
-  try { 
-    console.log(`[WA-LOG] ${msg}`); 
-    global.waMemoryLogs.push(line);
-    if (global.waMemoryLogs.length > 50) global.waMemoryLogs.shift();
-    db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); 
-  } catch (e) { waMemoryLogs.push(`❌ ERRO DB: ${e.message}`); }
+  console.log(`[WA-LOG] ${msg}`);
+  
+  // RAM
+  global.waMemoryLogs.push(line);
+  if (global.waMemoryLogs.length > 50) global.waMemoryLogs.shift();
+  
+  // BANCO
+  try { db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); } catch (e) {}
+
+  // ARQUIVO JSON PERSISTENTE (Solução Definitiva para processos diferentes)
+  try {
+    const logFile = path.join(dataDir, 'wa_debug_v3.json');
+    let logs = [];
+    if (fs.existsSync(logFile)) {
+      try { logs = JSON.parse(fs.readFileSync(logFile, 'utf8')); } catch (e) { logs = []; }
+    }
+    logs.push(line);
+    if (logs.length > 50) logs.shift();
+    fs.writeFileSync(logFile, JSON.stringify(logs, null, 2));
+  } catch (e) { console.error('Erro ao gravar log JSON:', e.message); }
 }
 
 function sseAdd(userId, res) {
@@ -1812,11 +1827,19 @@ app.get('/health', (_req, res) => {
 // ============================================================
 app.get('/api/wa/debug-db', auth, (req, res) => {
   try {
+    // Lê do arquivo persistente para garantir que vemos o que o console do EasyPanel viu
+    let fileLogs = [];
+    const logFile = path.join(dataDir, 'wa_debug_v3.json');
+    if (fs.existsSync(logFile)) {
+      try { fileLogs = JSON.parse(fs.readFileSync(logFile, 'utf8')); } catch (e) { fileLogs = []; }
+    }
+
     const counts = {
       conversations: db.prepare('SELECT COUNT(*) as count FROM wa_conversations').get().count,
       messages: db.prepare('SELECT COUNT(*) as count FROM wa_messages').get().count,
-      dbLogs: db.prepare('SELECT msg FROM wa_logs ORDER BY id DESC LIMIT 20').all().map(r => r.msg),
-      memoryLogs: global.waMemoryLogs || []
+      dbLogs: db.prepare('SELECT msg FROM wa_logs ORDER BY id DESC LIMIT 5').all().map(r => r.msg),
+      memoryLogs: global.waMemoryLogs || [],
+      persistentLogs: fileLogs
     };
     res.json(counts);
   } catch (err) {

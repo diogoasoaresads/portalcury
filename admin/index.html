@@ -889,7 +889,7 @@
       <div class="icon">C</div>
       <span>Cury <strong>Meu Apê</strong></span>
     </div>
-    <div style="background:#22c55e; color:#fff; font-size:10px; font-weight:bold; text-align:center; padding:5px; margin:0 20px 15px; border-radius:4px; letter-spacing:1px; animation: pulse 1s infinite; box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);">V3 - MEMORY BYPASS ATIVO</div>
+    <div style="background:#3b82f6; color:#fff; font-size:10px; font-weight:bold; text-align:center; padding:5px; margin:0 20px 15px; border-radius:4px; letter-spacing:1px; animation: pulse 1s infinite; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);">V4 - PERSISTÊNCIA NUCLEAR</div>
     <nav class="sidebar-nav">
       <div class="nav-item active" data-page="dashboard">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
@@ -2027,35 +2027,43 @@ function badgeHtml(status) {
 async function showWaLogs() {
   try {
     const data = await api('GET', '/api/wa/debug-db');
-    const logs = data.memoryLogs || []; // Prioridade para memória RAM
-    const dbLogs = data.dbLogs || [];
-    let html = `<b>Total Conversas (DB):</b> ${data.conversations}<br>`;
-    html += `<b>Total Mensagens (DB):</b> ${data.messages}<hr>`;
-    html += `<b style="color:var(--green)">MENSAGENS EM TEMPO REAL (RAM):</b><br>`;
+    const logs = data.persistentLogs || data.memoryLogs || [];
+    let html = `<b>Banco:</b> Conv: ${data.conversations} | Msg: ${data.messages}<hr>`;
+    html += `<b style="color:#3b82f6">LOGS PERSISTENTES (DISCO + RAM):</b><br>`;
     if (logs.length === 0) {
-      html += '<p>Nenhuma mensagem capturada na RAM ainda. Clique em "Simular" agora.</p>';
+      html += '<p>Nenhum log capturado. Verifique o console do EasyPanel se persistir vazio.</p>';
     } else {
-      html += '<div style="max-height:250px; overflow-y:auto; font-family:monospace; font-size:11px; background:#e8f5e9; padding:10px; border-radius:4px; text-align:left; border: 1px solid var(--green);">';
-      logs.forEach(l => { html += `<div style="margin-bottom:6px; border-bottom:1px solid #c8e6c9; padding-bottom:4px">${l}</div>`; });
+      html += '<div style="max-height:250px; overflow-y:auto; font-family:monospace; font-size:10px; background:#eff6ff; padding:10px; border-radius:4px; text-align:left; border: 1px solid #3b82f6;">';
+      logs.slice().reverse().forEach(l => { html += `<div style="margin-bottom:6px; border-bottom:1px solid #dbeafe; padding-bottom:4px">${l}</div>`; });
       html += '</div>';
     }
-    if (dbLogs.length > 0) {
-       html += `<hr><b>Últimos do Banco (Histórico):</b><div style="font-size:10px; color:var(--gray)">${dbLogs.slice(0,5).join('<br>')}</div>`;
-    }
-    Swal.fire({ title: 'Diagnóstico V3 (Tempo Real)', html: html, width: '700px', confirmButtonText: 'Fechar' });
+    Swal.fire({ title: 'Diagnóstico V4 (Nuclear)', html: html, width: '700px', confirmButtonText: 'Fechar' });
   } catch (e) { toast('Erro ao buscar logs: ' + e.message, 'error'); }
 }
 
 async function sendWaTest() {
   try {
-    // Usando GET para bypass total de WAF/Proxy no corpo do POST
-    const res = await fetch('/api/wa/receiver-v3?test=true&msg=bypass_url_v3', { method: 'GET' });
+    const payload = {
+      event: 'messages.upsert',
+      instance: 'teste-v4',
+      data: {
+        key: { remoteJid: '5521999999999@s.whatsapp.net', fromMe: false, id: 'V4_' + Date.now() },
+        pushName: 'Simulador V4',
+        message: { conversation: 'Mensagem de teste V4 - Persistência Nuclear.' },
+        messageType: 'conversation'
+      }
+    };
+    const res = await fetch('/api/wa/receiver-v3', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     if (res.ok) {
-      toast('✅ Simulação de Bypass enviada! Abra o log agora.', 'success');
+      toast('✅ Simulação V4 enviada com sucesso!', 'success');
     } else {
-      throw new Error('Falha no Bypass: ' + res.status);
+      throw new Error('Erro na simulação V4: ' + res.status);
     }
-  } catch (e) { toast('Erro na simulação: ' + e.message, 'error'); }
+  } catch (e) { toast('Erro: ' + e.message, 'error'); }
 }
 
 async function showWaHealth() {
