@@ -2046,6 +2046,18 @@ async function showWaLogs() {
   } catch (e) { toast('Erro ao buscar logs: ' + e.message, 'error'); }
 }
 
+async function sendWaTest() {
+  try {
+    // Usando GET para bypass total de WAF/Proxy no corpo do POST
+    const res = await fetch('/api/wa/receiver-v3?test=true&msg=bypass_url_v3', { method: 'GET' });
+    if (res.ok) {
+      toast('✅ Simulação de Bypass enviada! Abra o log agora.', 'success');
+    } else {
+      throw new Error('Falha no Bypass: ' + res.status);
+    }
+  } catch (e) { toast('Erro na simulação: ' + e.message, 'error'); }
+}
+
 async function showWaHealth() {
   try {
     Swal.fire({ title: 'Verificando...', text: 'Validando o banco de dados...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });

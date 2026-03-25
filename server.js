@@ -647,12 +647,13 @@ function fireNotifications(lead, cfg) {
 // ============================================================
 // ATENDIMENTO WHATSAPP — WEBHOOK (recebe msgs do Evolution)
 // ============================================================
-app.get('/webhook/wa-incoming', (req, res) => {
+app.all('/api/wa/receiver-v3', (req, res) => {
   const now = new Date().toISOString();
-  waLog(`[${now}] WEBHOOK TRIGGER (GET)! Query: ${JSON.stringify(req.query)}`);
-  res.send('OK - LOGADO');
+  const method = req.method;
+  waLog(`[${now}] RECEIVER-V3 TRIGGER (${method})! Query: ${JSON.stringify(req.query)}`);
+  res.send('OK - LOGADO V3 (' + method + ')');
   try {
-    const body = req.query || {};
+    const body = (method === 'POST') ? req.body : req.query;
     waLog(`[${now}] Body: ${JSON.stringify(body).slice(0, 500)}`);
 
     const event = body?.event || body?.type || '';
