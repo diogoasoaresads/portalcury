@@ -3531,20 +3531,16 @@ let waSseSource       = null;
 
 // ── Conecta SSE assim que faz login ──────────────────────────
 function initWaSSE() {
-  if (waSseSource) return; // já conectado
-  waSseSource = new EventSource('/api/wa/events?token=' + (localStorage.getItem('token') || ''));
-
-  // Hack: SSE com Authorization header não é suportado no browser; usamos fetch + ReadableStream
-  waSseSource.close();
-  waSseSource = null;
+  if (waSseSource) return; 
   _startWaSSE();
 }
 
 async function _startWaSSE() {
-  const token = localStorage.getItem('token');
+  const t = localStorage.getItem('crm_token');
+  if (!t) return;
   try {
     const resp = await fetch('/api/wa/events', {
-      headers: { 'Authorization': 'Bearer ' + token },
+      headers: { 'Authorization': 'Bearer ' + t },
     });
     if (!resp.ok || !resp.body) return;
 
@@ -3873,7 +3869,7 @@ async function disconnectWaAtend() {
 // Preenche URL do webhook na aba de config (chamado pelo loadConfig)
 function fillWaWebhookUrl() {
   const el = document.getElementById('waWebhookUrl');
-  if (el) el.textContent = `${location.origin}/webhook/wa-incoming`;
+  if (el) el.textContent = `${location.origin}/api/wa/receiver-v3`;
 }
 
 /* ============================================================
