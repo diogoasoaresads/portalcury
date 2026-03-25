@@ -3791,11 +3791,14 @@ async function openChatForLead(phone, name) {
     // 1. Troca para a aba Atendimento
     navigate('atendimento');
     
-    // 2. Aguarda um pouco para a aba carregar e entao seleciona a conversa
+    // 2. Força recarregamento das conversas para garantir que o ID novo/existente esteja na lista local
+    await loadConversations();
+    
+    // 3. Seleciona a conversa
     setTimeout(() => {
       openConversation(conv.id);
       showToast('Chat aberto!', 'success');
-    }, 300);
+    }, 100);
   } catch (err) {
     showToast('Erro ao abrir chat: ' + err.message, 'error');
   }
