@@ -434,9 +434,9 @@ function saveMessage(convId, direction, body, messageId) {
     const now = Date.now();
     const dedupeKey = `${convId}_${direction}_${(body || '').trim().toLowerCase()}`;
     
-    // De-duplicação em RAM (5 segundos - V15)
+    // De-duplicação em RAM (15 segundos - V16 Radical)
     if (waDedupeCache.has(dedupeKey)) {
-      if (now - waDedupeCache.get(dedupeKey) < 5000) {
+      if (now - waDedupeCache.get(dedupeKey) < 15000) {
         waLog(`[RAM-SKIP] Duplicada ignorada: ${dedupeKey}`);
         return null;
       }
@@ -853,12 +853,15 @@ app.post('/api/wa/conversations/:id/send', auth, async (req, res) => {
     await evolutionSend(evo.instance, evo.apikey, evo.url, conv.contact_phone, text.trim());
 
     const saved = saveMessage(conv.id, 'out', text.trim(), '');
+    if (!saved) {
+      return res.json({ ok: true, note: 'deduplicated' });
+    }
 
     sseBroadcast('new_message', {
       conversation_id: conv.id,
       direction: 'out',
       body: text.trim(),
-      created_at: saved.created_at,
+      created_at: new Date().toISOString(),
     });
 
     res.json({ ok: true });
