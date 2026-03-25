@@ -3640,7 +3640,7 @@ async function loadConversations() {
     waConversations = data;
     renderConvList();
     updateWaUnreadBadge();
-    checkStatus();
+    checkWaStatus();
   } catch (err) {
     console.error('[DEBUG] Falha ao carregar conversas:', err);
     toast('Erro ao listar conversas: ' + err.message, 'error');
