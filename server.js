@@ -431,11 +431,12 @@ const waDedupeCache = new Map();
 
 function saveMessage(convId, direction, body, messageId) {
   try {
+    const now = Date.now();
     const dedupeKey = `${convId}_${direction}_${(body || '').trim().toLowerCase()}`;
     
-    // De-duplicação em RAM (10 segundos - V13)
+    // De-duplicação em RAM (5 segundos - V15)
     if (waDedupeCache.has(dedupeKey)) {
-      if (now - waDedupeCache.get(dedupeKey) < 10000) {
+      if (now - waDedupeCache.get(dedupeKey) < 5000) {
         waLog(`[RAM-SKIP] Duplicada ignorada: ${dedupeKey}`);
         return null;
       }
@@ -808,7 +809,8 @@ app.get('/api/wa/conversations', auth, (req, res) => {
   const { status = 'open', agent } = req.query;
   let sql = `
     SELECT c.*, u.username AS agent_name,
-           l.name AS lead_name
+           l.name AS lead_name,
+           strftime('%Y-%m-%dT%H:%M:%SZ', c.last_message_at) as last_message_at
     FROM wa_conversations c
     LEFT JOIN users u ON u.id = c.assigned_to
     LEFT JOIN leads l ON l.id = c.lead_id
