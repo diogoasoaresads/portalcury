@@ -182,6 +182,7 @@ db.exec(`
 
 // Migrations — Verificação Robusta de Colunas
 console.log('[STARTUP] Verificando esquema do banco...');
+const startupStart = Date.now();
 const requiredColumns = [
   { table: 'wa_messages', col: 'media_url',  type: 'TEXT' },
   { table: 'wa_messages', col: 'media_type', type: 'TEXT' },
