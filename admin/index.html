@@ -3861,7 +3861,7 @@ async function sendWaMessage() {
   try {
     await api('POST', `/api/wa/conversations/${waCurrentConvId}/send`, { text });
   } catch (err) {
-    showToast('Erro ao enviar: ' + err.message, 'error');
+    toast('Erro ao enviar: ' + err.message, 'error');
   }
 }
 
@@ -3906,7 +3906,7 @@ async function assignAgent() {
   if (!waCurrentConvId) return;
   const userId = document.getElementById('waAgentSelect').value || null;
   await api('PATCH', `/api/wa/conversations/${waCurrentConvId}/assign`, { user_id: userId });
-  showToast('Agente atribuído', 'success');
+  toast('Agente atribuído', 'success');
 }
 
 // ── Fechar / reabrir conversa ─────────────────────────────────
@@ -3917,7 +3917,7 @@ async function toggleConvStatus() {
   await api('PATCH', `/api/wa/conversations/${waCurrentConvId}/status`, { status: newStatus });
   waCurrentConvData = { ...waCurrentConvData, status: newStatus };
   document.getElementById('waCloseBtn').textContent = newStatus === 'closed' ? 'Reabrir' : 'Fechar';
-  showToast(newStatus === 'closed' ? 'Conversa fechada' : 'Conversa reaberta', 'success');
+  toast(newStatus === 'closed' ? 'Conversa fechada' : 'Conversa reaberta', 'success');
 }
 
 // ── Ver lead vinculado ────────────────────────────────────────

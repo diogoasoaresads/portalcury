@@ -500,7 +500,6 @@ function saveMessage(convId, direction, body, messageId) {
     }
 
     // 2. De-duplicação por Janela de Tempo (2 segundos) - Caso o ID mude mas o conteúdo seja o mesmo
-    // Ignora se a mesma mensagem na mesma conversa e direção chegou há menos de 2 segundos
     const recent = db.prepare(`
       SELECT id FROM wa_messages 
       WHERE conversation_id = ? 
@@ -512,20 +511,35 @@ function saveMessage(convId, direction, body, messageId) {
     
     if (recent) return null;
 
-    const info = db.prepare(`
-      INSERT INTO wa_messages (conversation_id, direction, body, message_id, media_url, media_type, mimetype, filename, caption)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      convId, 
-      direction, 
-      body || '', 
-      messageId || '', 
-      arguments[4] || '', 
-      arguments[5] || '', 
-      arguments[6] || '', 
-      arguments[7] || '', 
-      arguments[8] || ''
-    );
+    let info;
+    try {
+      // V19: Tenta inserir com colunas de mídia
+      info = db.prepare(`
+        INSERT INTO wa_messages (conversation_id, direction, body, message_id, media_url, media_type, mimetype, filename, caption)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        convId, 
+        direction, 
+        body || '', 
+        messageId || '', 
+        arguments[4] || '', 
+        arguments[5] || '', 
+        arguments[6] || '', 
+        arguments[7] || '', 
+        arguments[8] || ''
+      );
+    } catch (dbErr) {
+      // Fallback: se as colunas novas não existirem (migration falhou por lock ou erro), salva apenas o básico
+      if (dbErr.message.includes('no column named') || dbErr.message.includes('has no column')) {
+        console.warn('[WA-DATABASE] Fallback saveMessage: Colunas de mídia ausentes em wa_messages.');
+        info = db.prepare(`
+          INSERT INTO wa_messages (conversation_id, direction, body, message_id)
+          VALUES (?, ?, ?, ?)
+        `).run(convId, direction, body || '', messageId || '');
+      } else {
+        throw dbErr;
+      }
+    }
 
     const updates = (direction === 'in')
       ? `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?, unread_count = unread_count + 1`
@@ -965,6 +979,7 @@ app.get('/api/wa/conversations', auth, (req, res) => {
 app.get('/api/wa/conversations/:id/messages', auth, (req, res) => {
   const msgs = db.prepare(`
     SELECT id, conversation_id, direction, body, message_id, status,
+           media_url, media_type, mimetype, filename, caption,
            strftime('%Y-%m-%dT%H:%M:%SZ', created_at) as created_at
     FROM wa_messages WHERE conversation_id = ? ORDER BY id ASC LIMIT 200
   `).all(req.params.id);
