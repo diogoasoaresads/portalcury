@@ -180,27 +180,42 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_wa_msg_id ON wa_messages(message_id);
 `);
 
-// Migrations
-console.log('[STARTUP] Executando migrações...');
-const startupStart = Date.now();
+// Migrations — Verificação Robusta de Colunas
+console.log('[STARTUP] Verificando esquema do banco...');
+const requiredColumns = [
+  { table: 'wa_messages', col: 'media_url',  type: 'TEXT' },
+  { table: 'wa_messages', col: 'media_type', type: 'TEXT' },
+  { table: 'wa_messages', col: 'mimetype',   type: 'TEXT' },
+  { table: 'wa_messages', col: 'filename',   type: 'TEXT' },
+  { table: 'wa_messages', col: 'caption',    type: 'TEXT' },
+];
+
+requiredColumns.forEach(c => {
+  const columns = db.prepare(`PRAGMA table_info(${c.table})`).all();
+  const exists = columns.some(col => col.name === c.col);
+  if (!exists) {
+    try {
+      db.exec(`ALTER TABLE ${c.table} ADD COLUMN ${c.col} ${c.type} DEFAULT ''`);
+      console.log(`[SCHEMA] Coluna ${c.col} adicionada a ${c.table}`);
+    } catch (e) {
+      console.error(`[SCHEMA-ERROR] Falha ao adicionar ${c.col}:`, e.message);
+    }
+  }
+});
+
+// Outras migrações (índices e campos legados)
 [
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != ''" ,
   "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'",
   "ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)",
   "ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
-  "ALTER TABLE wa_messages ADD COLUMN media_url TEXT DEFAULT ''",
-  "ALTER TABLE wa_messages ADD COLUMN media_type TEXT DEFAULT ''",
-  "ALTER TABLE wa_messages ADD COLUMN mimetype TEXT DEFAULT ''",
-  "ALTER TABLE wa_messages ADD COLUMN filename TEXT DEFAULT ''",
-  "ALTER TABLE wa_messages ADD COLUMN caption TEXT DEFAULT ''",
 ].forEach(sql => {
   try {
     db.exec(sql);
-    console.log(`[MIGRATION-OK] ${sql.slice(0, 40)}...`);
   } catch (e) {
     if (!e.message.includes('duplicate column name') && !e.message.includes('already exists')) {
-      console.warn(`[MIGRATION-ERROR] Falha em "${sql.slice(0, 50)}...":`, e.message);
+      console.warn(`[MIGRATION-ERROR] Pulo em "${sql.slice(0, 40)}...":`, e.message);
     }
   }
 });
@@ -985,7 +1000,7 @@ app.get('/api/wa/conversations/:id/messages', auth, (req, res) => {
     res.json(msgs);
   } catch (err) {
     console.error('[wa-messages]', err.message);
-    res.status(502).json({ error: 'Erro ao carregar mensagens: ' + err.message });
+    res.status(500).json({ error: 'Erro ao carregar mensagens: ' + err.message });
   }
 });
 
@@ -1021,7 +1036,7 @@ app.post('/api/wa/conversations/:id/send', auth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[wa-send]', err.message);
-    res.status(502).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
