@@ -36,8 +36,8 @@ app.use(helmet({
   contentSecurityPolicy: false, // desativado pois admin usa inline scripts e CDNs externos
   crossOriginEmbedderPolicy: false,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve landing page e admin
 app.use(express.static(path.join(__dirname), { index: false }));
@@ -154,6 +154,11 @@ db.exec(`
     body            TEXT    DEFAULT '',
     message_id      TEXT    DEFAULT '',
     status          TEXT    DEFAULT 'sent',
+    media_url       TEXT    DEFAULT '',
+    media_type      TEXT    DEFAULT '',
+    mimetype        TEXT    DEFAULT '',
+    filename        TEXT    DEFAULT '',
+    caption         TEXT    DEFAULT '',
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -182,6 +187,11 @@ const startupStart = Date.now();
   'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
   'ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP',
   'ALTER TABLE leads ADD COLUMN phone_norm TEXT',
+  'ALTER TABLE wa_messages ADD COLUMN media_url TEXT',
+  'ALTER TABLE wa_messages ADD COLUMN media_type TEXT',
+  'ALTER TABLE wa_messages ADD COLUMN mimetype TEXT',
+  'ALTER TABLE wa_messages ADD COLUMN filename TEXT',
+  'ALTER TABLE wa_messages ADD COLUMN caption TEXT',
 ].forEach(sql => {
   try {
     db.exec(sql);
@@ -503,9 +513,19 @@ function saveMessage(convId, direction, body, messageId) {
     if (recent) return null;
 
     const info = db.prepare(`
-      INSERT INTO wa_messages (conversation_id, direction, body, message_id)
-      VALUES (?, ?, ?, ?)
-    `).run(convId, direction, body, messageId || '');
+      INSERT INTO wa_messages (conversation_id, direction, body, message_id, media_url, media_type, mimetype, filename, caption)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      convId, 
+      direction, 
+      body || '', 
+      messageId || '', 
+      arguments[4] || '', 
+      arguments[5] || '', 
+      arguments[6] || '', 
+      arguments[7] || '', 
+      arguments[8] || ''
+    );
 
     const updates = (direction === 'in')
       ? `last_message_at = CURRENT_TIMESTAMP, last_message_body = ?, unread_count = unread_count + 1`
@@ -536,6 +556,32 @@ async function evolutionSend(instance, apikey, url, phone, text) {
     body: JSON.stringify({ number: phone, text }),
   });
   if (!resp.ok) throw new Error(`Evolution API error: ${resp.status}`);
+  return resp.json();
+}
+
+async function evolutionSendMedia(instance, apikey, url, phone, mediaData, mediaType, filename, caption) {
+  const endpoint = `${url.replace(/\/$/, '')}/message/sendMedia/${instance}`;
+  
+  // mediaData pode ser uma URL ou Base64
+  const body = {
+    number: phone,
+    mediaMessage: {
+      mediatype: mediaType, // image, document, video, audio
+      media: mediaData,
+      fileName: filename || (mediaType === 'image' ? 'image.jpg' : 'file'),
+      caption: caption || ''
+    }
+  };
+
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': apikey },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    throw new Error(`Evolution API Media error: ${resp.status} - ${errorText}`);
+  }
   return resp.json();
 }
 
@@ -786,14 +832,48 @@ app.all('/api/wa/receiver-v3', (req, res) => {
 
     const text = msg?.message?.conversation
       || msg?.message?.extendedTextMessage?.text
+      || msg?.message?.imageMessage?.caption
+      || msg?.message?.videoMessage?.caption
+      || msg?.message?.documentMessage?.caption
+      || msg?.message?.documentWithCaptionMessage?.message?.documentMessage?.caption
       || msg?.body
       || '';
+
+    let mediaUrl = '';
+    let mediaType = '';
+    let mimetype = '';
+    let filename = '';
+    let caption = text;
+
+    if (msg?.message?.imageMessage) {
+      mediaType = 'image';
+      mediaUrl = msg.message.imageMessage.url;
+      mimetype = msg.message.imageMessage.mimetype;
+    } else if (msg?.message?.audioMessage) {
+      mediaType = 'audio';
+      mediaUrl = msg.message.audioMessage.url;
+      mimetype = msg.message.audioMessage.mimetype;
+    } else if (msg?.message?.videoMessage) {
+      mediaType = 'video';
+      mediaUrl = msg.message.videoMessage.url;
+      mimetype = msg.message.videoMessage.mimetype;
+    } else if (msg?.message?.documentMessage || msg?.message?.documentWithCaptionMessage) {
+      const doc = msg?.message?.documentMessage || msg?.message?.documentWithCaptionMessage?.message?.documentMessage;
+      mediaType = 'document';
+      mediaUrl = doc?.url;
+      mimetype = doc?.mimetype;
+      filename = doc?.fileName || doc?.title;
+    } else if (msg?.message?.stickerMessage) {
+      mediaType = 'image'; // trata sticker como imagem
+      mediaUrl = msg.message.stickerMessage.url;
+      mimetype = msg.message.stickerMessage.mimetype;
+    }
 
     const pushName = msg?.pushName || msg?.key?.participant || '';
 
     const conv = upsertConversation(jid, pushName);
     const direction = fromMe ? 'out' : 'in';
-    const saved = saveMessage(conv.id, direction, text, messageId);
+    const saved = saveMessage(conv.id, direction, text || filename || `[${mediaType}]`, messageId, mediaUrl, mediaType, mimetype, filename, caption);
     if (!saved) {
       waLog(`[SKIP] Duplicada ignorada! ID: ${messageId}`);
       return;
@@ -804,8 +884,13 @@ app.all('/api/wa/receiver-v3', (req, res) => {
     sseBroadcast('new_message', {
       conversation_id: conv.id,
       direction,
-      body: text,
+      body: text || filename || `[${mediaType}]`,
       message_id: messageId,
+      media_url: mediaUrl,
+      media_type: mediaType,
+      mimetype,
+      filename,
+      caption,
       created_at: new Date().toISOString(),
       contact_name: conv.contact_name,
       contact_phone: conv.contact_phone,
@@ -918,6 +1003,42 @@ app.post('/api/wa/conversations/:id/send', auth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[wa-send]', err.message);
+    res.status(502).json({ error: err.message });
+  }
+});
+
+// Enviar Mídia
+app.post('/api/wa/conversations/:id/send-media', auth, async (req, res) => {
+  const { media, mediaType, filename, caption } = req.body;
+  if (!media) return res.status(400).json({ error: 'Mídia (base64 ou URL) obrigatória.' });
+  if (!mediaType) return res.status(400).json({ error: 'Tipo de mídia obrigatório.' });
+
+  const conv = db.prepare('SELECT * FROM wa_conversations WHERE id = ?').get(req.params.id);
+  if (!conv) return res.status(404).json({ error: 'Conversa não encontrada.' });
+
+  const cfg = getConfig();
+  const evo = getAtendEvoCfg(cfg);
+  
+  try {
+    const result = await evolutionSendMedia(evo.instance, evo.apikey, evo.url, conv.contact_phone, media, mediaType, filename, caption);
+    const messageId = result?.key?.id || result?.id || '';
+
+    const saved = saveMessage(conv.id, 'out', caption || filename || `[${mediaType}]`, messageId, media, mediaType, '', filename, caption);
+
+    sseBroadcast('new_message', {
+      conversation_id: conv.id,
+      direction: 'out',
+      body: caption || filename || `[${mediaType}]`,
+      media_url: media,
+      media_type: mediaType,
+      filename: filename,
+      caption: caption,
+      created_at: new Date().toISOString(),
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[wa-send-media]', err.message);
     res.status(502).json({ error: err.message });
   }
 });

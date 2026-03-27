@@ -576,6 +576,14 @@
       font-size: .68rem; color: var(--gray);
       text-align: right; margin-top: 3px; margin-bottom: -2px;
     }
+    .wa-bubble--media {
+      padding: 6px !important;
+      max-width: 320px !important;
+    }
+    .wa-bubble--media img, .wa-bubble--media video {
+      display: block;
+      border-radius: 4px;
+    }
     .wa-date-divider {
       text-align: center; font-size: .72rem; color: var(--gray);
       background: rgba(255,255,255,.7); border-radius: 20px;
@@ -1162,6 +1170,10 @@
 
           <!-- Input de envio -->
           <div class="wa-input-bar" id="waInputBar" style="display:none">
+            <input type="file" id="waMediaInput" style="display:none" onchange="handleWaMediaSelect(this)" />
+            <button class="btn btn-secondary" style="border-radius:50%; width:42px; height:42px; padding:0; display:flex; align-items:center; justify-content:center" onclick="document.getElementById('waMediaInput').click()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            </button>
             <textarea id="waMsgInput" class="wa-input" placeholder="Digite uma mensagem..." rows="1"
               onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendWaMessage()}"
               oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
@@ -3764,10 +3776,76 @@ function appendWaBubble(msg, container) {
   if (!container) container = document.getElementById('waMessages');
   const div = document.createElement('div');
   div.className = `wa-bubble ${msg.direction}`;
+  if (msg.media_type) div.classList.add('wa-bubble--media');
+
   const time = new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
-  div.innerHTML = `${escHtml(msg.body)}<div class="wa-bubble-time">${time}${msg.direction === 'out' ? ' ✓✓' : ''}</div>`;
+  
+  let contentHtml = '';
+  if (msg.media_type === 'image') {
+    contentHtml = `<img src="${msg.media_url}" style="max-width:100%; border-radius:4px; cursor:pointer" onclick="window.open('${msg.media_url}')" />`;
+  } else if (msg.media_type === 'audio') {
+    contentHtml = `<audio src="${msg.media_url}" controls style="max-width:100%"></audio>`;
+  } else if (msg.media_type === 'video') {
+    contentHtml = `<video src="${msg.media_url}" controls style="max-width:100%; border-radius:4px"></video>`;
+  } else if (msg.media_type === 'document') {
+    contentHtml = `<div style="display:flex; align-items:center; gap:8px; padding:8px; background:rgba(0,0,0,0.05); border-radius:4px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <div style="flex:1; min-width:0">
+        <div style="font-weight:600; font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${escHtml(msg.filename || 'Arquivo')}</div>
+        <a href="${msg.media_url}" target="_blank" style="font-size:.75rem; color:var(--blue); text-decoration:underline">Baixar</a>
+      </div>
+    </div>`;
+  }
+
+  const bodyHtml = msg.body && msg.body !== `[${msg.media_type}]` ? `<div style="margin-top:4px">${escHtml(msg.body)}</div>` : '';
+  
+  div.innerHTML = `${contentHtml}${bodyHtml}<div class="wa-bubble-time">${time}${msg.direction === 'out' ? ' ✓✓' : ''}</div>`;
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
+}
+
+// V19: Handler para seleção de mídia
+async function handleWaMediaSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result;
+    let mediaType = 'document';
+    if (file.type.startsWith('image/')) mediaType = 'image';
+    else if (file.type.startsWith('audio/')) mediaType = 'audio';
+    else if (file.type.startsWith('video/')) mediaType = 'video';
+
+    const { isConfirmed, value: caption } = await Swal.fire({
+      title: 'Enviar arquivo?',
+      text: `Deseja enviar o arquivo "${file.name}"?`,
+      input: 'text',
+      inputLabel: 'Legenda (opcional)',
+      inputPlaceholder: 'Escreva uma legenda...',
+      showCancelButton: true,
+      confirmButtonText: 'Enviar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#25D366'
+    });
+
+    if (isConfirmed) {
+      try {
+        toast('Enviando arquivo...', 'info');
+        await api('POST', `/api/wa/conversations/${waCurrentConvId}/send-media`, {
+          media: base64,
+          mediaType: mediaType,
+          filename: file.name,
+          caption: caption
+        });
+        toast('Arquivo enviado com sucesso!', 'success');
+      } catch (err) {
+        toast('Erro ao enviar: ' + err.message, 'error');
+      }
+    }
+    input.value = ''; // limpa o input
+  };
+  reader.readAsDataURL(file);
 }
 
 // ── Enviar mensagem ───────────────────────────────────────────
