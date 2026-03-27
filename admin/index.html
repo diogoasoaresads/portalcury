@@ -458,12 +458,27 @@
     ============================================================ */
     .wa-shell {
       display: flex; flex: 1;
-      height: calc(100vh - 120px) !important;
+      height: calc(100vh - 140px) !important;
       min-height: 0;
       background: #fff;
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden !important; 
+    }
+    
+    /* Premium Scrollbar for Contact List */
+    .wa-conv-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .wa-conv-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .wa-conv-list::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    .wa-conv-list::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
     }
     .wa-sidebar {
       width: 320px; min-width: 260px; max-width: 380px;
