@@ -444,6 +444,9 @@ function normalizeWA(jid) {
 function upsertConversation(jid, name) {
   try {
     const phone = normalizeWA(jid);
+    // V19: Ignora JIDs de sistema ou status
+    if (jid.includes('status@broadcast') || jid.includes('broadcast')) return null;
+
     let conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
     if (!conv) {
       console.log(`[WA] Criando nova conversa para ${jid} (Name: ${name})`);
@@ -869,16 +872,24 @@ app.all('/api/wa/receiver-v3', (req, res) => {
       return;
     }
 
-    const text = msg?.message?.conversation
+    const text = (msg?.message?.conversation
       || msg?.message?.extendedTextMessage?.text
       || msg?.message?.imageMessage?.caption
       || msg?.message?.videoMessage?.caption
       || msg?.message?.documentMessage?.caption
       || msg?.message?.documentWithCaptionMessage?.message?.documentMessage?.caption
       || msg?.body
-      || '';
+      || '').trim();
 
-    let mediaUrl = '';
+    // V19: Ignora mensagens vazias ou que são apenas colchetes (comum em ghosts da Evolution v2)
+    if (!text && !msg?.message?.imageMessage && !msg?.message?.audioMessage && !msg?.message?.videoMessage && !msg?.message?.documentMessage && !msg?.message?.documentWithCaptionMessage) {
+      waLog(`[SKIP] Mensagem sem conteúdo útil ignorada. ID: ${messageId}`);
+      return;
+    }
+    if (text === '[]' || text === '{}') {
+      waLog(`[SKIP] Mensagem de controle ignorada. Content: ${text}`);
+      return;
+    }
     let mediaType = '';
     let mimetype = '';
     let filename = '';
