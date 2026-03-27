@@ -191,6 +191,16 @@
         form.reset();
         showModal();
 
+        // QAO Pixel – captura de lead
+        if (window.QAO) {
+          window.QAO.sendLead({
+            name:  data.name  || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            data: { interesse: data.interesse || '', pagina: window.location.pathname },
+          });
+        }
+
         // Google Ads Conversion — disparado automaticamente via config do admin
         if (typeof gtag !== 'undefined' && window._GADS) {
           gtag('event', 'conversion', { 'send_to': window._GADS });
@@ -380,6 +390,16 @@
         });
         const json = await resp.json();
         if (json.wa_url) waRedirectUrl = json.wa_url;
+
+        // QAO Pixel – captura de lead via WhatsApp
+        if (window.QAO) {
+          window.QAO.sendLead({
+            name:  name,
+            email: '',
+            phone: phone,
+            data: { origem: 'botao_whatsapp', pagina: window.location.pathname },
+          });
+        }
       } catch (_) { /* silent — always redirect */ }
 
       closeWaModal();
