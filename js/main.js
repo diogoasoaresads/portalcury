@@ -201,6 +201,20 @@
           fbq('track', window._META_EVENT);
         }
 
+        // QAO Lead Capture
+        if (window.QAO) {
+          window.QAO.sendLead({
+            name: data.name,
+            email: data.email || "",
+            phone: data.phone,
+            data: {
+              origem: "formulario_contato",
+              pagina: window.location.pathname,
+              interesse: data.interest || ""
+            }
+          });
+        }
+
       } catch (err) {
         console.error('Erro ao enviar formulário:', err);
         alert(err.message || 'Ocorreu um erro. Entre em contato pelo WhatsApp.');
@@ -387,6 +401,19 @@
         });
         const json = await resp.json();
         if (json.wa_url) waRedirectUrl = json.wa_url;
+
+        // QAO Lead Capture
+        if (window.QAO) {
+          window.QAO.sendLead({
+            name: name,
+            email: "",
+            phone: phone,
+            data: {
+              origem: "botao_whatsapp",
+              pagina: window.location.pathname
+            }
+          });
+        }
       } catch (_) { /* silent — always redirect */ }
 
       closeWaModal();

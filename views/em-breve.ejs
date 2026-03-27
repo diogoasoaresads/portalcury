@@ -45,6 +45,10 @@
   <% if (tracking.custom_head_code) { %>
   <%- tracking.custom_head_code %>
   <% } %>
+
+  <!-- Pixel QAO -->
+  <script src="https://site-qao-painelqao.qgj3b3.easypanel.host/qao-pixel.js"></script>
+  <!-- End Pixel QAO -->
 </head>
 <body>
 
@@ -346,6 +350,21 @@
         if (res.ok) {
           document.getElementById('ebForm').style.display = 'none';
           document.getElementById('ebFormSuccess').style.display = 'flex';
+          
+          // QAO Lead Capture
+          if (window.QAO) {
+            window.QAO.sendLead({
+              name: name,
+              email: email,
+              phone: phone,
+              data: {
+                origem: "formulario_pre_cadastro",
+                pagina: window.location.pathname,
+                interesse: interest || ""
+              }
+            });
+          }
+
           // Google Ads conversion
           if (typeof gtag !== 'undefined' && window._GADS) {
             gtag('event', 'conversion', { 'send_to': window._GADS });
