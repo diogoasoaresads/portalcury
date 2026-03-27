@@ -1029,7 +1029,8 @@ app.post('/api/wa/conversations/:id/send', auth, async (req, res) => {
   }
 
   try {
-    const result = await evolutionSend(evo.instance, evo.apikey, evo.url, conv.contact_phone, text.trim());
+    // V19: Usa remote_jid para garantir que a Evolution API identifique o contato corretamente
+    const result = await evolutionSend(evo.instance, evo.apikey, evo.url, conv.remote_jid, text.trim());
     const messageId = result?.key?.id || result?.message?.key?.id || '';
 
     // Salva localmente (saveMessage já lida com o de-dupe se o webhook chegar primeiro)
@@ -1067,7 +1068,8 @@ app.post('/api/wa/conversations/:id/send-media', auth, async (req, res) => {
   const evo = getAtendEvoCfg(cfg);
   
   try {
-    const result = await evolutionSendMedia(evo.instance, evo.apikey, evo.url, conv.contact_phone, media, mediaType, filename, caption);
+    // V19: Usa remote_jid para garantir que a Evolution API identifique o contato corretamente
+    const result = await evolutionSendMedia(evo.instance, evo.apikey, evo.url, conv.remote_jid, media, mediaType, filename, caption);
     const messageId = result?.key?.id || result?.message?.key?.id || result?.id || '';
 
     const saved = saveMessage(conv.id, 'out', caption || filename || `[${mediaType}]`, messageId, media, mediaType, '', filename, caption);
