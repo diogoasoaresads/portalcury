@@ -430,9 +430,14 @@ function jidToPhone(jid) {
   return (jid || '').replace(/@.*$/, '').replace(/\D/g, '');
 }
 
-// Normaliza JID para busca de lead: "5521999999999@s.whatsapp.net" → "5521999999999"
+// Normaliza JID para busca de lead e envio: "5521999999999@s.whatsapp.net" → "5521999999999"
 function normalizeWA(jid) {
-  return (jid || '').replace(/@.*$/, '').replace(/\D/g, '');
+  let phone = (jid || '').replace(/@.*$/, '').replace(/\D/g, '');
+  // V19: Se for número brasileiro (10 ou 11 dígitos sem o 55), tenta adicionar o 55
+  if (phone.length === 10 || phone.length === 11) {
+    if (!phone.startsWith('55')) phone = '55' + phone;
+  }
+  return phone;
 }
 
 // Busca ou cria conversa pelo JID recebido do Evolution
@@ -442,9 +447,13 @@ function upsertConversation(jid, name) {
     let conv = db.prepare('SELECT * FROM wa_conversations WHERE remote_jid = ?').get(jid);
     if (!conv) {
       console.log(`[WA] Criando nova conversa para ${jid} (Name: ${name})`);
+      // Tenta achar o lead removendo o 55 se necessário (matching flexível)
+      const phoneClean = phone.replace(/^55/, '');
       const lead = db.prepare(`
-        SELECT id FROM leads WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone,' ',''),'-',''),'(',''),')',''),'+','') = ? LIMIT 1
-      `).get(phone);
+        SELECT id FROM leads 
+        WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone,' ',''),'-',''),'(',''),')',''),'+','') IN (?, ?, ?) 
+        LIMIT 1
+      `).get(phone, phoneClean, '55' + phoneClean);
 
       const cfg = getConfig();
       let assignedTo = null;
@@ -1020,21 +1029,25 @@ app.post('/api/wa/conversations/:id/send', auth, async (req, res) => {
   }
 
   try {
-    await evolutionSend(evo.instance, evo.apikey, evo.url, conv.contact_phone, text.trim());
+    const result = await evolutionSend(evo.instance, evo.apikey, evo.url, conv.contact_phone, text.trim());
+    const messageId = result?.key?.id || result?.message?.key?.id || '';
 
-    const saved = saveMessage(conv.id, 'out', text.trim(), '');
-    if (!saved) {
-      return res.json({ ok: true, note: 'deduplicated' });
+    // Salva localmente (saveMessage já lida com o de-dupe se o webhook chegar primeiro)
+    const saved = saveMessage(conv.id, 'out', text.trim(), messageId);
+    
+    // Opcional: Se o saved for null, significa que o webhook já salvou e disparou o SSE.
+    // Se não for null, podemos disparar o SSE aqui para feedback imediato se o webhook atrasar.
+    if (saved) {
+      sseBroadcast('new_message', {
+        conversation_id: conv.id,
+        direction: 'out',
+        body: text.trim(),
+        message_id: messageId,
+        created_at: new Date().toISOString(),
+      });
     }
 
-    sseBroadcast('new_message', {
-      conversation_id: conv.id,
-      direction: 'out',
-      body: text.trim(),
-      created_at: new Date().toISOString(),
-    });
-
-    res.json({ ok: true });
+    res.json({ ok: true, messageId });
   } catch (err) {
     console.error('[wa-send]', err.message);
     res.status(500).json({ error: err.message });
@@ -1055,7 +1068,7 @@ app.post('/api/wa/conversations/:id/send-media', auth, async (req, res) => {
   
   try {
     const result = await evolutionSendMedia(evo.instance, evo.apikey, evo.url, conv.contact_phone, media, mediaType, filename, caption);
-    const messageId = result?.key?.id || result?.id || '';
+    const messageId = result?.key?.id || result?.message?.key?.id || result?.id || '';
 
     const saved = saveMessage(conv.id, 'out', caption || filename || `[${mediaType}]`, messageId, media, mediaType, '', filename, caption);
 
