@@ -3855,12 +3855,14 @@ async function sendWaMessage() {
   const text = input.value.trim();
   if (!text) return;
 
+  const oldText = input.value;
   input.value = '';
   input.style.height = 'auto';
 
   try {
     await api('POST', `/api/wa/conversations/${waCurrentConvId}/send`, { text });
   } catch (err) {
+    input.value = oldText; // Restaura em caso de erro
     toast('Erro ao enviar: ' + err.message, 'error');
   }
 }

@@ -56,6 +56,8 @@ if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
 
 const db = new Database(path.join(dataDir, 'portalcury.db'));
 
+// Configuração de Timeout e Performance SQLite
+db.pragma('busy_timeout = 5000'); // Aguarda até 5s se o banco estiver travado
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
@@ -182,22 +184,23 @@ db.exec(`
 console.log('[STARTUP] Executando migrações...');
 const startupStart = Date.now();
 [
-  'CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != \'\'' ,
-  'ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT \'admin\'',
-  'ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)',
-  'ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP',
-  'ALTER TABLE leads ADD COLUMN phone_norm TEXT',
-  'ALTER TABLE wa_messages ADD COLUMN media_url TEXT',
-  'ALTER TABLE wa_messages ADD COLUMN media_type TEXT',
-  'ALTER TABLE wa_messages ADD COLUMN mimetype TEXT',
-  'ALTER TABLE wa_messages ADD COLUMN filename TEXT',
-  'ALTER TABLE wa_messages ADD COLUMN caption TEXT',
+  "CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != ''" ,
+  "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'",
+  "ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)",
+  "ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+  "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
+  "ALTER TABLE wa_messages ADD COLUMN media_url TEXT DEFAULT ''",
+  "ALTER TABLE wa_messages ADD COLUMN media_type TEXT DEFAULT ''",
+  "ALTER TABLE wa_messages ADD COLUMN mimetype TEXT DEFAULT ''",
+  "ALTER TABLE wa_messages ADD COLUMN filename TEXT DEFAULT ''",
+  "ALTER TABLE wa_messages ADD COLUMN caption TEXT DEFAULT ''",
 ].forEach(sql => {
   try {
     db.exec(sql);
+    console.log(`[MIGRATION-OK] ${sql.slice(0, 40)}...`);
   } catch (e) {
     if (!e.message.includes('duplicate column name') && !e.message.includes('already exists')) {
-      console.warn(`[MIGRATION] Pulo/Erro em "${sql.slice(0, 50)}...":`, e.message);
+      console.warn(`[MIGRATION-ERROR] Falha em "${sql.slice(0, 50)}...":`, e.message);
     }
   }
 });
@@ -377,17 +380,11 @@ function waLog(msg) {
   // BANCO
   try { db.prepare('INSERT INTO wa_logs (msg) VALUES (?)').run(msg); } catch (e) {}
 
-  // ARQUIVO JSON PERSISTENTE (Solução Definitiva para processos diferentes)
+  // ARQUIVO DE LOG (Apenas append para performance)
   try {
-    const logFile = path.join(dataDir, 'wa_debug_v3.json');
-    let logs = [];
-    if (fs.existsSync(logFile)) {
-      try { logs = JSON.parse(fs.readFileSync(logFile, 'utf8')); } catch (e) { logs = []; }
-    }
-    logs.push(line);
-    if (logs.length > 50) logs.shift();
-    fs.writeFileSync(logFile, JSON.stringify(logs, null, 2));
-  } catch (e) { console.error('Erro ao gravar log JSON:', e.message); }
+    const logFile = path.join(dataDir, 'wa_debug_v3.log');
+    fs.appendFileSync(logFile, line + '\n');
+  } catch (e) {}
 }
 
 function sseAdd(userId, res) {
@@ -569,7 +566,10 @@ async function evolutionSend(instance, apikey, url, phone, text) {
     headers: { 'Content-Type': 'application/json', 'apikey': apikey },
     body: JSON.stringify({ number: phone, text }),
   });
-  if (!resp.ok) throw new Error(`Evolution API error: ${resp.status}`);
+  if (!resp.ok) {
+    const errorText = await resp.text().catch(() => '');
+    throw new Error(`Evolution API error: ${resp.status} - ${errorText.slice(0, 150)}`);
+  }
   return resp.json();
 }
 
@@ -977,13 +977,16 @@ app.get('/api/wa/conversations', auth, (req, res) => {
 
 // Mensagens de uma conversa
 app.get('/api/wa/conversations/:id/messages', auth, (req, res) => {
-  const msgs = db.prepare(`
-    SELECT id, conversation_id, direction, body, message_id, status,
-           media_url, media_type, mimetype, filename, caption,
-           strftime('%Y-%m-%dT%H:%M:%SZ', created_at) as created_at
-    FROM wa_messages WHERE conversation_id = ? ORDER BY id ASC LIMIT 200
-  `).all(req.params.id);
-  res.json(msgs);
+  try {
+    const msgs = db.prepare(`
+      SELECT *, strftime('%Y-%m-%dT%H:%M:%SZ', created_at) as created_at
+      FROM wa_messages WHERE conversation_id = ? ORDER BY id ASC LIMIT 200
+    `).all(req.params.id);
+    res.json(msgs);
+  } catch (err) {
+    console.error('[wa-messages]', err.message);
+    res.status(502).json({ error: 'Erro ao carregar mensagens: ' + err.message });
+  }
 });
 
 // Enviar mensagem
