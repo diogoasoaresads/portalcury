@@ -867,9 +867,9 @@ app.all('/api/wa/receiver-v3', (req, res) => {
 
     waLog(`[REQ] MSG RECV - ID: ${messageId} | JID: ${jid}`);
     
-    // V20: Filtros contra fantasmas e broadcasts
+    // V20: Filtros contra fantasmas e broadcasts (ajustado para ser menos agressivo)
     const isBroadcast = jid.includes('broadcast') || jid.includes('status');
-    const isInvalidJid = jid.length > 25 || jid.includes('/') || !jid.includes('@');
+    const isInvalidJid = jid.length > 50 || jid.includes('/');
     
     if (!jid || jid.includes('@g.us') || isBroadcast || isInvalidJid) {
       waLog(`[${new Date().toISOString()}] Ignorado: JID inválido, grupo ou broadcast (${jid})`);
@@ -1005,11 +1005,8 @@ app.get('/api/wa/conversations', auth, (req, res) => {
     LEFT JOIN users u ON u.id = c.assigned_to
     LEFT JOIN leads l ON l.id = c.lead_id
     WHERE 1=1
-      AND c.remote_jid NOT LIKE '%@broadcast%'
-      AND c.remote_jid NOT LIKE '%@status%'
-      AND LENGTH(c.remote_jid) <= 25
-      AND c.last_message_body != '[]' 
-      AND c.last_message_body != '{}'
+      AND (c.remote_jid NOT LIKE '%@broadcast%' AND c.remote_jid NOT LIKE '%@status%')
+      AND LENGTH(c.remote_jid) <= 50
   `;
   const params = [];
   if (status !== 'all') { sql += ' AND c.status = ?'; params.push(status); }
