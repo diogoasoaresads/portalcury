@@ -885,6 +885,9 @@
       50% { transform: scale(1.05); opacity: 0.8; }
       100% { transform: scale(1); opacity: 1; }
     }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -1160,7 +1163,25 @@
 
         <!-- Painel de Chat -->
         <div class="wa-chat" id="waChat">
-          <!-- Estado vazio -->
+          <!-- Banner: WhatsApp não conectado -->
+          <div id="waNotConnectedBanner" style="display:none; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:20px; padding:40px 24px; background:#f0f2f5;">
+            <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="1.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            <div style="text-align:center">
+              <h3 style="color:#0f172a;font-size:1.1rem;margin-bottom:8px">WhatsApp não conectado</h3>
+              <p style="color:#64748b;font-size:.875rem;max-width:300px">Escaneie o QR Code com o WhatsApp no celular para ativar o atendimento.</p>
+            </div>
+            <button onclick="generateQrInline()" id="btnGenerateQr" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 14px rgba(37,211,102,.35)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="7" y1="7" x2="7" y2="7"/><line x1="17" y1="7" x2="17" y2="7"/><line x1="17" y1="17" x2="17" y2="17"/><line x1="7" y1="17" x2="7" y2="17"/></svg>
+              Gerar QR Code
+            </button>
+            <div id="waQrInline" style="display:none;flex-direction:column;align-items:center;gap:12px">
+              <div id="waQrInlineImg"></div>
+              <p style="color:#64748b;font-size:.82rem;text-align:center">Abra o WhatsApp → <strong>Dispositivos conectados</strong> → <strong>Conectar dispositivo</strong></p>
+              <p id="waQrCountdown" style="color:#94a3b8;font-size:.75rem">O QR Code expira em <strong>60s</strong> — clique novamente se precisar atualizar</p>
+            </div>
+          </div>
+
+          <!-- Estado vazio (conectado, mas sem conversa selecionada) -->
           <div class="wa-empty" id="waEmpty">
             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             <h3>Selecione uma conversa</h3>
@@ -2215,7 +2236,7 @@ function navigate(page) {
   if (page === 'attendants')  loadAttendants();
   if (page === 'users')       loadUsers();
   if (page === 'atendimento') {
-    loadConversations();
+    checkWaConnectionAndShowQr();
     loadWaUsers();
     initWaSSE();
   }
@@ -3678,6 +3699,97 @@ async function loadConversations() {
   } catch (err) {
     console.error('[DEBUG] Falha ao carregar conversas:', err);
     toast('Erro ao listar conversas: ' + err.message, 'error');
+  }
+}
+
+// ── Verificar conexão e exibir banner de QR se desconectado ──
+async function checkWaConnectionAndShowQr() {
+  const banner  = document.getElementById('waNotConnectedBanner');
+  const empty   = document.getElementById('waEmpty');
+  const chatHdr = document.getElementById('waChatHeader');
+  const msgs    = document.getElementById('waMessages');
+  const input   = document.getElementById('waInputBar');
+  const dot     = document.getElementById('waStatusDot');
+  if (!banner) return;
+
+  try {
+    const data = await api('GET', '/api/wa/status').catch(() => null);
+    const connected = data && (data.state === 'open' || data.connectionStatus === 'open' || data.status === 'open' || data.connected === true);
+
+    if (connected) {
+      dot && (dot.style.background = '#25D366');
+      banner.style.display = 'none';
+      empty.style.display  = 'flex';
+      loadConversations();
+    } else {
+      dot && (dot.style.background = '#ef4444');
+      banner.style.display = 'flex';
+      empty.style.display  = 'none';
+      if (chatHdr) chatHdr.style.display = 'none';
+      if (msgs)    msgs.style.display    = 'none';
+      if (input)   input.style.display   = 'none';
+    }
+  } catch (e) {
+    banner.style.display = 'flex';
+    empty.style.display  = 'none';
+  }
+}
+
+async function generateQrInline() {
+  const btn     = document.getElementById('btnGenerateQr');
+  const wrap    = document.getElementById('waQrInline');
+  const imgEl   = document.getElementById('waQrInlineImg');
+  const cntdEl  = document.getElementById('waQrCountdown');
+  if (!btn) return;
+
+  btn.disabled   = true;
+  btn.innerHTML  = '<span style="display:inline-block;width:18px;height:18px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite"></span> Gerando...';
+  wrap.style.display = 'none';
+  imgEl.innerHTML = '';
+
+  try {
+    const data    = await api('POST', '/api/wa/connect', {});
+    const qrData  = data.qr?.base64 || data.qr?.code;
+
+    if (qrData) {
+      imgEl.innerHTML = `<img src="${qrData.startsWith('data:') ? qrData : 'data:image/png;base64,' + qrData}" style="width:220px;height:220px;border-radius:12px;border:4px solid #fff;box-shadow:0 4px 20px rgba(0,0,0,.15)" alt="QR Code" />`;
+      wrap.style.display = 'flex';
+
+      // Countdown de 60s — depois limpa e pede novo scan
+      let secs = 60;
+      const timer = setInterval(() => {
+        secs--;
+        if (cntdEl) cntdEl.innerHTML = `O QR Code expira em <strong>${secs}s</strong> — clique novamente se precisar atualizar`;
+        if (secs <= 0) {
+          clearInterval(timer);
+          imgEl.innerHTML = '<p style="color:#ef4444;font-size:.85rem">QR Code expirado. Clique em "Gerar QR Code" novamente.</p>';
+          wrap.style.display = 'flex';
+        }
+      }, 1000);
+
+      // Verifica conexão a cada 5s
+      const poll = setInterval(async () => {
+        try {
+          const st = await api('GET', '/api/wa/status').catch(() => null);
+          const ok = st && (st.state === 'open' || st.connectionStatus === 'open' || st.connected === true);
+          if (ok) {
+            clearInterval(poll);
+            clearInterval(timer);
+            toast('WhatsApp conectado com sucesso! ✅', 'success');
+            checkWaConnectionAndShowQr();
+          }
+        } catch {}
+      }, 5000);
+
+    } else {
+      toast('Instância já conectada!', 'success');
+      checkWaConnectionAndShowQr();
+    }
+  } catch (err) {
+    toast('Erro ao gerar QR: ' + err.message, 'error');
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Gerar QR Code';
   }
 }
 
