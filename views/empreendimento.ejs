@@ -127,7 +127,20 @@
         </div>
         <h1><%= emp.name %></h1>
         <p class="emp-hero__tagline"><%= emp.tagline %></p>
+        <% if (emp.subheadline) { %>
+        <p class="emp-hero__subheadline"><%= emp.subheadline %></p>
+        <% } %>
         <% if (emp.price) { %><p class="emp-hero__price"><%= emp.price %></p><% } %>
+        <% if (emp.highlights && emp.highlights.length) { %>
+        <div class="emp-hero__highlights">
+          <% emp.highlights.forEach(function(h) { %>
+          <span class="emp-highlight-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <%= h %>
+          </span>
+          <% }); %>
+        </div>
+        <% } %>
         <div class="emp-hero__details">
           <div class="emp-detail">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -151,7 +164,7 @@
         <div class="hero__form-card">
           <p class="form-card__eyebrow">Interesse neste empreendimento?</p>
           <h2 class="form-card__title">Fale com um Especialista</h2>
-          <p class="form-card__subtitle">Resposta em até 5 minutos</p>
+          <p class="form-card__subtitle">Faça agora uma simulação</p>
           <form class="lead-form" id="heroForm" novalidate>
             <input type="hidden" name="interest" value="<%= emp.interestValue %>" />
             <div class="form-group">
@@ -194,7 +207,7 @@
               <label for="h-fgts-valor">Valor estimado (FGTS + entrada)</label>
               <input type="text" id="h-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
             </div>
-            <button type="submit" class="btn btn--primary btn--full">Quero Minha Simulação Grátis</button>
+            <button type="submit" class="btn btn--primary btn--full">Enviar</button>
             <p class="form-card__privacy">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
               Seus dados estão protegidos.
@@ -236,16 +249,20 @@
     <div class="container emp-content__grid">
       <div class="emp-content__main">
 
-        <!-- About -->
+
+        <!-- Nearby -->
         <div class="content-card">
           <h2 class="content-card__title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-            Sobre o Empreendimento
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            O Que Tem Por Perto
           </h2>
-          <p><%= emp.description %></p>
-          <div class="emp-address">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <%= emp.address %>
+          <div class="nearby-grid">
+            <% emp.nearby.forEach(function(n) { %>
+            <div class="nearby-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+              <%= n %>
+            </div>
+            <% }); %>
           </div>
         </div>
 
@@ -265,33 +282,71 @@
           </ul>
         </div>
 
-        <!-- Nearby -->
+        <!-- About -->
         <div class="content-card">
           <h2 class="content-card__title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            O Que Tem Por Perto
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Sobre o Empreendimento
           </h2>
-          <div class="nearby-grid">
-            <% emp.nearby.forEach(function(n) { %>
-            <div class="nearby-item">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
-              <%= n %>
-            </div>
-            <% }); %>
+          <p><%= emp.description %></p>
+          <div class="emp-address">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <%= emp.address %>
           </div>
         </div>
 
-        <!-- Financing -->
-        <div class="content-card content-card--financing">
-          <h2 class="content-card__title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Formas de Financiamento
-          </h2>
-          <div class="financing-tags">
-            <% emp.financing.forEach(function(f) { %>
-            <span class="fin-tag"><%= f %></span>
-            <% }); %>
+        <!-- Condições / Quem pode comprar -->
+        <div class="content-card content-card--conditions">
+          <div class="conditions-grid">
+            <div class="conditions-col">
+              <h3 class="conditions-col__title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                Condições válidas por tempo limitado
+              </h3>
+              <ul class="conditions-list">
+                <li><span>✔</span> Ato a partir de R$14mil</li>
+                <li><span>✔</span> Entrada parcelada</li>
+                <li><span>✔</span> Financiamento pela Caixa de até 90%</li>
+                <li><span>✔</span> Isenção de IPTU e documentação grátis</li>
+                <li><span>✔</span> Financiamento direto com a construtora</li>
+              </ul>
+            </div>
+            <div class="conditions-col">
+              <h3 class="conditions-col__title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                Quem pode comprar?
+              </h3>
+              <ul class="conditions-list">
+                <li><span>✔</span> Renda a partir de R$10mil</li>
+                <li><span>✔</span> Autônomos também podem conseguir aprovação</li>
+                <li><span>✔</span> Militar tem possibilidade de desconto</li>
+              </ul>
+            </div>
           </div>
+        </div>
+
+        <!-- Compre agora e Garanta -->
+        <div class="content-card content-card--compre">
+          <h2 class="content-card__title compre-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Compre agora e Garanta
+          </h2>
+          <ul class="compre-list">
+            <% const compre = emp.compre || [
+              { icon: '🏆', title: 'Valorização garantida', desc: 'Imóveis em ' + emp.bairro + ', ' + emp.city + ' registram crescimento consistente — comprar na planta é entrar no melhor momento.' },
+              { icon: '💰', title: 'Possibilidade de rentabilizar com aluguel/temporada', desc: 'Localização estratégica próxima a ' + (emp.nearby && emp.nearby[0] ? emp.nearby[0] : emp.bairro) + ' garante alta demanda de locação.' },
+              { icon: '🎯', title: 'Condições mais flexíveis no lançamento', desc: 'Entrada parcelada, FGTS aceito, financiamento até 90% pela Caixa e documentação grátis — só por tempo limitado.' }
+            ]; %>
+            <% compre.forEach(function(item) { %>
+            <li>
+              <span class="compre-icon"><%= item.icon %></span>
+              <div>
+                <strong><%= item.title %></strong>
+                <p><%= item.desc %></p>
+              </div>
+            </li>
+            <% }); %>
+          </ul>
         </div>
       </div>
 
@@ -343,10 +398,6 @@
               <label for="sb-fgts-valor">Valor estimado (FGTS + entrada)</label>
               <input type="text" id="sb-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
             </div>
-            <div class="form-group">
-              <label for="sb-msg">Mensagem</label>
-              <textarea id="sb-msg" name="message" rows="2" placeholder="Alguma dúvida ou informação adicional?"></textarea>
-            </div>
             <button type="submit" class="btn btn--primary btn--full btn--lg">Solicitar Atendimento</button>
             <a href="https://wa.me/5521967019390?text=Olá!%20Tenho%20interesse%20no%20<%= encodeURIComponent(emp.name) %>" target="_blank" rel="noopener" class="btn btn--whatsapp btn--full" style="margin-top:10px;text-decoration:none">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -367,26 +418,36 @@
     </div>
   </section>
 
-  <!-- Other developments -->
-  <section class="outros-empreendimentos">
+  <!-- Apresentação do Produto -->
+  <section class="product-presentation">
     <div class="container">
+      <% const ps = emp.productSection || {}; %>
       <div class="section-header">
-        <span class="section-header__eyebrow">Explore mais opções</span>
-        <h2 class="section-header__title">Outros Empreendimentos</h2>
+        <span class="section-header__eyebrow"><%= ps.eyebrow || 'Por que investir agora?' %></span>
+        <h2 class="section-header__title"><%= ps.title || 'Invista em ' + emp.name %></h2>
+        <p class="section-header__desc"><%= ps.desc || emp.description.split('.')[0] + '.' %></p>
       </div>
-      <div class="outros-grid">
-        <% others.forEach(function(o) { %>
-        <a href="/empreendimentos/<%= o.slug %>" class="outro-card">
-          <div class="outro-card__img">
-            <img src="<%= o.heroImage %>" alt="<%= o.name %>" loading="lazy" />
-          </div>
-          <div class="outro-card__body">
-            <span class="outro-card__bairro"><%= o.bairro %></span>
-            <h3><%= o.name %></h3>
-            <span class="outro-card__rooms"><%= o.details.rooms %></span>
-          </div>
-        </a>
+      <div class="product-stats">
+        <% const stats = ps.stats || [
+          { number: emp.price ? emp.price.replace('A partir de ', '') : 'Consulte', label: 'valor de entrada \u2014 condições facilitadas' },
+          { number: emp.details.units, label: 'disponíveis neste empreendimento' },
+          { number: emp.details.area, label: 'opções de metragem disponíveis' },
+          { number: emp.details.delivery, label: 'previsão de entrega' }
+        ]; %>
+        <% stats.forEach(function(s) { %>
+        <div class="product-stat">
+          <span class="product-stat__number"><%= s.number %></span>
+          <span class="product-stat__label"><%= s.label %></span>
+        </div>
         <% }); %>
+      </div>
+      <div class="product-cta">
+        <p><%= ps.cta || 'Não perca esta oportunidade — garanta sua unidade agora.' %></p>
+        <a href="#contato" class="btn btn--primary btn--lg">Quero Garantir Minha Unidade</a>
+        <a href="https://wa.me/5521967019390?text=Olá!%20Tenho%20interesse%20no%20<%= encodeURIComponent(emp.name) %>" target="_blank" rel="noopener" class="btn btn--whatsapp btn--lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Falar pelo WhatsApp
+        </a>
       </div>
     </div>
   </section>
