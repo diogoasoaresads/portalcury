@@ -2223,6 +2223,10 @@ function initApp(username, role) {
     el.style.display = userRole === 'PO' ? '' : 'none';
   });
 
+  // Remove opção de criar PO se não for PO
+  const poOpt = document.querySelector('#usr-role option[value="PO"]');
+  if (poOpt && userRole !== 'PO') poOpt.remove();
+
   // Ajustes de interface para atendente vs admin/PO na seção de configurações
   if (userRole !== 'admin' && userRole !== 'PO') {
     document.getElementById('lblConfig').textContent = 'Meu Perfil';

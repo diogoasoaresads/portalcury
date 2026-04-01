@@ -1679,15 +1679,21 @@ app.delete('/api/attendants/:id', auth, adminOnly, (req, res) => {
 // ROUTES — USERS (admin)
 // ============================================================
 app.get('/api/users', auth, adminOnly, (_req, res) => {
+  const where = req.user.role === 'PO' ? '' : 'WHERE u.role != "PO"';
   const users = db.prepare(`
     SELECT u.id, u.username, u.role, u.attendant_id, u.created_at, a.name as attendant_name
-    FROM users u LEFT JOIN attendants a ON u.attendant_id = a.id ORDER BY u.id
+    FROM users u LEFT JOIN attendants a ON u.attendant_id = a.id
+    ${where}
+    ORDER BY u.id
   `).all();
   res.json(users);
 });
 
 app.post('/api/users', auth, adminOnly, (req, res) => {
   const { username, password, role = 'atendente', attendant_id } = req.body;
+  if (req.user.role !== 'PO' && role === 'PO') {
+    return res.status(403).json({ error: 'Você não tem permissão para criar um usuário PO.' });
+  }
   if (!username?.trim() || !password || password.length < 8)
     return res.status(400).json({ error: 'Usuário e senha (mín. 8 caracteres) são obrigatórios.' });
   try {
@@ -1703,6 +1709,12 @@ app.post('/api/users', auth, adminOnly, (req, res) => {
 
 app.put('/api/users/:id', auth, adminOnly, (req, res) => {
   const { role, attendant_id, password } = req.body;
+  
+  if (req.user.role !== 'PO') {
+    if (role === 'PO') return res.status(403).json({ error: 'Você não tem permissão para tornar alguém PO.' });
+    const target = db.prepare('SELECT role FROM users WHERE id = ?').get(req.params.id);
+    if (target && target.role === 'PO') return res.status(403).json({ error: 'Você não tem permissão para editar um PO.' });
+  }
   if (password) {
     if (password.length < 8) return res.status(400).json({ error: 'Senha deve ter ao menos 8 caracteres.' });
     db.prepare('UPDATE users SET role = ?, attendant_id = ?, password_hash = ? WHERE id = ?').run(
@@ -1716,6 +1728,11 @@ app.put('/api/users/:id', auth, adminOnly, (req, res) => {
 
 app.delete('/api/users/:id', auth, adminOnly, (req, res) => {
   if (req.user.id === parseInt(req.params.id)) return res.status(400).json({ error: 'Não é possível excluir sua própria conta.' });
+  
+  if (req.user.role !== 'PO') {
+    const target = db.prepare('SELECT role FROM users WHERE id = ?').get(req.params.id);
+    if (target && target.role === 'PO') return res.status(403).json({ error: 'Você não tem permissão para excluir um PO.' });
+  }
   db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
