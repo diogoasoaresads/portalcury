@@ -459,6 +459,17 @@ function upsertConversation(jid, name) {
         LIMIT 1
       `).get(phone, phoneClean, '55' + phoneClean);
 
+      let finalLeadId = lead?.id || null;
+      if (!finalLeadId) {
+        waLog(`[WA-LEAD] Criando Lead automático para o número ${phone} (Nome: ${name})`);
+        const rLead = db.prepare(`
+          INSERT INTO leads (name, phone, source, status, message, user_id) 
+          VALUES (?, ?, 'whatsapp', 'novo', 'Mensagem iniciada diretamente no WhatsApp', ?)
+        `).run(name || 'Novo Lead (WhatsApp)', phone, null); // user_id fica null a menos que seja round robin
+        finalLeadId = rLead.lastInsertRowid;
+        addActivity(finalLeadId, 'novo_contato', 'Captação Automática (WhatsApp)', 'Lead criado automaticamente ao enviar a primeira mensagem.');
+      }
+
       const cfg = getConfig();
       let assignedTo = null;
       if (cfg.wa_atend_distribution === 'round_robin') {
@@ -468,13 +479,16 @@ function upsertConversation(jid, name) {
         if (agents.length) {
           assignedTo = agents[idx % agents.length].id;
           db.prepare("INSERT OR REPLACE INTO config (key,value) VALUES ('wa_queue_idx',?)").run(String((idx + 1) % agents.length));
+          
+          // Opcional: Se quiser que o Lead inteiro seja atribuído a esse agente, descomente abaixo:
+          db.prepare("UPDATE leads SET user_id = ? WHERE id = ?").run(assignedTo, finalLeadId);
         }
       }
 
       const info = db.prepare(`
         INSERT INTO wa_conversations (remote_jid, contact_name, contact_phone, lead_id, assigned_to)
         VALUES (?, ?, ?, ?, ?)
-      `).run(jid, name || phone, phone, lead?.id || null, assignedTo);
+      `).run(jid, name || phone, phone, finalLeadId, assignedTo);
 
       conv = db.prepare('SELECT * FROM wa_conversations WHERE id = ?').get(info.lastInsertRowid);
       console.log(`[WA] Conversa criada ID=${conv.id}`);
