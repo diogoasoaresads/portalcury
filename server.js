@@ -1163,14 +1163,35 @@ app.post('/api/wa/connect', auth, async (req, res) => {
   try {
     console.log(`[WA] Tentando conectar instancia: ${instance} em ${cfg.evolution_url}`);
     
-    // 1. Tenta criar a instância (ignora erro se já existir)
+    // Detecta o domínio em que o sistema está rodando para setar o webhook
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const webhookUrl = `${protocol}://${req.get('host')}/api/wa/receiver-v3`;
+
+    // 1. Tenta criar a instância (ignora erro se já existir) com Webhook embutido
     const createRes = await evolutionCall('POST', `instance/create`, {
       instanceName: instance,
       qrcode: true,
       integration: 'WHATSAPP-BAILEYS',
+      webhook: {
+        url: webhookUrl,
+        byEvents: false,
+        base64: false,
+        events: ['MESSAGES_UPSERT']
+      }
     }, evo);
     
-    console.log(`[WA] Criar instancia: status=${createRes.status}`, createRes.data);
+    console.log(`[WA] Criar instancia com Webhook (${webhookUrl}): status=${createRes.status}`);
+
+    // Força atualização do Webhook em instâncias já existentes
+    await evolutionCall('POST', `webhook/set/${instance}`, {
+      webhook: {
+        enabled: true,
+        url: webhookUrl,
+        byEvents: false,
+        base64: false,
+        events: ['MESSAGES_UPSERT']
+      }
+    }, evo).catch(e => console.error('[WA] Erro ao atualizar webhook:', e.message));
 
     // 2. Busca o QR code para conexão
     const qr = await evolutionCall('GET', `instance/connect/${instance}`, null, evo);
@@ -2263,7 +2284,7 @@ app.post('/api/wa/sync-history', auth, async (req, res) => {
     if (!url || !key || !inst) throw new Error('Configuração Evolution API incompleta.');
 
     // Busca conversas recentes
-    const resp = await fetch(`${url}/chat/findConversations/${inst}`, {
+    const resp = await fetch(`${url}/chat/findChats/${inst}`, {
       headers: { 'apikey': key }
     });
     if (!resp.ok) throw new Error(`Erro Evolution API (${resp.status}): ${await resp.text()}`);
@@ -2272,10 +2293,10 @@ app.post('/api/wa/sync-history', auth, async (req, res) => {
     let syncedCount = 0;
 
     for (const conv of conversations) {
-      if (!conv.id) continue;
+      const remoteJid = conv.remoteJid || conv.id;
+      if (!remoteJid) continue;
       
       // Upsert na conversa local
-      const remoteJid = conv.id;
       const phone = remoteJid.split('@')[0];
       
       const existing = db.prepare('SELECT id FROM wa_conversations WHERE remote_jid = ?').get(remoteJid);
