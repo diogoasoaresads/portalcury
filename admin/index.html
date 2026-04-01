@@ -1382,7 +1382,7 @@
             Envia uma mensagem WhatsApp pelo <strong>Evolution API</strong> a cada novo lead recebido.
             Preencha a URL do seu servidor Evolution, o nome da instância e a API Key.
           </p>
-          <div class="toggle-row">
+          <div class="toggle-row po-only">
             <div class="info">
               <strong>Ativar aviso por Evolution API</strong>
               <span>Enviar mensagem automática ao receber lead</span>
@@ -1391,17 +1391,17 @@
           </div>
           <div style="margin-top:20px">
             <div class="form-grid">
-              <div class="field">
+              <div class="field po-only">
                 <label>URL do servidor Evolution</label>
                 <input type="url" id="cfg-evolution-url" placeholder="https://evo.seudominio.com" />
                 <p class="hint">URL base da sua instância Evolution (sem barra no final)</p>
               </div>
-              <div class="field">
+              <div class="field po-only">
                 <label>Nome da instância</label>
                 <input type="text" id="cfg-evolution-instance" placeholder="minha-instancia" />
                 <p class="hint">Nome exato da instância no painel Evolution</p>
               </div>
-              <div class="field">
+              <div class="field po-only">
                 <label>API Key</label>
                 <input type="text" id="cfg-evolution-apikey" placeholder="sua-api-key" autocomplete="off" />
                 <p class="hint">Global API Key ou Instance API Key do Evolution</p>
@@ -2218,6 +2218,11 @@ function initApp(username, role) {
     el.style.display = (userRole === 'admin' || userRole === 'PO') ? '' : 'none';
   });
 
+  // Mostrar/ocultar itens po-only
+  document.querySelectorAll('.po-only').forEach(el => {
+    el.style.display = userRole === 'PO' ? '' : 'none';
+  });
+
   // Ajustes de interface para atendente vs admin/PO na seção de configurações
   if (userRole !== 'admin' && userRole !== 'PO') {
     document.getElementById('lblConfig').textContent = 'Meu Perfil';
@@ -2665,14 +2670,17 @@ async function saveWebhookConfig() {
 
 async function saveWaNotifyConfig() {
   try {
-    await api('PUT', '/api/config', {
-      evolution_enabled:  document.getElementById('cfg-evolution-enabled').checked ? 'true' : 'false',
-      evolution_url:      document.getElementById('cfg-evolution-url').value.trim(),
-      evolution_instance: document.getElementById('cfg-evolution-instance').value.trim(),
-      evolution_apikey:   document.getElementById('cfg-evolution-apikey').value.trim(),
-      evolution_phone:    document.getElementById('cfg-evolution-phone').value.trim(),
-      evolution_message:  document.getElementById('cfg-evolution-message').value,
-    });
+      const body = {
+        evolution_phone:    document.getElementById('cfg-evolution-phone').value.trim(),
+        evolution_message:  document.getElementById('cfg-evolution-message').value,
+      };
+      if (userRole === 'PO') {
+        body.evolution_enabled  = document.getElementById('cfg-evolution-enabled').checked ? 'true' : 'false';
+        body.evolution_url      = document.getElementById('cfg-evolution-url').value.trim();
+        body.evolution_instance = document.getElementById('cfg-evolution-instance').value.trim();
+        body.evolution_apikey   = document.getElementById('cfg-evolution-apikey').value.trim();
+      }
+      await api('PUT', '/api/config', body);
     showMsg('waNotifyConfigMsg', '✓ Aviso WhatsApp salvo!', 'success');
     toast('Config WhatsApp salva!');
   } catch (e) { showMsg('waNotifyConfigMsg', e.message, 'error'); }
