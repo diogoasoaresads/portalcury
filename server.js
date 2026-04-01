@@ -1152,7 +1152,7 @@ app.patch('/api/wa/conversations/:id/read', auth, (req, res) => {
 // ============================================================
 
 // Conectar instância (cria se não existe) e retorna QR Code
-app.post('/api/wa/connect', auth, adminOnly, async (req, res) => {
+app.post('/api/wa/connect', auth, async (req, res) => {
   const cfg = getConfig();
   const evo = getAtendEvoCfg(cfg);
   if (!evo.url || !evo.apikey) {
@@ -1199,7 +1199,8 @@ app.get('/api/wa/status', auth, async (req, res) => {
   try {
     const r = await evolutionCall('GET', `instance/fetchInstances?instanceName=${instance}`, null, evo);
     const inst = Array.isArray(r.data) ? r.data[0] : r.data;
-    res.json({ status: inst?.instance?.state || inst?.state || 'unknown', instance });
+    const st = String(inst?.connectionStatus || inst?.instance?.state || inst?.state || 'unknown').toLowerCase();
+    res.json({ status: st, instance });
   } catch {
     res.json({ status: 'error' });
   }

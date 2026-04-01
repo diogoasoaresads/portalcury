@@ -3814,7 +3814,7 @@ async function generateQrInline() {
       const poll = setInterval(async () => {
         try {
           const st = await api('GET', '/api/wa/status').catch(() => null);
-          const ok = st && (st.state === 'open' || st.connectionStatus === 'open' || st.connected === true);
+          const ok = st && (st.status === 'open' || st.state === 'open' || st.connectionStatus === 'open' || st.connected === true);
           if (ok) {
             clearInterval(poll);
             clearInterval(timer);
