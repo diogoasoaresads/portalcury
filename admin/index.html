@@ -961,9 +961,9 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
         Usuários
       </div>
-      <div class="nav-item admin-only" data-page="config">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
-        Configurações
+      <div class="nav-item" data-page="config">
+        <svg id="iconConfig" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+        <span id="lblConfig">Configurações</span>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -1597,7 +1597,7 @@
       <!-- Tab: Segurança -->
       <div class="config-panel" id="tab-security">
         <div class="config-card">
-          <h4><span class="dot"></span>Alterar Senha do Administrador</h4>
+          <h4><span class="dot"></span><span id="lblSecTitle">Alterar Senha do Administrador</span></h4>
           <div style="max-width:400px">
             <div class="field">
               <label>Senha atual</label>
@@ -1940,7 +1940,11 @@
       <div class="field"><label>Senha *</label><input type="password" id="usr-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password" /><p class="hint" id="usr-pass-hint">Deixe em branco para manter a senha atual</p></div>
       <div class="field">
         <label>Perfil</label>
-        <select id="usr-role"><option value="agent">Agente (vê só seus leads)</option><option value="admin">Admin (vê tudo)</option></select>
+        <select id="usr-role">
+          <option value="atendente">Atendente (Dashboard, Leads, Kanban, WhatsApp, Seu Perfil)</option>
+          <option value="PO">Product Owner - PO (Acesso Total)</option>
+          <option value="admin">Administrador (Acesso Total)</option>
+        </select>
       </div>
       <div class="field">
         <label>Atendente vinculado</label>
@@ -2211,8 +2215,28 @@ function initApp(username, role) {
   document.getElementById('userAvatar').textContent = username[0].toUpperCase();
   // Mostrar/ocultar itens admin-only
   document.querySelectorAll('.admin-only').forEach(el => {
-    el.style.display = userRole === 'admin' ? '' : 'none';
+    el.style.display = (userRole === 'admin' || userRole === 'PO') ? '' : 'none';
   });
+
+  // Ajustes de interface para atendente vs admin/PO na seção de configurações
+  if (userRole !== 'admin' && userRole !== 'PO') {
+    document.getElementById('lblConfig').textContent = 'Meu Perfil';
+    document.getElementById('iconConfig').innerHTML = '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>';
+    
+    // Oculta todas as outras abas de configuração, forçando apenas Segurança
+    document.querySelectorAll('.cfg-tabs button').forEach(b => {
+      if (b.dataset.tab !== 'security') b.style.display = 'none';
+    });
+    const secTitle = document.getElementById('lblSecTitle');
+    if (secTitle) secTitle.textContent = 'Alterar Minha Senha';
+  } else {
+    document.getElementById('lblConfig').textContent = 'Configurações';
+    document.getElementById('iconConfig').innerHTML = '<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>';
+    
+    document.querySelectorAll('.cfg-tabs button').forEach(b => b.style.display = '');
+    const secTitle = document.getElementById('lblSecTitle');
+    if (secTitle) secTitle.textContent = 'Alterar Senha do Administrador';
+  }
   loadDashboard();
   loadWaUsers();
   initWaSSE();
@@ -2241,7 +2265,13 @@ function navigate(page) {
     initWaSSE();
   }
   if (page === 'config') {
-    loadConfig();
+    if (userRole === 'admin' || userRole === 'PO') {
+      loadConfig();
+    }
+    // Força a visualização da aba segurança se for atendente
+    if (userRole !== 'admin' && userRole !== 'PO') {
+      document.querySelector('.cfg-tabs button[data-tab="security"]').click();
+    }
     // Atualiza link de debug com token atual
     const debugBtn = document.querySelector('a[href*="/api/wa/debug-db"]');
     if (debugBtn) {
@@ -2500,6 +2530,7 @@ async function exportExcel() {
    CONFIG
 ============================================================ */
 async function loadConfig() {
+  if (userRole !== 'admin' && userRole !== 'PO') return; // Atendente não carrega config global
   try {
     const cfg = await api('GET', '/api/config');
 
@@ -2797,7 +2828,7 @@ async function loadUsers() {
       <tr>
         <td style="color:var(--gray);font-size:.8rem">#${u.id}</td>
         <td><strong>${escHtml(u.username)}</strong></td>
-        <td><span class="badge ${u.role === 'admin' ? 'badge-atend' : 'badge-novo'}">${u.role === 'admin' ? 'Admin' : 'Agente'}</span></td>
+        <td><span class="badge ${['admin', 'PO'].includes(u.role) ? 'badge-atend' : 'badge-novo'}">${u.role === 'admin' ? 'Admin' : u.role === 'PO' ? 'PO' : 'Atendente'}</span></td>
         <td style="font-size:.85rem">${escHtml(u.attendant_name || '—')}</td>
         <td style="color:var(--gray);font-size:.82rem">${formatDate(u.created_at)}</td>
         <td><div class="actions">
@@ -2815,7 +2846,7 @@ async function openUserModal(id) {
   document.getElementById('userModalTitle').textContent = usr ? 'Editar Usuário' : 'Novo Usuário';
   document.getElementById('usr-username').value  = usr?.username || '';
   document.getElementById('usr-password').value  = '';
-  document.getElementById('usr-role').value      = usr?.role || 'agent';
+  document.getElementById('usr-role').value      = usr?.role || 'atendente';
   document.getElementById('usr-pass-hint').style.display = usr ? 'block' : 'none';
   document.getElementById('usrModalMsg').style.display = 'none';
 

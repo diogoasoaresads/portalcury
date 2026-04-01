@@ -204,13 +204,14 @@ requiredColumns.forEach(c => {
   }
 });
 
-// Outras migrações (índices e campos legados)
 [
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != ''" ,
   "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'",
   "ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)",
   "ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
+  "UPDATE users SET role = 'PO' WHERE username = 'diogoasoaresads@gmail.com'",
+  "UPDATE users SET role = 'atendente' WHERE role = 'agent'",
 ].forEach(sql => {
   try {
     db.exec(sql);
@@ -669,7 +670,7 @@ function auth(req, res, next) {
 }
 
 function adminOnly(req, res, next) {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado.' });
+  if (req.user.role !== 'admin' && req.user.role !== 'PO') return res.status(403).json({ error: 'Acesso negado.' });
   next();
 }
 
@@ -1410,7 +1411,7 @@ app.get('/api/leads', auth, (req, res) => {
   const params = [];
 
   // Agentes veem apenas seus próprios leads
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin' && req.user.role !== 'PO') {
     where += ' AND l.attendant_id = ?';
     params.push(req.user.attendant_id || -1);
   } else if (attendant !== 'all') {
@@ -1443,7 +1444,7 @@ app.get('/api/leads/export-excel', auth, async (req, res) => {
   let where = 'WHERE 1=1';
   const params = [];
 
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin' && req.user.role !== 'PO') {
     where += ' AND l.attendant_id = ?';
     params.push(req.user.attendant_id || -1);
   } else if (attendant !== 'all') {
@@ -1582,7 +1583,7 @@ app.get('/api/leads/export-excel', auth, async (req, res) => {
 app.get('/api/leads/stats', auth, (req, res) => {
   let where = '';
   const params = [];
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin' && req.user.role !== 'PO') {
     where = 'WHERE attendant_id = ?';
     params.push(req.user.attendant_id || -1);
   }
@@ -1686,7 +1687,7 @@ app.get('/api/users', auth, adminOnly, (_req, res) => {
 });
 
 app.post('/api/users', auth, adminOnly, (req, res) => {
-  const { username, password, role = 'agent', attendant_id } = req.body;
+  const { username, password, role = 'atendente', attendant_id } = req.body;
   if (!username?.trim() || !password || password.length < 8)
     return res.status(400).json({ error: 'Usuário e senha (mín. 8 caracteres) são obrigatórios.' });
   try {
@@ -1889,7 +1890,7 @@ app.get('/api/analytics', auth, (req, res) => {
   const days = Math.min(Math.max(parseInt(period) || 30, 7), 365);
 
   // Filtro por atendente para não-admins
-  const agentFilter = req.user.role !== 'admin'
+  const agentFilter = (req.user.role !== 'admin' && req.user.role !== 'PO')
     ? `AND attendant_id = ${req.user.attendant_id || -1}`
     : '';
 
