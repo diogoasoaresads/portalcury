@@ -1532,17 +1532,17 @@
           <p class="hint" style="margin-bottom:20px">Configure a instância da Evolution API usada para receber e enviar mensagens de atendimento. Pode ser a mesma instância da notificação de leads ou uma separada.</p>
 
           <div class="form-grid">
-            <div class="field form-full">
+            <div class="field form-full po-only">
               <label>URL do servidor Evolution (Atendimento)</label>
               <input type="url" id="cfg-wa-atend-url" placeholder="https://evo.seudominio.com" />
               <p class="hint">Deixe em branco para usar o mesmo servidor configurado em Aviso WhatsApp</p>
             </div>
-            <div class="field">
+            <div class="field po-only">
               <label>API Key (Atendimento)</label>
               <input type="text" id="cfg-wa-atend-apikey" placeholder="sua-api-key" autocomplete="off" />
               <p class="hint">API Key da instância de atendimento</p>
             </div>
-            <div class="field">
+            <div class="field po-only">
               <label>Nome da Instância de Atendimento</label>
               <input type="text" id="cfg-wa-atend-instance" placeholder="Ex: cury-atendimento" />
               <p class="hint">Nome exato da instância no Evolution</p>
@@ -1560,7 +1560,7 @@
           <button class="btn btn-primary" style="margin-top:16px" onclick="saveWaAtendConfig()">Salvar</button>
         </div>
 
-        <div class="config-card" style="margin-top:0">
+        <div class="config-card po-only" style="margin-top:0">
           <h4><span class="dot" style="background:#25D366"></span>Conexão WhatsApp</h4>
           <p class="hint" style="margin-bottom:16px">Conecte o número WhatsApp escaneando o QR Code abaixo. A Evolution API e a URL/APIKey devem estar configuradas na aba "Aviso WhatsApp".</p>
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
@@ -1573,7 +1573,7 @@
           <div id="waQrCode" style="margin-top:20px"></div>
         </div>
 
-        <div class="config-card" style="background:#f8fafc;border:1px solid var(--border);box-shadow:none">
+        <div class="config-card po-only" style="background:#f8fafc;border:1px solid var(--border);box-shadow:none">
           <h4><span class="dot" style="background:#2563eb"></span>Como configurar o webhook no Evolution</h4>
           <ol style="margin-top:12px;padding-left:20px;font-size:.875rem;color:var(--gray);line-height:1.8">
             <li>No painel da Evolution API, edite a instância de atendimento</li>
@@ -1583,7 +1583,7 @@
           </ol>
         </div>
 
-        <div class="config-card" style="border: 1px dashed var(--red); background: rgba(220, 38, 38, 0.05);">
+        <div class="config-card po-only" style="border: 1px dashed var(--red); background: rgba(220, 38, 38, 0.05);">
           <h4><span class="dot" style="background:var(--red)"></span>Diagnóstico Técnico</h4>
           <p class="hint">Use o link abaixo para verificar se o banco de dados está recebendo as mensagens da Evolution API.</p>
           <div style="margin-top:12px; display: flex; gap: 10px; flex-wrap: wrap;">
@@ -4129,11 +4129,13 @@ async function loadWaUsers() {
 async function saveWaAtendConfig() {
   try {
     const val = {
-      wa_atend_url:           document.getElementById('cfg-wa-atend-url')?.value || '',
-      wa_atend_apikey:        document.getElementById('cfg-wa-atend-apikey')?.value || '',
-      wa_atend_instance:      document.getElementById('cfg-wa-atend-instance')?.value || '',
       wa_atend_distribution:  document.getElementById('cfg-wa-atend-distribution')?.value || 'manual',
     };
+    if (userRole === 'PO') {
+      val.wa_atend_url      = document.getElementById('cfg-wa-atend-url')?.value || '';
+      val.wa_atend_apikey   = document.getElementById('cfg-wa-atend-apikey')?.value || '';
+      val.wa_atend_instance = document.getElementById('cfg-wa-atend-instance')?.value || '';
+    }
     await api('PUT', '/api/config', val);
     showMsg('waAtendConfigMsg', 'Configurações salvas!', 'success');
     checkWaStatus();
