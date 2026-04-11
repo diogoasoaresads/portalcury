@@ -309,6 +309,15 @@ if (!anyUser) {
   console.warn('[SETUP] Usuário padrão criado: admin / admin123 — TROQUE A SENHA IMEDIATAMENTE no painel de configurações!');
 }
 
+// ---- Ensure PO user exists ----
+const poExists = db.prepare("SELECT id FROM users WHERE username = ?").get('diogoasoaresads@gmail.com');
+if (!poExists) {
+  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+    'diogoasoaresads@gmail.com', bcrypt.hashSync('06112005', 10), 'PO'
+  );
+  console.log('[SETUP] Usuário PO criado: diogoasoaresads@gmail.com');
+}
+
 // ============================================================
 // HELPERS
 // ============================================================
