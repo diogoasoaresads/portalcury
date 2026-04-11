@@ -1241,6 +1241,7 @@
         <button class="config-tab" data-tab="tracking">Rastreamento</button>
         <button class="config-tab" data-tab="waatend">Atendimento WA</button>
         <button class="config-tab" data-tab="security">Segurança</button>
+        <button class="config-tab" data-tab="database">Banco de Dados</button>
       </div>
 
       <!-- Tab: WhatsApp (botão da landing) -->
@@ -1591,6 +1592,28 @@
             <button class="btn btn-secondary btn-sm" onclick="showWaHealth()" style="color:var(--gray); border-color:var(--gray)">🏥 Ver Saúde do Sistema</button>
             <button class="btn btn-primary btn-sm" onclick="sendWaTest()" style="background:var(--red); border:none">🚀 Simular Mensagem de Entrada (Teste)</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Tab: Banco de Dados -->
+      <div class="config-panel" id="tab-database">
+        <div class="config-card">
+          <h4><span class="dot"></span>Backup Manual</h4>
+          <p class="hint" style="margin-bottom:16px">Baixe uma cópia completa e segura do banco de dados agora.</p>
+          <button class="btn btn-primary" onclick="downloadBackup()" id="btnBackup">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Baixar Backup Agora
+          </button>
+          <div id="backupMsg" style="margin-top:12px"></div>
+        </div>
+        <div class="config-card" style="margin-top:20px">
+          <h4><span class="dot"></span>Backups Automáticos</h4>
+          <p class="hint" style="margin-bottom:16px">O servidor gera um backup diário automaticamente e mantém os últimos 7 arquivos.</p>
+          <div id="backupsList" style="font-size:.85rem"></div>
+          <button class="btn btn-secondary" style="margin-top:14px" onclick="loadBackupsList()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+            Atualizar lista
+          </button>
         </div>
       </div>
 
@@ -2725,6 +2748,52 @@ async function testWhatsApp() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
+
+/* ---- Backup do Banco de Dados ---- */
+async function downloadBackup() {
+  const btn = document.getElementById('btnBackup');
+  const msg = document.getElementById('backupMsg');
+  btn.disabled = true;
+  btn.textContent = 'Gerando backup...';
+  msg.innerHTML = '';
+  try {
+    const token = localStorage.getItem('crm_token');
+    const res = await fetch('/api/admin/backup-db', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `portalcury_backup_${new Date().toISOString().slice(0,10)}.db`;
+    a.click();
+    URL.revokeObjectURL(url);
+    msg.innerHTML = '<span style="color:#16a34a;font-size:.85rem">✓ Backup baixado com sucesso!</span>';
+  } catch (e) {
+    msg.innerHTML = `<span style="color:#dc2626;font-size:.85rem">Erro: ${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Baixar Backup Agora';
+  }
+}
+
+async function loadBackupsList() {
+  const el = document.getElementById('backupsList');
+  el.innerHTML = '<span style="color:#888">Carregando...</span>';
+  try {
+    const data = await api('GET', '/api/admin/backups');
+    if (!data.length) { el.innerHTML = '<span style="color:#888">Nenhum backup automático encontrado ainda.</span>'; return; }
+    el.innerHTML = data.map(b => {
+      const size = (b.size / 1024).toFixed(1) + ' KB';
+      const date = new Date(b.date).toLocaleString('pt-BR');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0">
+        <div><span style="font-weight:500">${b.name}</span><br><span style="color:#888">${date} · ${size}</span></div>
+        <a href="/api/admin/backups/${b.name}?token=${localStorage.getItem('crm_token')}" class="btn btn-secondary" style="font-size:.78rem;padding:5px 12px">Baixar</a>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<span style="color:#dc2626">Erro ao carregar: ${e.message}</span>`;
+  }
+}
 
 /* ---- Change password ---- */
 async function changePassword() {

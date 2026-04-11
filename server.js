@@ -2386,12 +2386,86 @@ app.post('/api/wa/sync-history', auth, async (req, res) => {
 });
 
 // ============================================================
+// BACKUP DO BANCO DE DADOS
+// ============================================================
+const backupsDir = path.join(dataDir, 'backups');
+if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+
+async function runBackup() {
+  const date = new Date().toISOString().slice(0, 10);
+  const dest  = path.join(backupsDir, `portalcury_${date}.db`);
+  try {
+    await db.backup(dest);
+    // Mantém apenas os últimos 7 backups diários
+    const files = fs.readdirSync(backupsDir)
+      .filter(f => f.startsWith('portalcury_') && f.endsWith('.db'))
+      .sort();
+    if (files.length > 7) {
+      files.slice(0, files.length - 7).forEach(f => {
+        try { fs.unlinkSync(path.join(backupsDir, f)); } catch (_) {}
+      });
+    }
+    console.log(`[BACKUP] Backup salvo: ${dest}`);
+  } catch (e) {
+    console.error('[BACKUP] Erro ao fazer backup:', e.message);
+  }
+}
+
+// Backup automático diário (24h)
+const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+setTimeout(function scheduleBackup() {
+  runBackup();
+  setTimeout(scheduleBackup, BACKUP_INTERVAL_MS);
+}, BACKUP_INTERVAL_MS);
+
+// Backup manual — download do .db
+app.get('/api/admin/backup-db', auth, adminOnly, async (req, res) => {
+  const tmp = path.join(backupsDir, `download_${Date.now()}.db`);
+  try {
+    await db.backup(tmp);
+    const filename = `portalcury_backup_${new Date().toISOString().slice(0,10)}.db`;
+    res.download(tmp, filename, () => {
+      try { fs.unlinkSync(tmp); } catch (_) {}
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro ao gerar backup: ' + e.message });
+  }
+});
+
+// Lista backups disponíveis
+app.get('/api/admin/backups', auth, adminOnly, (req, res) => {
+  try {
+    const files = fs.readdirSync(backupsDir)
+      .filter(f => f.startsWith('portalcury_') && f.endsWith('.db'))
+      .sort()
+      .reverse()
+      .map(f => {
+        const stat = fs.statSync(path.join(backupsDir, f));
+        return { name: f, size: stat.size, date: stat.mtime };
+      });
+    res.json(files);
+  } catch (e) {
+    res.json([]);
+  }
+});
+
+// Download de backup específico
+app.get('/api/admin/backups/:filename', auth, adminOnly, (req, res) => {
+  const filename = path.basename(req.params.filename); // sanitize
+  const filepath = path.join(backupsDir, filename);
+  if (!fs.existsSync(filepath)) return res.status(404).json({ error: 'Backup não encontrado.' });
+  res.download(filepath, filename);
+});
+
+// ============================================================
 // START
 // ============================================================
 const server = app.listen(PORT, () => {
   console.log(`\n✅ Portal Cury rodando em http://localhost:${PORT}`);
   console.log(`   Admin CRM: http://localhost:${PORT}/admin`);
   console.log(`   Health:    http://localhost:${PORT}/health\n`);
+  // Backup inicial ao subir o servidor
+  runBackup();
 });
 
 // Graceful shutdown — fecha banco antes de sair
