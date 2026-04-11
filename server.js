@@ -1723,7 +1723,7 @@ app.delete('/api/attendants/:id', auth, adminOnly, (req, res) => {
 // ============================================================
 // ROUTES — USERS (admin)
 // ============================================================
-app.get('/api/users', auth, adminOnly, (_req, res) => {
+app.get('/api/users', auth, adminOnly, (req, res) => {
   const where = req.user.role === 'PO' ? '' : 'WHERE u.role != "PO"';
   const users = db.prepare(`
     SELECT u.id, u.username, u.role, u.attendant_id, u.created_at, a.name as attendant_name
