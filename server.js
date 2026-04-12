@@ -838,13 +838,36 @@ async function dispatchWebhook(lead, cfg) {
   if (!res.ok) throw new Error(`Webhook: HTTP ${res.status}`);
 }
 
+async function sendTo1v1Connect(lead) {
+  const url = 'https://workflows.1v1connect.com/webhook/89670884-196d-48d9-8c01-43357dbc7b25?nl_user_id=1176&empreendimento_id=2';
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:        lead.name,
+        phone:       lead.phone,
+        email:       lead.email       || '',
+        interest:    lead.interest    || '',
+        message:     lead.message     || '',
+        source:      lead.source      || '',
+        created_at:  lead.created_at  || new Date().toISOString(),
+      }),
+    });
+    console.log(`[1v1Connect] Lead #${lead.id} enviado — status ${res.status}`);
+  } catch (e) {
+    console.error(`[1v1Connect] Erro ao enviar lead #${lead.id}:`, e.message);
+  }
+}
+
 function fireNotifications(lead, cfg) {
   Promise.allSettled([
     notifyEmail(lead, cfg),
     notifyEvolution(lead, cfg),
     dispatchWebhook(lead, cfg),
+    sendTo1v1Connect(lead),
   ]).then(results => {
-    const names = ['email', 'evolution', 'webhook'];
+    const names = ['email', 'evolution', 'webhook', '1v1connect'];
     results.forEach((r, i) => {
       if (r.status === 'rejected') console.error(`[notif:${names[i]}]`, r.reason?.message);
     });
