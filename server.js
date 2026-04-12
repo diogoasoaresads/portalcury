@@ -207,6 +207,7 @@ requiredColumns.forEach(c => {
 [
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_wa_msg_unique_id ON wa_messages(message_id) WHERE message_id != ''" ,
   "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'",
+  "ALTER TABLE users ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)",
   "ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)",
   "ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
