@@ -213,16 +213,17 @@ requiredColumns.forEach(c => {
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
   "UPDATE users SET role = 'PO' WHERE username = 'diogoasoaresads@gmail.com'",
   "UPDATE users SET role = 'atendente' WHERE role = 'agent'",
-  `CREATE TABLE IF NOT EXISTS webhook_1v1_logs (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    lead_id    INTEGER,
-    lead_name  TEXT,
-    lead_phone TEXT,
-    status     TEXT,
-    http_code  INTEGER,
-    response   TEXT,
-    error      TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  `CREATE TABLE IF NOT EXISTS webhook_logs (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id     INTEGER,
+    lead_name   TEXT,
+    lead_phone  TEXT,
+    webhook_url TEXT,
+    status      TEXT,
+    http_code   INTEGER,
+    response    TEXT,
+    error       TEXT,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
   )`,
 ].forEach(sql => {
   try {
@@ -844,53 +845,29 @@ async function dispatchWebhook(lead, cfg) {
   const headers = { 'Content-Type': 'application/json' };
   if (cfg.webhook_secret) headers['X-Webhook-Secret'] = cfg.webhook_secret;
 
-  const res = await fetch(cfg.webhook_url, {
-    method: 'POST', headers, body: JSON.stringify(payload),
-  });
-  if (!res.ok) throw new Error(`Webhook: HTTP ${res.status}`);
-}
-
-async function sendTo1v1Connect(lead) {
-  const url = 'https://workflows.1v1connect.com/webhook/89670884-196d-48d9-8c01-43357dbc7b25?nl_user_id=1176&empreendimento_id=2';
-  const payload = {
-    name:       lead.name,
-    phone:      lead.phone,
-    email:      lead.email      || '',
-    interest:   lead.interest   || '',
-    message:    lead.message    || '',
-    source:     lead.source     || '',
-    created_at: lead.created_at || new Date().toISOString(),
-  };
-
-  const logRow = { lead_id: lead.id, lead_name: lead.name, lead_phone: lead.phone, status: 'error', http_code: null, response: null, error: null };
-
+  const logRow = { lead_id: lead.id, lead_name: lead.name, lead_phone: lead.phone,
+                   webhook_url: cfg.webhook_url, status: 'error', http_code: null, response: null, error: null };
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-    const res = await fetch(url, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-      signal:  controller.signal,
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(cfg.webhook_url, {
+      method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal,
     });
     clearTimeout(timeout);
-
     const body = await res.text();
     logRow.http_code = res.status;
     logRow.response  = body.slice(0, 500);
     logRow.status    = res.ok ? 'success' : 'error';
-
-    console.log(`[1v1Connect] Lead #${lead.id} — HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
   } catch (e) {
     logRow.error  = e.message;
     logRow.status = 'error';
-    console.error(`[1v1Connect] Erro lead #${lead.id}:`, e.message);
+    throw e;
   } finally {
     try {
-      db.prepare(`INSERT INTO webhook_1v1_logs (lead_id, lead_name, lead_phone, status, http_code, response, error)
-                  VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-        logRow.lead_id, logRow.lead_name, logRow.lead_phone,
+      db.prepare(`INSERT INTO webhook_logs (lead_id, lead_name, lead_phone, webhook_url, status, http_code, response, error)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        logRow.lead_id, logRow.lead_name, logRow.lead_phone, logRow.webhook_url,
         logRow.status, logRow.http_code, logRow.response, logRow.error
       );
     } catch (_) {}
@@ -902,9 +879,8 @@ function fireNotifications(lead, cfg) {
     notifyEmail(lead, cfg),
     notifyEvolution(lead, cfg),
     dispatchWebhook(lead, cfg),
-    sendTo1v1Connect(lead),
   ]).then(results => {
-    const names = ['email', 'evolution', 'webhook', '1v1connect'];
+    const names = ['email', 'evolution', 'webhook'];
     results.forEach((r, i) => {
       if (r.status === 'rejected') console.error(`[notif:${names[i]}]`, r.reason?.message);
     });
@@ -2448,13 +2424,13 @@ app.post('/api/wa/sync-history', auth, async (req, res) => {
 // ============================================================
 // LOGS WEBHOOK 1V1CONNECT
 // ============================================================
-app.get('/api/admin/1v1connect-logs', auth, adminOnly, (req, res) => {
-  const logs = db.prepare(`SELECT * FROM webhook_1v1_logs ORDER BY id DESC LIMIT 100`).all();
+app.get('/api/admin/webhook-logs', auth, adminOnly, (req, res) => {
+  const logs = db.prepare(`SELECT * FROM webhook_logs ORDER BY id DESC LIMIT 200`).all();
   res.json(logs);
 });
 
-app.delete('/api/admin/1v1connect-logs', auth, adminOnly, (req, res) => {
-  db.prepare('DELETE FROM webhook_1v1_logs').run();
+app.delete('/api/admin/webhook-logs', auth, adminOnly, (req, res) => {
+  db.prepare('DELETE FROM webhook_logs').run();
   res.json({ success: true });
 });
 

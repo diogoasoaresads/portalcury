@@ -1241,7 +1241,6 @@
         <button class="config-tab" data-tab="waatend">Atendimento WA</button>
         <button class="config-tab" data-tab="security">Segurança</button>
         <button class="config-tab" data-tab="database">Banco de Dados</button>
-        <button class="config-tab" data-tab="webhook-logs">Logs Webhook</button>
       </div>
 
       <!-- Tab: WhatsApp (botão da landing) -->
@@ -1371,6 +1370,25 @@
           <div style="display:flex;gap:10px;margin-top:16px">
             <button class="btn btn-primary" onclick="saveWebhookConfig()">Salvar</button>
             <button class="btn btn-secondary" onclick="testWebhook()">Disparar teste</button>
+          </div>
+        </div>
+
+        <!-- Log de envios -->
+        <div class="config-card" style="margin-top:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <h4 style="margin:0"><span class="dot"></span>Log de Envios</h4>
+              <p class="hint" style="margin:4px 0 0">Últimas 200 tentativas de disparo do webhook.</p>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary" onclick="loadWebhookLogs()" style="font-size:.82rem;padding:7px 14px">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Atualizar
+              </button>
+              <button class="btn btn-secondary" onclick="clearWebhookLogs()" style="font-size:.82rem;padding:7px 14px;color:#dc2626">Limpar</button>
+            </div>
+          </div>
+          <div id="webhookLogsTable" style="font-size:.82rem;overflow-x:auto">
+            <p style="color:#888">Clique em Atualizar para carregar os logs.</p>
           </div>
         </div>
       </div>
@@ -1591,27 +1609,6 @@
             <button class="btn btn-secondary btn-sm" onclick="showWaLogs()" style="color:var(--red); border-color:var(--red)">🔍 Ver Logs de Conexão (Histórico)</button>
             <button class="btn btn-secondary btn-sm" onclick="showWaHealth()" style="color:var(--gray); border-color:var(--gray)">🏥 Ver Saúde do Sistema</button>
             <button class="btn btn-primary btn-sm" onclick="sendWaTest()" style="background:var(--red); border:none">🚀 Simular Mensagem de Entrada (Teste)</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab: Logs Webhook 1v1Connect -->
-      <div class="config-panel" id="tab-webhook-logs">
-        <div class="config-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <h4 style="margin:0"><span class="dot"></span>Logs — Webhook 1v1Connect</h4>
-              <p class="hint" style="margin:4px 0 0">Últimas 100 tentativas de envio de leads para o workflow.</p>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-secondary" onclick="load1v1Logs()" style="font-size:.82rem;padding:7px 14px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Atualizar
-              </button>
-              <button class="btn btn-secondary" onclick="clear1v1Logs()" style="font-size:.82rem;padding:7px 14px;color:#dc2626">Limpar logs</button>
-            </div>
-          </div>
-          <div id="webhookLogsTable" style="font-size:.82rem;overflow-x:auto">
-            <p style="color:#888">Clique em Atualizar para carregar.</p>
           </div>
         </div>
       </div>
@@ -2342,7 +2339,7 @@ document.querySelectorAll('.config-tab').forEach(tab => {
     document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
-    if (tab.dataset.tab === 'webhook-logs') load1v1Logs();
+    if (tab.dataset.tab === 'webhook') loadWebhookLogs();
     if (tab.dataset.tab === 'database') loadBackupsList();
   });
 });
@@ -2772,13 +2769,13 @@ async function testWhatsApp() {
 }
 
 
-/* ---- Logs Webhook 1v1Connect ---- */
-async function load1v1Logs() {
+/* ---- Logs Webhook ---- */
+async function loadWebhookLogs() {
   const el = document.getElementById('webhookLogsTable');
   el.innerHTML = '<p style="color:#888">Carregando...</p>';
   try {
-    const logs = await api('GET', '/api/admin/1v1connect-logs');
-    if (!logs.length) { el.innerHTML = '<p style="color:#888">Nenhum log registrado ainda.</p>'; return; }
+    const logs = await api('GET', '/api/admin/webhook-logs');
+    if (!logs.length) { el.innerHTML = '<p style="color:#888">Nenhum disparo registrado ainda.</p>'; return; }
     el.innerHTML = `
       <table style="width:100%;border-collapse:collapse">
         <thead>
@@ -2804,7 +2801,7 @@ async function load1v1Logs() {
                 </span>
               </td>
               <td style="padding:7px 10px">${l.http_code || '—'}</td>
-              <td style="padding:7px 10px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555" title="${(l.response||l.error||'').replace(/"/g,'&quot;')}">${l.response || l.error || '—'}</td>
+              <td style="padding:7px 10px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555" title="${(l.response||l.error||'').replace(/"/g,'&quot;')}">${l.response || l.error || '—'}</td>
               <td style="padding:7px 10px;white-space:nowrap;color:#888">${new Date(l.created_at).toLocaleString('pt-BR')}</td>
             </tr>`).join('')}
         </tbody>
@@ -2814,10 +2811,10 @@ async function load1v1Logs() {
   }
 }
 
-async function clear1v1Logs() {
+async function clearWebhookLogs() {
   if (!confirm('Limpar todos os logs do webhook?')) return;
-  await api('DELETE', '/api/admin/1v1connect-logs');
-  load1v1Logs();
+  await api('DELETE', '/api/admin/webhook-logs');
+  loadWebhookLogs();
   toast('Logs limpos!');
 }
 
