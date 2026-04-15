@@ -1073,6 +1073,8 @@ h1, h2, h3, h4 {
   bottom: 28px; right: 28px;
   z-index: 999;
   display: flex;
+  border: none;
+  font-family: inherit;
   align-items: center;
   gap: 10px;
   background: var(--color-whatsapp);
