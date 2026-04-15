@@ -213,6 +213,17 @@ requiredColumns.forEach(c => {
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
   "UPDATE users SET role = 'PO' WHERE username = 'diogoasoaresads@gmail.com'",
   "UPDATE users SET role = 'atendente' WHERE role = 'agent'",
+  `CREATE TABLE IF NOT EXISTS webhook_1v1_logs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id    INTEGER,
+    lead_name  TEXT,
+    lead_phone TEXT,
+    status     TEXT,
+    http_code  INTEGER,
+    response   TEXT,
+    error      TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`,
 ].forEach(sql => {
   try {
     db.exec(sql);
@@ -841,23 +852,48 @@ async function dispatchWebhook(lead, cfg) {
 
 async function sendTo1v1Connect(lead) {
   const url = 'https://workflows.1v1connect.com/webhook/89670884-196d-48d9-8c01-43357dbc7b25?nl_user_id=1176&empreendimento_id=2';
+  const payload = {
+    name:       lead.name,
+    phone:      lead.phone,
+    email:      lead.email      || '',
+    interest:   lead.interest   || '',
+    message:    lead.message    || '',
+    source:     lead.source     || '',
+    created_at: lead.created_at || new Date().toISOString(),
+  };
+
+  const logRow = { lead_id: lead.id, lead_name: lead.name, lead_phone: lead.phone, status: 'error', http_code: null, response: null, error: null };
+
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     const res = await fetch(url, {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name:        lead.name,
-        phone:       lead.phone,
-        email:       lead.email       || '',
-        interest:    lead.interest    || '',
-        message:     lead.message     || '',
-        source:      lead.source      || '',
-        created_at:  lead.created_at  || new Date().toISOString(),
-      }),
+      body:    JSON.stringify(payload),
+      signal:  controller.signal,
     });
-    console.log(`[1v1Connect] Lead #${lead.id} enviado — status ${res.status}`);
+    clearTimeout(timeout);
+
+    const body = await res.text();
+    logRow.http_code = res.status;
+    logRow.response  = body.slice(0, 500);
+    logRow.status    = res.ok ? 'success' : 'error';
+
+    console.log(`[1v1Connect] Lead #${lead.id} — HTTP ${res.status}`);
   } catch (e) {
-    console.error(`[1v1Connect] Erro ao enviar lead #${lead.id}:`, e.message);
+    logRow.error  = e.message;
+    logRow.status = 'error';
+    console.error(`[1v1Connect] Erro lead #${lead.id}:`, e.message);
+  } finally {
+    try {
+      db.prepare(`INSERT INTO webhook_1v1_logs (lead_id, lead_name, lead_phone, status, http_code, response, error)
+                  VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
+        logRow.lead_id, logRow.lead_name, logRow.lead_phone,
+        logRow.status, logRow.http_code, logRow.response, logRow.error
+      );
+    } catch (_) {}
   }
 }
 
@@ -2407,6 +2443,19 @@ app.post('/api/wa/sync-history', auth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ============================================================
+// LOGS WEBHOOK 1V1CONNECT
+// ============================================================
+app.get('/api/admin/1v1connect-logs', auth, adminOnly, (req, res) => {
+  const logs = db.prepare(`SELECT * FROM webhook_1v1_logs ORDER BY id DESC LIMIT 100`).all();
+  res.json(logs);
+});
+
+app.delete('/api/admin/1v1connect-logs', auth, adminOnly, (req, res) => {
+  db.prepare('DELETE FROM webhook_1v1_logs').run();
+  res.json({ success: true });
 });
 
 // ============================================================
