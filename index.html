@@ -176,8 +176,8 @@
               <input type="tel" id="hero-phone" name="phone" placeholder="(21) 9 0000-0000" required autocomplete="tel" />
             </div>
             <div class="form-group">
-              <label for="hero-interest">Empreendimento de interesse</label>
-              <select id="hero-interest" name="interest">
+              <label for="hero-interest">Empreendimento de interesse *</label>
+              <select id="hero-interest" name="interest" required>
                 <option value="">Selecione um empreendimento</option>
                 <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
                 <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
@@ -211,8 +211,8 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="hero-fgts">FGTS ou entrada?</label>
-                <select id="hero-fgts" name="fgts">
+                <label for="hero-fgts">FGTS ou entrada? *</label>
+                <select id="hero-fgts" name="fgts" required>
                   <option value="">Selecione</option>
                   <option value="FGTS disponível">FGTS disponível</option>
                   <option value="Tenho entrada">Tenho entrada</option>
@@ -221,8 +221,8 @@
                 </select>
               </div>
               <div class="form-group">
-                <label for="hero-renda">Renda familiar mensal</label>
-                <select id="hero-renda" name="renda">
+                <label for="hero-renda">Renda familiar mensal *</label>
+                <select id="hero-renda" name="renda" required>
                   <option value="">Selecione</option>
                   <option value="R$ 3.000 a R$ 5.000">R$ 3.000 a R$ 5.000</option>
                   <option value="R$ 5.001 a R$ 8.000">R$ 5.001 a R$ 8.000</option>
@@ -234,8 +234,8 @@
               </div>
             </div>
             <div class="form-group">
-              <label for="hero-fgts-valor">Valor estimado (FGTS + entrada)</label>
-              <input type="text" id="hero-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
+              <label for="hero-fgts-valor">Valor estimado (FGTS + entrada) *</label>
+              <input type="text" id="hero-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" required />
             </div>
             <button type="submit" class="btn btn--primary btn--full">
               Quero Atendimento Agora
@@ -732,12 +732,12 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="ct-email">E-mail</label>
-              <input type="email" id="ct-email" name="email" placeholder="seu@email.com" autocomplete="email" />
+              <label for="ct-email">E-mail *</label>
+              <input type="email" id="ct-email" name="email" placeholder="seu@email.com" autocomplete="email" required />
             </div>
             <div class="form-group">
-              <label for="ct-interest">Empreendimento de interesse</label>
-              <select id="ct-interest" name="interest">
+              <label for="ct-interest">Empreendimento de interesse *</label>
+              <select id="ct-interest" name="interest" required>
                 <option value="">Selecione</option>
                 <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
                 <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
@@ -757,8 +757,8 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="ct-fgts">FGTS ou entrada?</label>
-              <select id="ct-fgts" name="fgts">
+              <label for="ct-fgts">FGTS ou entrada? *</label>
+              <select id="ct-fgts" name="fgts" required>
                 <option value="">Selecione</option>
                 <option value="FGTS disponível">FGTS disponível</option>
                 <option value="Tenho entrada">Tenho entrada</option>
@@ -767,8 +767,8 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="ct-renda">Renda familiar mensal</label>
-              <select id="ct-renda" name="renda">
+              <label for="ct-renda">Renda familiar mensal *</label>
+              <select id="ct-renda" name="renda" required>
                 <option value="">Selecione</option>
                 <option value="Até R$ 2.000">Até R$ 2.000</option>
                 <option value="R$ 2.001 a R$ 3.500">R$ 2.001 a R$ 3.500</option>
@@ -779,8 +779,8 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="ct-fgts-valor">Valor estimado (FGTS + entrada)</label>
-            <input type="text" id="ct-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
+            <label for="ct-fgts-valor">Valor estimado (FGTS + entrada) *</label>
+            <input type="text" id="ct-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" required />
           </div>
           <div class="form-group">
             <label>Região de interesse</label>
@@ -798,8 +798,8 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="ct-message">Mensagem (opcional)</label>
-            <textarea id="ct-message" name="message" rows="2" placeholder="Alguma dúvida ou informação adicional?"></textarea>
+            <label for="ct-message">Mensagem *</label>
+            <textarea id="ct-message" name="message" rows="2" placeholder="Alguma dúvida ou informação adicional?" required></textarea>
           </div>
           <button type="submit" class="btn btn--primary btn--full btn--lg">
             Solicitar Atendimento Agora
