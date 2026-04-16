@@ -476,8 +476,16 @@ function fireNotifications(lead, cfg) {
 // ROUTES — PUBLIC
 // ============================================================
 
-// Landing page
-app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// Landing page — injeta custom_head_code e custom_body_code no HTML server-side
+// (necessário para scripts de chat como Jivo que precisam estar no HTML ao carregar)
+app.get('/', (_req, res) => {
+  const cfg = getConfig();
+  const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8')
+    .replace('<!-- __CUSTOM_HEAD_CODE__ -->', cfg.custom_head_code || '')
+    .replace('<!-- __CUSTOM_BODY_CODE__ -->', cfg.custom_body_code || '');
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});
 
 // Config público (WhatsApp, rastreamento e códigos personalizados)
 app.get('/api/public-config', (_req, res) => {

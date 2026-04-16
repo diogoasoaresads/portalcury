@@ -303,30 +303,8 @@
         }
       }
 
-      // Injeta HTML preservando execução de <script> tags
-      // (innerHTML não executa scripts — precisa recriar os elementos)
-      function injectCode(html, container, prepend) {
-        var tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        Array.from(tmp.childNodes).forEach(function(node) {
-          var el;
-          if (node.nodeName === 'SCRIPT') {
-            el = document.createElement('script');
-            Array.from(node.attributes).forEach(function(a) { el.setAttribute(a.name, a.value); });
-            el.textContent = node.textContent;
-          } else {
-            el = node.cloneNode(true);
-          }
-          if (prepend && container.firstChild) container.insertBefore(el, container.firstChild);
-          else container.appendChild(el);
-        });
-      }
-
-      // Código personalizado no <head>
-      if (cfg.custom_head_code) injectCode(cfg.custom_head_code, document.head, false);
-
-      // Código personalizado no <body>
-      if (cfg.custom_body_code) injectCode(cfg.custom_body_code, document.body, true);
+      // custom_head_code e custom_body_code são injetados server-side na home
+      // (ver GET / no server.js — placeholders __CUSTOM_HEAD_CODE__ / __CUSTOM_BODY_CODE__)
     })
     .catch(() => {});
 
