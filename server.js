@@ -827,11 +827,11 @@ async function notifyEvolution(lead, cfg) {
   }
 }
 
-async function dispatchWebhook(lead, cfg) {
+async function dispatchWebhook(lead, cfg, eventType = 'new_lead') {
   if (cfg.webhook_enabled !== 'true' || !cfg.webhook_url) return;
 
   const payload = {
-    event: 'new_lead',
+    event: eventType,
     lead: {
       id: lead.id, name: lead.name, phone: lead.phone,
       email: lead.email, interest: lead.interest,
@@ -1423,6 +1423,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 
       const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
       fireNotifications(lead, cfg);
+      dispatchWebhook(lead, cfg, 'whatsapp_button').catch(e => console.error('[webhook:wa]', e.message));
 
       const attendant = db.prepare('SELECT * FROM attendants WHERE id = ?').get(existing.attendant_id);
       const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
@@ -1449,6 +1450,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     addActivity(lead.id, 'novo_contato', 'Lead recebido (WhatsApp)', bodyLines);
 
     fireNotifications(lead, cfg);
+    dispatchWebhook(lead, cfg, 'whatsapp_button').catch(e => console.error('[webhook:wa]', e.message));
 
     const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
     const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
