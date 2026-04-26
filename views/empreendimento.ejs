@@ -400,7 +400,7 @@
               <input type="text" id="sb-fgts-valor" name="fgts_valor" placeholder="Ex: R$ 20.000" />
             </div>
             <button type="submit" class="btn btn--primary btn--full btn--lg">Solicitar Atendimento</button>
-            <a href="https://wa.me/5521967019390?text=Olá!%20Tenho%20interesse%20no%20<%= encodeURIComponent(emp.name) %>" target="_blank" rel="noopener" class="btn btn--whatsapp btn--full" style="margin-top:10px;text-decoration:none">
+            <a href="#" onclick="openWaModal();return false;" class="btn btn--whatsapp btn--full" style="margin-top:10px;text-decoration:none">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
               Chamar no WhatsApp
             </a>
@@ -445,7 +445,7 @@
       <div class="product-cta">
         <p><%= ps.cta || 'Não perca esta oportunidade — garanta sua unidade agora.' %></p>
         <a href="#contato" class="btn btn--primary btn--lg">Quero Garantir Minha Unidade</a>
-        <a href="https://wa.me/5521967019390?text=Olá!%20Tenho%20interesse%20no%20<%= encodeURIComponent(emp.name) %>" target="_blank" rel="noopener" class="btn btn--whatsapp btn--lg">
+        <a href="#" onclick="openWaModal();return false;" class="btn btn--whatsapp btn--lg">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Falar pelo WhatsApp
         </a>
@@ -491,10 +491,10 @@
   </footer>
 
   <!-- WhatsApp Float -->
-  <a href="https://wa.me/5521967019390?text=Olá!%20Tenho%20interesse%20no%20<%= encodeURIComponent(emp.name) %>" class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <button class="whatsapp-float" aria-label="Falar no WhatsApp" onclick="openWaModal()" style="border:none;font-family:inherit">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
     <span>WhatsApp</span>
-  </a>
+  </button>
 
   <!-- WhatsApp Lead Modal -->
   <div class="modal" id="waLeadModal" role="dialog" aria-modal="true" aria-labelledby="waModalTitle">
@@ -515,6 +515,7 @@
           <input type="tel" id="wa-phone" name="phone" placeholder="Seu WhatsApp *" required autocomplete="tel"
             style="width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:1rem;box-sizing:border-box" />
         </div>
+        <div id="waModalError" style="color:#dc2626;font-size:.85rem;margin-bottom:8px"></div>
         <button type="submit" style="width:100%;padding:13px;background:#25d366;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Continuar para o WhatsApp
@@ -536,6 +537,56 @@
 
   <script src="/js/main.js"></script>
   <script src="/js/gallery.js"></script>
+  <script>
+  /* ── Modal WhatsApp (empreendimento) ─────────────────── */
+  function openWaModal() {
+    document.getElementById('waLeadModal').classList.add('open');
+    setTimeout(function() { document.getElementById('wa-name').focus(); }, 100);
+  }
+  function closeWaModal() {
+    document.getElementById('waLeadModal').classList.remove('open');
+    document.getElementById('waLeadForm').reset();
+    document.getElementById('waModalError').textContent = '';
+    var btn = document.querySelector('#waLeadForm button[type=submit]');
+    if (btn) { btn.disabled = false; btn.textContent = 'Continuar para o WhatsApp'; }
+  }
+  document.getElementById('waModalClose').addEventListener('click', closeWaModal);
+  document.getElementById('waModalBackdrop').addEventListener('click', closeWaModal);
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeWaModal(); });
+
+  document.getElementById('waLeadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var name  = document.getElementById('wa-name').value.trim();
+    var phone = document.getElementById('wa-phone').value.trim();
+    var errEl = document.getElementById('waModalError');
+    errEl.textContent = '';
+    if (!name || !phone) {
+      errEl.textContent = 'Preencha seu nome e WhatsApp para continuar.';
+      return;
+    }
+    var btn = this.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = 'Aguarde...';
+    var waUrl = null;
+    try {
+      var resp = await fetch('/api/leads/wa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, phone: phone, message: 'Lead via botão WhatsApp — <%= emp.name %>' })
+      });
+      var data = await resp.json();
+      if (data.wa_url) waUrl = data.wa_url;
+    } catch(_) {}
+    if (!waUrl) {
+      var waNum = phone.replace(/\D/g, '');
+      if (waNum.length <= 11) waNum = '55' + waNum;
+      var msg = encodeURIComponent('Olá! Sou ' + name + ' e quero saber mais sobre <%= emp.name %>.');
+      waUrl = 'https://wa.me/' + waNum + '?text=' + msg;
+    }
+    window.open(waUrl, '_blank');
+    closeWaModal();
+  });
+  </script>
   <% if (tracking.gads_tag_id && tracking.gads_conversion_label) { %>
   <script>
   // Dispara conversão do Google Ads quando lead for enviado com sucesso
