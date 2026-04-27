@@ -82,14 +82,32 @@
 
   /* ---- Phone Mask ---- */
   function phoneMask(input) {
+    // Hint element – shown temporarily when DDI 55 is auto-stripped
+    const hint = document.createElement('small');
+    hint.style.cssText = 'color:#dc2626;font-size:.78rem;display:none;margin-top:3px;line-height:1.3;';
+    hint.textContent = '⚠ DDI 55 removido — informe apenas DDD + número (ex: 21 9 8888-7777)';
+    if (input.parentNode) input.parentNode.insertBefore(hint, input.nextSibling);
+
+    let hintTimer;
     input.addEventListener('input', () => {
-      let v = input.value.replace(/\D/g, '').substring(0, 11);
-      if (v.length <= 10) {
-        v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-      } else {
-        v = v.replace(/(\d{2})(\d{1})(\d{4})(\d{0,4})/, '($1) $2 $3-$4');
+      let raw = input.value.replace(/\D/g, '');
+
+      // Auto-strip DDI 55: detectado quando dígitos ≥ 12 e começa com 55
+      if (raw.length >= 12 && raw.startsWith('55')) {
+        raw = raw.slice(2);
+        clearTimeout(hintTimer);
+        hint.style.display = 'block';
+        hintTimer = setTimeout(() => { hint.style.display = 'none'; }, 5000);
       }
-      input.value = v;
+
+      raw = raw.substring(0, 11);
+
+      if (raw.length <= 10) {
+        raw = raw.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+      } else {
+        raw = raw.replace(/(\d{2})(\d{1})(\d{4})(\d{0,4})/, '($1) $2 $3-$4');
+      }
+      input.value = raw;
     });
   }
 
