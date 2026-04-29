@@ -932,17 +932,28 @@
     btn.disabled = true;
     btn.textContent = 'Aguarde...';
 
+    let waUrl = null;
     try {
-      await fetch('/api/leads/wa', {
+      const resp = await fetch('/api/leads/wa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, message: 'Lead via botão WhatsApp' })
       });
+      const data = await resp.json();
+      if (data.wa_url) waUrl = data.wa_url;
     } catch(_) {}
 
-    const waNum = '5521999999999';
-    const msg = encodeURIComponent('Olá! Sou ' + name + ' e quero saber mais sobre os empreendimentos do Portal Cury.');
-    window.open('https://wa.me/' + waNum + '?text=' + msg, '_blank');
+    // Fallback: usa número do admin se API falhar
+    if (!waUrl) {
+      try {
+        const cfg = await fetch('/api/public-config').then(r => r.json());
+        const num = (cfg.whatsapp_number || '').replace(/\D/g, '');
+        const msg = encodeURIComponent(cfg.whatsapp_message || ('Olá! Sou ' + name + ' e quero saber mais sobre os empreendimentos do Portal Cury.'));
+        waUrl = num ? 'https://wa.me/' + num + '?text=' + msg : null;
+      } catch(_) {}
+    }
+
+    if (waUrl) window.open(waUrl, '_blank');
     closeWaModal();
   });
   </script>
