@@ -578,12 +578,14 @@
       if (data.wa_url) waUrl = data.wa_url;
     } catch(_) {}
     if (!waUrl) {
-      var waNum = phone.replace(/\D/g, '');
-      if (waNum.length <= 11) waNum = '55' + waNum;
-      var msg = encodeURIComponent('Olá! Sou ' + name + ' e quero saber mais sobre <%= emp.name %>.');
-      waUrl = 'https://wa.me/' + waNum + '?text=' + msg;
+      try {
+        var cfg = await fetch('/api/public-config').then(function(r){ return r.json(); });
+        var num = (cfg.whatsapp_number || '').replace(/\D/g, '');
+        var msg = encodeURIComponent(cfg.whatsapp_message || ('Olá! Sou ' + name + ' e quero saber mais sobre <%= emp.name %>.'));
+        if (num) waUrl = 'https://wa.me/' + num + '?text=' + msg;
+      } catch(_) {}
     }
-    window.open(waUrl, '_blank');
+    if (waUrl) window.open(waUrl, '_blank');
     closeWaModal();
   });
   </script>
