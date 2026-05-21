@@ -210,9 +210,7 @@
         showModal();
 
         // Google Ads Conversion — disparado automaticamente via config do admin
-        if (typeof gtag !== 'undefined' && window._GADS) {
-          gtag('event', 'conversion', { 'send_to': window._GADS });
-        }
+        window.fireGadsConversion();
 
         // Meta Ads (Facebook Pixel) — disparado automaticamente via config do admin
         if (typeof fbq !== 'undefined' && window._META_EVENT) {
@@ -397,3 +395,40 @@
   }
 
 })();
+
+/* ============================================================
+   GOOGLE ADS CONVERSION — helper global acessível por inline scripts
+   Aguarda até 3s por window._GADS e window.gtag (carregamento async)
+   ============================================================ */
+window.fireGadsConversion = function () {
+  var attempts = 0;
+  var maxAttempts = 6; // 6 × 500ms = 3s
+
+  var tryFire = function () {
+    var id = window._GADS;
+
+    if (!id) {
+      if (attempts < maxAttempts) {
+        attempts++;
+        setTimeout(tryFire, 500); // aguarda _GADS ficar disponível
+        return;
+      }
+      // Esgotou tentativas sem _GADS → configuração ausente
+      console.warn('[PortalCury] Conversão Google Ads: window._GADS não definido após 3s. Verifique a configuração em /admin → Google Ads (Tag ID + Label).');
+      return;
+    }
+
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', 'conversion', { send_to: id });
+      console.log('[PortalCury] Conversão Google Ads disparada →', id);
+    } else if (attempts < maxAttempts) {
+      // gtag.js ainda não carregou — aguarda
+      attempts++;
+      setTimeout(tryFire, 500);
+    } else {
+      console.warn('[PortalCury] Conversão Google Ads: window.gtag indisponível após 3s. gtag.js bloqueado ou Tag ID inválido?');
+    }
+  };
+
+  tryFire();
+};
