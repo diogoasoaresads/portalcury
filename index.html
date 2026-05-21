@@ -954,6 +954,12 @@
     }
 
     if (waUrl) window.open(waUrl, '_blank');
+
+    // Google Ads conversion — WA modal
+    if (typeof gtag !== 'undefined' && window._GADS) {
+      gtag('event', 'conversion', { 'send_to': window._GADS });
+    }
+
     closeWaModal();
   });
   </script>
