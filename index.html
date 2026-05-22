@@ -937,7 +937,7 @@
       const resp = await fetch('/api/leads/wa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, message: 'Lead via botão WhatsApp' })
+        body: JSON.stringify({ name, phone, message: 'Lead via botão WhatsApp', gclid: typeof window.getStoredGclid === 'function' ? window.getStoredGclid() : '' })
       });
       const data = await resp.json();
       if (data.wa_url) waUrl = data.wa_url;

@@ -80,6 +80,30 @@
     });
   });
 
+  /* ---- Captura gclid (Google Ads Click ID) ---- */
+  // Armazena por 30 dias; enviado com cada lead para conversão server-side
+  (function () {
+    try {
+      var p = new URLSearchParams(window.location.search);
+      var gc = p.get('gclid');
+      if (gc) {
+        localStorage.setItem('_pc_gc', gc);
+        localStorage.setItem('_pc_gc_ts', Date.now().toString());
+      }
+    } catch (e) {}
+  })();
+
+  function getStoredGclid() {
+    try {
+      var gc = localStorage.getItem('_pc_gc');
+      var ts = parseInt(localStorage.getItem('_pc_gc_ts') || '0', 10);
+      var TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
+      if (gc && (Date.now() - ts) < TTL) return gc;
+    } catch (e) {}
+    return '';
+  }
+  window.getStoredGclid = getStoredGclid; // expõe para scripts inline (WA modal)
+
   /* ---- Phone Mask ---- */
   function phoneMask(input) {
     // Hint element – shown temporarily when DDI 55 is auto-stripped
@@ -196,6 +220,8 @@
       delete data.fgts;
       delete data.fgts_valor;
       delete data.renda;
+
+      data.gclid = getStoredGclid(); // inclui gclid para conversão server-side
 
       try {
         const res = await fetch('/api/leads', {

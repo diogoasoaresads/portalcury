@@ -211,6 +211,7 @@ requiredColumns.forEach(c => {
   "ALTER TABLE leads ADD COLUMN attendant_id INTEGER REFERENCES attendants(id)",
   "ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
+  "ALTER TABLE leads ADD COLUMN gclid TEXT DEFAULT ''",
   "UPDATE users SET role = 'PO' WHERE username = 'diogoasoaresads@gmail.com'",
   "UPDATE users SET role = 'atendente' WHERE role = 'agent'",
   `CREATE TABLE IF NOT EXISTS webhook_logs (
@@ -827,6 +828,39 @@ async function notifyEvolution(lead, cfg) {
   }
 }
 
+// Google Ads Server-to-Server conversion ping
+// Disparado no servidor após cada lead salvo — não depende de JavaScript no browser
+async function fireServerGadsConversion(cfg, gclid = '') {
+  const tagId = (cfg.gads_tag_id || '').trim();
+  const label = (cfg.gads_conversion_label || '').trim();
+  if (!tagId || !label) return; // Google Ads não configurado no admin
+
+  const numericId = tagId.replace(/^AW-/i, '');
+  if (!numericId || !/^\d+$/.test(numericId)) return;
+
+  const params = new URLSearchParams({
+    label,
+    value:         '1',
+    currency_code: 'BRL',
+    guid:          'ON',
+    script:        '0',
+    fmt:           '3',
+  });
+  if (gclid) params.set('gclid', gclid);
+
+  const url = `https://www.googleadservices.com/pagead/conversion/${numericId}/?${params.toString()}`;
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PortalCury/1.0)' },
+      signal: AbortSignal.timeout(8000),
+    });
+    console.log(`[GADS-S2S] Conversão → HTTP ${res.status} | ${numericId}/${label}${gclid ? ' | gclid=' + gclid.slice(0, 10) + '…' : ''}`);
+  } catch (err) {
+    console.error('[GADS-S2S] Falha:', err.message);
+  }
+}
+
 async function dispatchWebhook(lead, cfg, eventType = 'new_lead') {
   if (cfg.webhook_enabled !== 'true' || !cfg.webhook_url) return;
 
@@ -1320,11 +1354,12 @@ app.get('/api/public-config', (_req, res) => {
 // Receber lead do formulário (fila form)
 app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   try {
-    const { name, phone, email = '', interest = '', message = '' } = req.body;
+    const { name, phone, email = '', interest = '', message = '', gclid = '' } = req.body;
     if (!name?.trim() || !phone?.trim()) {
       return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
     }
 
+    const cfg = getConfig();
     const phoneNorm = normalizePhone(phone);
     const existing = findDuplicateLead(phone, email);
 
@@ -1358,16 +1393,17 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
       addActivity(existing.id, 'novo_contato', 'Novo contato recebido (landing page)', bodyLines);
 
       const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
-      fireNotifications(lead, getConfig());
+      fireNotifications(lead, cfg);
+      fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
       return res.json({ success: true, id: lead.id, duplicate: true });
     }
 
     // Lead novo
     const attendant = nextAttendant('form_queue_idx');
     const r = db.prepare(`
-      INSERT INTO leads (name, phone, phone_norm, email, interest, message, source, attendant_id)
-      VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?)
-    `).run(name.trim(), phone.trim(), phoneNorm, email.trim(), interest.trim(), message.trim(), attendant?.id || null);
+      INSERT INTO leads (name, phone, phone_norm, email, interest, message, source, attendant_id, gclid)
+      VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?, ?)
+    `).run(name.trim(), phone.trim(), phoneNorm, email.trim(), interest.trim(), message.trim(), attendant?.id || null, gclid.trim());
 
     const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
@@ -1382,7 +1418,8 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 
     addActivity(lead.id, 'novo_contato', 'Lead received (landing page)', bodyLines);
 
-    fireNotifications(lead, getConfig());
+    fireNotifications(lead, cfg);
+    fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
     res.json({ success: true, id: lead.id, duplicate: false });
   } catch (err) {
     console.error('[API-LEADS] Fatal error:', err);
@@ -1397,7 +1434,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 // Receber lead do WhatsApp (fila WA) — retorna URL do próximo atendente
 app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   try {
-    const { name, phone, message = '' } = req.body;
+    const { name, phone, message = '', gclid = '' } = req.body;
     if (!name?.trim() || !phone?.trim()) {
       return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
     }
@@ -1424,6 +1461,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
       const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
       fireNotifications(lead, cfg);
       dispatchWebhook(lead, cfg, 'whatsapp_button').catch(e => console.error('[webhook:wa]', e.message));
+      fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
 
       const attendant = db.prepare('SELECT * FROM attendants WHERE id = ?').get(existing.attendant_id);
       const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
@@ -1434,9 +1472,9 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     // Lead novo
     const attendant = nextAttendant('wa_queue_idx');
     const r = db.prepare(`
-      INSERT INTO leads (name, phone, phone_norm, message, source, attendant_id)
-      VALUES (?, ?, ?, ?, 'whatsapp', ?)
-    `).run(name.trim(), phone.trim(), phoneNorm, message.trim(), attendant?.id || null);
+      INSERT INTO leads (name, phone, phone_norm, message, source, attendant_id, gclid)
+      VALUES (?, ?, ?, ?, 'whatsapp', ?, ?)
+    `).run(name.trim(), phone.trim(), phoneNorm, message.trim(), attendant?.id || null, gclid.trim());
 
     const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
@@ -1451,6 +1489,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 
     fireNotifications(lead, cfg);
     dispatchWebhook(lead, cfg, 'whatsapp_button').catch(e => console.error('[webhook:wa]', e.message));
+    fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
 
     const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
     const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');

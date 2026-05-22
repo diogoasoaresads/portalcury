@@ -572,7 +572,7 @@
       var resp = await fetch('/api/leads/wa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, phone: phone, message: 'Lead via botão WhatsApp — <%= emp.name %>' })
+        body: JSON.stringify({ name: name, phone: phone, message: 'Lead via botão WhatsApp — <%= emp.name %>', gclid: typeof window.getStoredGclid === 'function' ? window.getStoredGclid() : '' })
       });
       var data = await resp.json();
       if (data.wa_url) waUrl = data.wa_url;
