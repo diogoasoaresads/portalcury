@@ -567,12 +567,16 @@
     var btn = this.querySelector('button[type=submit]');
     btn.disabled = true;
     btn.textContent = 'Aguarde...';
+    var waConvId = typeof window.generateConversionId === 'function' ? window.generateConversionId() : '';
     var waUrl = null;
     try {
       var resp = await fetch('/api/leads/wa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name, phone: phone, message: 'Lead via botão WhatsApp — <%= emp.name %>', gclid: typeof window.getStoredGclid === 'function' ? window.getStoredGclid() : '' })
+        body: JSON.stringify(Object.assign(
+          { name: name, phone: phone, message: 'Lead via botão WhatsApp — <%= emp.name %>', gclid: typeof window.getStoredGclid === 'function' ? window.getStoredGclid() : '', conversion_id: waConvId },
+          typeof window.getStoredUtm === 'function' ? (function(u){ return { utm_source: u.utm_source||'', utm_medium: u.utm_medium||'', utm_campaign: u.utm_campaign||'', utm_content: u.utm_content||'', utm_term: u.utm_term||'', referrer_url: u.referrer||'', landing_page: u.landing_page||'' }; })(window.getStoredUtm()) : {}
+        ))
       });
       var data = await resp.json();
       if (data.wa_url) waUrl = data.wa_url;
@@ -586,7 +590,7 @@
       } catch(_) {}
     }
     if (waUrl) window.open(waUrl, '_blank');
-    if (typeof window.fireGadsConversion === 'function') window.fireGadsConversion();
+    if (typeof window.fireGadsConversion === 'function') window.fireGadsConversion({ phone: phone, transactionId: waConvId });
     closeWaModal();
   });
   </script>

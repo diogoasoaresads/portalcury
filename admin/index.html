@@ -746,6 +746,20 @@
     .kb-card__btn--wa { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .kb-card__btn--wa:hover { background: #bbf7d0; }
 
+    /* Source badges no card do kanban */
+    .kb-source-badge {
+      display: inline-block; font-size: .62rem; font-weight: 700;
+      padding: 1px 5px; border-radius: 3px; white-space: nowrap;
+      letter-spacing: .02em; vertical-align: middle;
+    }
+    .kb-source-badge--gads    { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .kb-source-badge--google  { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .kb-source-badge--social  { background: #fdf4ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+    .kb-source-badge--utm     { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .kb-source-badge--wa      { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .kb-source-badge--ref     { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .kb-source-badge--organic { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+
     .kb-col__empty {
       text-align: center; padding: 24px 12px; color: #94a3b8;
       font-size: .8rem;
@@ -1022,11 +1036,11 @@
           <table>
             <thead>
               <tr>
-                <th>Nome</th><th>Telefone</th><th>Empreendimento</th><th>Status</th><th>Data</th><th>Ações</th>
+                <th>Nome</th><th>Telefone</th><th>Empreendimento</th><th>Origem</th><th>Status</th><th>Data</th><th>Ações</th>
               </tr>
             </thead>
             <tbody id="recentLeadsTable">
-              <tr><td colspan="6"><div class="empty-state"><p>Carregando...</p></div></td></tr>
+              <tr><td colspan="7"><div class="empty-state"><p>Carregando...</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1074,11 +1088,11 @@
             <thead>
               <tr>
                 <th>#</th><th>Nome</th><th>Telefone</th><th>E-mail</th>
-                <th>Empreendimento</th><th>Atendente</th><th>Status</th><th>Data</th><th>Ações</th>
+                <th>Empreendimento</th><th>Origem</th><th>Atendente</th><th>Status</th><th>Data</th><th>Ações</th>
               </tr>
             </thead>
             <tbody id="leadsTable">
-              <tr><td colspan="9"><div class="empty-state"><p>Carregando...</p></div></td></tr>
+              <tr><td colspan="10"><div class="empty-state"><p>Carregando...</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -2322,11 +2336,6 @@ function navigate(page) {
     if (userRole !== 'admin' && userRole !== 'PO') {
       document.querySelector('.cfg-tabs button[data-tab="security"]').click();
     }
-    // Atualiza link de debug com token atual
-    const debugBtn = document.querySelector('a[href*="/api/wa/debug-db"]');
-    if (debugBtn) {
-      debugBtn.href = `/api/wa/debug-db?token=${token}`;
-    }
   }
 }
 
@@ -2365,7 +2374,7 @@ async function loadDashboard() {
     const { leads } = await api('GET', '/api/leads?limit=8');
     const tbody = document.getElementById('recentLeadsTable');
     if (!leads.length) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>Nenhum lead ainda.</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Nenhum lead ainda.</p></div></td></tr>`;
       return;
     }
     tbody.innerHTML = leads.map(l => `
@@ -2373,6 +2382,7 @@ async function loadDashboard() {
         <td><strong>${escHtml(l.name)}</strong></td>
         <td><a href="tel:${escHtml(l.phone)}" style="color:var(--red)">${escHtml(l.phone)}</a></td>
         <td>${escHtml(INTEREST_LABELS[l.interest] || l.interest || '—')}</td>
+        <td>${buildSourceBadge(l)}</td>
         <td>${badgeHtml(l.status)}</td>
         <td style="color:var(--gray);font-size:.82rem">${formatDate(l.updated_at || l.created_at)}</td>
         <td><div class="actions">
@@ -2409,7 +2419,7 @@ async function loadLeads() {
 
     const tbody = document.getElementById('leadsTable');
     if (!data.leads.length) {
-      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <p>Nenhum lead encontrado.</p>
       </div></td></tr>`;
@@ -2421,6 +2431,7 @@ async function loadLeads() {
           <td><a href="tel:${escHtml(l.phone)}" style="color:var(--red)">${escHtml(l.phone)}</a></td>
           <td style="color:var(--gray);font-size:.85rem">${escHtml(l.email || '—')}</td>
           <td style="font-size:.85rem">${escHtml(INTEREST_LABELS[l.interest] || l.interest || '—')}</td>
+          <td>${buildSourceBadge(l)}</td>
           <td style="font-size:.82rem;color:var(--gray)">${escHtml(l.attendant_name || '—')}</td>
           <td>${badgeHtml(l.status)}</td>
           <td style="color:var(--gray);font-size:.82rem;white-space:nowrap">${formatDate(l.updated_at || l.created_at)}</td>
@@ -2494,6 +2505,19 @@ async function openLead(id) {
       <div class="detail-row"><span class="lbl">Empreendimento</span><span class="val">${escHtml(INTEREST_LABELS[lead.interest] || lead.interest || '—')}</span></div>
       <div class="detail-row"><span class="lbl">Mensagem</span><span class="val" style="white-space:pre-wrap">${escHtml(lead.message || '—')}</span></div>
       <div class="detail-row"><span class="lbl">Recebido em</span><span class="val">${formatDate(lead.created_at)}</span></div>
+      <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+      <div style="margin-bottom:12px">
+        <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray);margin-bottom:8px">Origem / Campanha</div>
+        <div class="detail-row"><span class="lbl">Fonte</span><span class="val">${buildSourceBadge(lead)}</span></div>
+        ${lead.utm_source   ? `<div class="detail-row"><span class="lbl">utm_source</span><span class="val" style="font-family:monospace;font-size:.83rem">${escHtml(lead.utm_source)}</span></div>` : ''}
+        ${lead.utm_medium   ? `<div class="detail-row"><span class="lbl">utm_medium</span><span class="val" style="font-family:monospace;font-size:.83rem">${escHtml(lead.utm_medium)}</span></div>` : ''}
+        ${lead.utm_campaign ? `<div class="detail-row"><span class="lbl">Campanha</span><span class="val" style="font-family:monospace;font-size:.83rem">${escHtml(lead.utm_campaign)}</span></div>` : ''}
+        ${lead.utm_content  ? `<div class="detail-row"><span class="lbl">utm_content</span><span class="val" style="font-family:monospace;font-size:.83rem">${escHtml(lead.utm_content)}</span></div>` : ''}
+        ${lead.utm_term     ? `<div class="detail-row"><span class="lbl">utm_term</span><span class="val" style="font-family:monospace;font-size:.83rem">${escHtml(lead.utm_term)}</span></div>` : ''}
+        ${lead.gclid        ? `<div class="detail-row"><span class="lbl">gclid</span><span class="val" style="font-family:monospace;font-size:.75rem;word-break:break-all">${escHtml(lead.gclid)}</span></div>` : ''}
+        ${lead.referrer_url ? `<div class="detail-row"><span class="lbl">Referrer</span><span class="val" style="font-size:.82rem;word-break:break-all">${escHtml(lead.referrer_url)}</span></div>` : ''}
+        ${lead.landing_page ? `<div class="detail-row"><span class="lbl">Landing page</span><span class="val" style="font-size:.82rem;word-break:break-all">${escHtml(lead.landing_page)}</span></div>` : ''}
+      </div>
       <hr style="margin:18px 0;border:none;border-top:1px solid var(--border)">
       <div class="field">
         <label>Status</label>
@@ -2856,11 +2880,32 @@ async function loadBackupsList() {
       const date = new Date(b.date).toLocaleString('pt-BR');
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0">
         <div><span style="font-weight:500">${b.name}</span><br><span style="color:#888">${date} · ${size}</span></div>
-        <a href="/api/admin/backups/${b.name}?token=${localStorage.getItem('crm_token')}" class="btn btn-secondary" style="font-size:.78rem;padding:5px 12px">Baixar</a>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 12px" onclick="downloadBackupFile('${escHtml(b.name)}')">Baixar</button>
       </div>`;
     }).join('');
   } catch (e) {
     el.innerHTML = `<span style="color:#dc2626">Erro ao carregar: ${e.message}</span>`;
+  }
+}
+
+async function downloadBackupFile(filename) {
+  try {
+    const res = await fetch(`/api/admin/backups/${encodeURIComponent(filename)}`, {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({ error: 'Erro ao baixar backup.' }));
+      throw new Error(e.error || 'Erro ao baixar backup.');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    toast(e.message, 'error');
   }
 }
 
@@ -3179,9 +3224,46 @@ function renderKanban() {
   });
 }
 
+function sourceTooltip(lead) {
+  const parts = [];
+  if (lead.gclid) parts.push('gclid: ' + lead.gclid);
+  if (lead.utm_source) parts.push('utm_source: ' + lead.utm_source);
+  if (lead.utm_medium) parts.push('utm_medium: ' + lead.utm_medium);
+  if (lead.utm_campaign) parts.push('utm_campaign: ' + lead.utm_campaign);
+  if (lead.utm_content) parts.push('utm_content: ' + lead.utm_content);
+  if (lead.utm_term) parts.push('utm_term: ' + lead.utm_term);
+  if (lead.referrer_url) parts.push('referrer: ' + lead.referrer_url);
+  if (lead.landing_page) parts.push('landing: ' + lead.landing_page);
+  return escHtml(parts.join(' | ') || 'Sem UTM/referrer identificado');
+}
+
+function buildSourceBadge(lead) {
+  const title = sourceTooltip(lead);
+  if (lead.gclid) {
+    return `<span class="kb-source-badge kb-source-badge--gads" title="${title}">Google Ads</span>`;
+  }
+  if (lead.utm_source) {
+    const src = (lead.utm_source || '').toLowerCase();
+    if (src.includes('google')) {
+      return `<span class="kb-source-badge kb-source-badge--google" title="${title}">Google</span>`;
+    }
+    if (src.includes('facebook') || src.includes('fb') || src.includes('instagram') || src.includes('ig')) {
+      return `<span class="kb-source-badge kb-source-badge--social" title="${title}">Social</span>`;
+    }
+    return `<span class="kb-source-badge kb-source-badge--utm" title="${title}">${escHtml(lead.utm_source)}</span>`;
+  }
+  if (lead.source === 'whatsapp') {
+    return `<span class="kb-source-badge kb-source-badge--wa" title="${title}">WhatsApp</span>`;
+  }
+  if (lead.referrer_url && lead.referrer_url !== '') {
+    return `<span class="kb-source-badge kb-source-badge--ref" title="${title}">Referral</span>`;
+  }
+  return `<span class="kb-source-badge kb-source-badge--organic" title="${title}">Orgânico</span>`;
+}
+
 function buildKbCard(lead) {
   const lastDate = lead.updated_at || lead.created_at;
-  const dateStr = new Date(lastDate).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }) + ' ' + 
+  const dateStr = new Date(lastDate).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }) + ' ' +
                   new Date(lastDate).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
   const interest = INTEREST_LABELS[lead.interest] || lead.interest || '—';
   const waPhone  = '55' + lead.phone.replace(/\D/g, '');
@@ -3192,9 +3274,12 @@ function buildKbCard(lead) {
       <div class="kb-card__interest">${escHtml(interest)}</div>
       <div class="kb-card__footer">
         <span class="kb-card__date">${dateStr}</span>
-        <div class="kb-card__actions">
-          <button class="kb-card__btn kb-card__btn--detail" onclick="openLead(${lead.id})">Ver</button>
-          <a class="kb-card__btn kb-card__btn--wa" href="https://wa.me/${waPhone}" target="_blank">WA</a>
+        <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+          ${buildSourceBadge(lead)}
+          <div class="kb-card__actions">
+            <button class="kb-card__btn kb-card__btn--detail" onclick="openLead(${lead.id})">Ver</button>
+            <a class="kb-card__btn kb-card__btn--wa" href="https://wa.me/${waPhone}" target="_blank">WA</a>
+          </div>
         </div>
       </div>
     </div>`;

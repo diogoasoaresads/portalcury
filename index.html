@@ -932,12 +932,16 @@
     btn.disabled = true;
     btn.textContent = 'Aguarde...';
 
+    const waConvId = typeof window.generateConversionId === 'function' ? window.generateConversionId() : '';
     let waUrl = null;
     try {
       const resp = await fetch('/api/leads/wa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, message: 'Lead via botão WhatsApp', gclid: typeof window.getStoredGclid === 'function' ? window.getStoredGclid() : '' })
+        body: JSON.stringify(Object.assign(
+          { name, phone, message: 'Lead via botão WhatsApp', gclid: typeof window.getStoredGclid === 'function' ? window.getStoredGclid() : '', conversion_id: waConvId },
+          typeof window.getStoredUtm === 'function' ? (function(u){ return { utm_source: u.utm_source||'', utm_medium: u.utm_medium||'', utm_campaign: u.utm_campaign||'', utm_content: u.utm_content||'', utm_term: u.utm_term||'', referrer_url: u.referrer||'', landing_page: u.landing_page||'' }; })(window.getStoredUtm()) : {}
+        ))
       });
       const data = await resp.json();
       if (data.wa_url) waUrl = data.wa_url;
@@ -954,7 +958,7 @@
     }
 
     if (waUrl) window.open(waUrl, '_blank');
-    if (typeof window.fireGadsConversion === 'function') window.fireGadsConversion();
+    if (typeof window.fireGadsConversion === 'function') window.fireGadsConversion({ phone, transactionId: waConvId });
     closeWaModal();
   });
   </script>

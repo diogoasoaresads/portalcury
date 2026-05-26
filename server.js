@@ -212,6 +212,14 @@ requiredColumns.forEach(c => {
   "ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
   "ALTER TABLE leads ADD COLUMN gclid TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN utm_source    TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN utm_medium    TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN utm_campaign  TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN utm_content   TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN utm_term      TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN referrer_url  TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN landing_page  TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN conversion_id TEXT DEFAULT ''",
   "UPDATE users SET role = 'PO' WHERE username = 'diogoasoaresads@gmail.com'",
   "UPDATE users SET role = 'atendente' WHERE role = 'agent'",
   `CREATE TABLE IF NOT EXISTS webhook_logs (
@@ -315,21 +323,35 @@ const DEFAULT_CONFIG = {
 const insertCfg = db.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)');
 for (const [k, v] of Object.entries(DEFAULT_CONFIG)) insertCfg.run(k, v);
 
-// ---- Default admin user (criado apenas se não existir NENHUM usuário) ----
+// ---- Bootstrap admin user (somente via env; evita credenciais fixas no codigo) ----
 const anyUser = db.prepare('SELECT id FROM users LIMIT 1').get();
 if (!anyUser) {
-  const hash = bcrypt.hashSync('admin123', 10);
-  db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').run('admin', hash);
-  console.warn('[SETUP] Usuário padrão criado: admin / admin123 — TROQUE A SENHA IMEDIATAMENTE no painel de configurações!');
+  const bootstrapUser = process.env.BOOTSTRAP_ADMIN_USER || process.env.DEFAULT_ADMIN_USER;
+  const bootstrapPass = process.env.BOOTSTRAP_ADMIN_PASSWORD || process.env.DEFAULT_ADMIN_PASSWORD;
+
+  if (!bootstrapUser || !bootstrapPass || bootstrapPass.length < 12) {
+    console.error('[SETUP] Nenhum usuario existe. Defina BOOTSTRAP_ADMIN_USER e BOOTSTRAP_ADMIN_PASSWORD (min. 12 caracteres) para criar o primeiro admin.');
+    process.exit(1);
+  }
+
+  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+    bootstrapUser.trim(), bcrypt.hashSync(bootstrapPass, 10), 'admin'
+  );
+  console.warn(`[SETUP] Usuario admin inicial criado via env: ${bootstrapUser.trim()}. Remova as variaveis BOOTSTRAP_ADMIN_* apos o primeiro login.`);
 }
 
-// ---- Ensure PO user exists ----
-const poExists = db.prepare("SELECT id FROM users WHERE username = ?").get('diogoasoaresads@gmail.com');
-if (!poExists) {
-  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
-    'diogoasoaresads@gmail.com', bcrypt.hashSync('06112005', 10), 'PO'
-  );
-  console.log('[SETUP] Usuário PO criado: diogoasoaresads@gmail.com');
+// ---- Optional PO bootstrap user ----
+const poBootstrapUser = process.env.BOOTSTRAP_PO_USER || process.env.DEFAULT_PO_USER;
+const poBootstrapPass = process.env.BOOTSTRAP_PO_PASSWORD || process.env.DEFAULT_PO_PASSWORD;
+if (poBootstrapUser && poBootstrapPass) {
+  if (poBootstrapPass.length < 12) {
+    console.warn('[SETUP] BOOTSTRAP_PO_PASSWORD ignorado: use ao menos 12 caracteres.');
+  } else if (!db.prepare("SELECT id FROM users WHERE username = ?").get(poBootstrapUser.trim())) {
+    db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+      poBootstrapUser.trim(), bcrypt.hashSync(poBootstrapPass, 10), 'PO'
+    );
+    console.log(`[SETUP] Usuario PO criado via env: ${poBootstrapUser.trim()}`);
+  }
 }
 
 // ============================================================
@@ -486,9 +508,9 @@ function upsertConversation(jid, name) {
       if (!finalLeadId) {
         waLog(`[WA-LEAD] Criando Lead automático para o número ${phone} (Nome: ${name})`);
         const rLead = db.prepare(`
-          INSERT INTO leads (name, phone, source, status, message, user_id) 
-          VALUES (?, ?, 'whatsapp', 'novo', 'Mensagem iniciada diretamente no WhatsApp', ?)
-        `).run(name || 'Novo Lead (WhatsApp)', phone, null); // user_id fica null a menos que seja round robin
+          INSERT INTO leads (name, phone, phone_norm, source, status, message, attendant_id) 
+          VALUES (?, ?, ?, 'whatsapp', 'novo', 'Mensagem iniciada diretamente no WhatsApp', ?)
+        `).run(name || 'Novo Lead (WhatsApp)', phone, phone, null);
         finalLeadId = rLead.lastInsertRowid;
         addActivity(finalLeadId, 'novo_contato', 'Captação Automática (WhatsApp)', 'Lead criado automaticamente ao enviar a primeira mensagem.');
       }
@@ -503,8 +525,10 @@ function upsertConversation(jid, name) {
           assignedTo = agents[idx % agents.length].id;
           db.prepare("INSERT OR REPLACE INTO config (key,value) VALUES ('wa_queue_idx',?)").run(String((idx + 1) % agents.length));
           
-          // Opcional: Se quiser que o Lead inteiro seja atribuído a esse agente, descomente abaixo:
-          db.prepare("UPDATE leads SET user_id = ? WHERE id = ?").run(assignedTo, finalLeadId);
+          const agent = db.prepare('SELECT attendant_id FROM users WHERE id = ?').get(assignedTo);
+          if (agent?.attendant_id) {
+            db.prepare('UPDATE leads SET attendant_id = ? WHERE id = ?').run(agent.attendant_id, finalLeadId);
+          }
         }
       }
 
@@ -692,8 +716,7 @@ async function evolutionCall(method, path, body, evoCfg) {
 // ---- Auth middleware ----
 function auth(req, res, next) {
   const authHeader = req.headers.authorization;
-  const queryToken = req.query.token;
-  const token = (authHeader && authHeader.split(' ')[1]) || queryToken;
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ error: 'Não autorizado (Token ausente)' });
@@ -828,9 +851,27 @@ async function notifyEvolution(lead, cfg) {
   }
 }
 
+// Hashes SHA-256 (hex) para Enhanced Conversions
+function sha256hex(str) {
+  return crypto.createHash('sha256').update((str || '').toLowerCase().trim()).digest('hex');
+}
+
+// Normaliza telefone para E.164 (+55XXXXXXXXXXX)
+function toE164(phone) {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('55') && digits.length >= 12) return '+' + digits;
+  return '+55' + digits;
+}
+
 // Google Ads Server-to-Server conversion ping
 // Disparado no servidor após cada lead salvo — não depende de JavaScript no browser
-async function fireServerGadsConversion(cfg, gclid = '') {
+// opts: { gclid, email, phone, conversionId }
+async function fireServerGadsConversion(cfg, opts = '') {
+  // Suporte ao formato antigo: fireServerGadsConversion(cfg, gclid)
+  if (typeof opts === 'string') opts = { gclid: opts };
+  const { gclid = '', email = '', phone = '', conversionId = '' } = opts;
+
   const tagId = (cfg.gads_tag_id || '').trim();
   const label = (cfg.gads_conversion_label || '').trim();
   if (!tagId || !label) return; // Google Ads não configurado no admin
@@ -846,7 +887,11 @@ async function fireServerGadsConversion(cfg, gclid = '') {
     script:        '0',
     fmt:           '3',
   });
-  if (gclid) params.set('gclid', gclid);
+
+  if (gclid)        params.set('gclid', gclid);
+  if (conversionId) params.set('oid',   conversionId);           // deduplication key
+  if (email)        params.set('em',    sha256hex(email));       // Enhanced Conversions
+  if (phone)        params.set('ph',    sha256hex(toE164(phone)));// Enhanced Conversions
 
   const url = `https://www.googleadservices.com/pagead/conversion/${numericId}/?${params.toString()}`;
   try {
@@ -855,7 +900,10 @@ async function fireServerGadsConversion(cfg, gclid = '') {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PortalCury/1.0)' },
       signal: AbortSignal.timeout(8000),
     });
-    console.log(`[GADS-S2S] Conversão → HTTP ${res.status} | ${numericId}/${label}${gclid ? ' | gclid=' + gclid.slice(0, 10) + '…' : ''}`);
+    console.log(`[GADS-S2S] Conversão → HTTP ${res.status} | ${numericId}/${label}` +
+      (gclid ? ' | gclid=' + gclid.slice(0, 10) + '…' : '') +
+      (email ? ' | enhanced=✓' : '') +
+      (conversionId ? ' | oid=' + conversionId.slice(0, 8) + '…' : ''));
   } catch (err) {
     console.error('[GADS-S2S] Falha:', err.message);
   }
@@ -1319,18 +1367,6 @@ app.post('/api/wa/disconnect', auth, adminOnly, async (req, res) => {
   }
 });
 
-// Debug para o desenvolvedor ver se tem dados
-app.get('/api/wa/debug-db', auth, adminOnly, (req, res) => {
-  try {
-    const convs = db.prepare('SELECT count(*) as count FROM wa_conversations').get();
-    const msgs = db.prepare('SELECT count(*) as count FROM wa_messages').get();
-    const lastMsg = db.prepare('SELECT * FROM wa_messages ORDER BY id DESC LIMIT 1').get();
-    res.json({ conversations: convs.count, messages: msgs.count, lastMessage: lastMsg });
-  } catch (err) {
-    res.json({ error: err.message });
-  }
-});
-
 // Landing page
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
@@ -1354,7 +1390,12 @@ app.get('/api/public-config', (_req, res) => {
 // Receber lead do formulário (fila form)
 app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   try {
-    const { name, phone, email = '', interest = '', message = '', gclid = '' } = req.body;
+    const {
+      name, phone, email = '', interest = '', message = '', gclid = '',
+      utm_source = '', utm_medium = '', utm_campaign = '',
+      utm_content = '', utm_term = '', referrer_url = '', landing_page = '',
+      conversion_id = '',
+    } = req.body;
     if (!name?.trim() || !phone?.trim()) {
       return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
     }
@@ -1371,6 +1412,15 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
           email       = CASE WHEN ? != '' THEN ? ELSE email END,
           interest    = CASE WHEN ? != '' THEN ? ELSE interest END,
           phone_norm  = ?,
+          gclid       = CASE WHEN ? != '' THEN ? ELSE gclid END,
+          utm_source  = CASE WHEN ? != '' THEN ? ELSE utm_source END,
+          utm_medium  = CASE WHEN ? != '' THEN ? ELSE utm_medium END,
+          utm_campaign= CASE WHEN ? != '' THEN ? ELSE utm_campaign END,
+          utm_content = CASE WHEN ? != '' THEN ? ELSE utm_content END,
+          utm_term    = CASE WHEN ? != '' THEN ? ELSE utm_term END,
+          referrer_url= CASE WHEN ? != '' THEN ? ELSE referrer_url END,
+          landing_page= CASE WHEN ? != '' THEN ? ELSE landing_page END,
+          conversion_id=CASE WHEN ? != '' THEN ? ELSE conversion_id END,
           updated_at  = CURRENT_TIMESTAMP
         WHERE id = ?
       `).run(
@@ -1378,6 +1428,15 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
         email.trim(), email.trim(),
         interest.trim(), interest.trim(),
         phoneNorm,
+        gclid.trim(), gclid.trim(),
+        utm_source.trim(), utm_source.trim(),
+        utm_medium.trim(), utm_medium.trim(),
+        utm_campaign.trim(), utm_campaign.trim(),
+        utm_content.trim(), utm_content.trim(),
+        utm_term.trim(), utm_term.trim(),
+        referrer_url.trim(), referrer_url.trim(),
+        landing_page.trim(), landing_page.trim(),
+        conversion_id.trim(), conversion_id.trim(),
         existing.id
       );
 
@@ -1388,22 +1447,30 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
         interest.trim() ? `Empreendimento: ${interest.trim()}` : null,
         message.trim()  ? `Mensagem: ${message.trim()}`   : null,
         `Fonte: landing_page`,
+        utm_campaign.trim() ? `Campanha: ${utm_campaign.trim()}` : null,
       ].filter(Boolean).join('\n');
 
       addActivity(existing.id, 'novo_contato', 'Novo contato recebido (landing page)', bodyLines);
 
       const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
       fireNotifications(lead, cfg);
-      fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
+      fireServerGadsConversion(cfg, { gclid: gclid.trim(), email: email.trim(), phone: phone.trim(), conversionId: conversion_id.trim() }).catch(() => {});
       return res.json({ success: true, id: lead.id, duplicate: true });
     }
 
     // Lead novo
     const attendant = nextAttendant('form_queue_idx');
     const r = db.prepare(`
-      INSERT INTO leads (name, phone, phone_norm, email, interest, message, source, attendant_id, gclid)
-      VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?, ?)
-    `).run(name.trim(), phone.trim(), phoneNorm, email.trim(), interest.trim(), message.trim(), attendant?.id || null, gclid.trim());
+      INSERT INTO leads (name, phone, phone_norm, email, interest, message, source, attendant_id,
+        gclid, utm_source, utm_medium, utm_campaign, utm_content, utm_term, referrer_url, landing_page, conversion_id)
+      VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      name.trim(), phone.trim(), phoneNorm, email.trim(), interest.trim(), message.trim(),
+      attendant?.id || null, gclid.trim(),
+      utm_source.trim(), utm_medium.trim(), utm_campaign.trim(),
+      utm_content.trim(), utm_term.trim(), referrer_url.trim(), landing_page.trim(),
+      conversion_id.trim()
+    );
 
     const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
@@ -1419,7 +1486,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     addActivity(lead.id, 'novo_contato', 'Lead received (landing page)', bodyLines);
 
     fireNotifications(lead, cfg);
-    fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
+    fireServerGadsConversion(cfg, { gclid: gclid.trim(), email: email.trim(), phone: phone.trim(), conversionId: conversion_id.trim() }).catch(() => {});
     res.json({ success: true, id: lead.id, duplicate: false });
   } catch (err) {
     console.error('[API-LEADS] Fatal error:', err);
@@ -1434,7 +1501,12 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
 // Receber lead do WhatsApp (fila WA) — retorna URL do próximo atendente
 app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
   try {
-    const { name, phone, message = '', gclid = '' } = req.body;
+    const {
+      name, phone, message = '', gclid = '',
+      utm_source = '', utm_medium = '', utm_campaign = '',
+      utm_content = '', utm_term = '', referrer_url = '', landing_page = '',
+      conversion_id = '',
+    } = req.body;
     if (!name?.trim() || !phone?.trim()) {
       return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
     }
@@ -1446,14 +1518,41 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     if (existing) {
       // Lead já existe — atualiza nome, phone_norm e registra atividade
       db.prepare(`
-        UPDATE leads SET name = ?, phone_norm = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-      `).run(name.trim(), phoneNorm, existing.id);
+        UPDATE leads SET
+          name = ?,
+          phone_norm = ?,
+          source = CASE WHEN source = '' OR source IS NULL THEN 'whatsapp' ELSE source END,
+          gclid = CASE WHEN ? != '' THEN ? ELSE gclid END,
+          utm_source = CASE WHEN ? != '' THEN ? ELSE utm_source END,
+          utm_medium = CASE WHEN ? != '' THEN ? ELSE utm_medium END,
+          utm_campaign = CASE WHEN ? != '' THEN ? ELSE utm_campaign END,
+          utm_content = CASE WHEN ? != '' THEN ? ELSE utm_content END,
+          utm_term = CASE WHEN ? != '' THEN ? ELSE utm_term END,
+          referrer_url = CASE WHEN ? != '' THEN ? ELSE referrer_url END,
+          landing_page = CASE WHEN ? != '' THEN ? ELSE landing_page END,
+          conversion_id = CASE WHEN ? != '' THEN ? ELSE conversion_id END,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(
+        name.trim(), phoneNorm,
+        gclid.trim(), gclid.trim(),
+        utm_source.trim(), utm_source.trim(),
+        utm_medium.trim(), utm_medium.trim(),
+        utm_campaign.trim(), utm_campaign.trim(),
+        utm_content.trim(), utm_content.trim(),
+        utm_term.trim(), utm_term.trim(),
+        referrer_url.trim(), referrer_url.trim(),
+        landing_page.trim(), landing_page.trim(),
+        conversion_id.trim(), conversion_id.trim(),
+        existing.id
+      );
 
       const bodyLines = [
         `Nome: ${name.trim()}`,
         `Telefone: ${phone.trim()}`,
         message.trim() ? `Mensagem: ${message.trim()}` : null,
         `Fonte: whatsapp`,
+        utm_campaign.trim() ? `Campanha: ${utm_campaign.trim()}` : null,
       ].filter(Boolean).join('\n');
 
       addActivity(existing.id, 'novo_contato', 'Novo contato recebido (WhatsApp)', bodyLines);
@@ -1461,7 +1560,7 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
       const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(existing.id);
       fireNotifications(lead, cfg);
       dispatchWebhook(lead, cfg, 'whatsapp_button').catch(e => console.error('[webhook:wa]', e.message));
-      fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
+      fireServerGadsConversion(cfg, { gclid: gclid.trim(), phone: phone.trim(), conversionId: conversion_id.trim() }).catch(() => {});
 
       const attendant = db.prepare('SELECT * FROM attendants WHERE id = ?').get(existing.attendant_id);
       const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
@@ -1472,9 +1571,15 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     // Lead novo
     const attendant = nextAttendant('wa_queue_idx');
     const r = db.prepare(`
-      INSERT INTO leads (name, phone, phone_norm, message, source, attendant_id, gclid)
-      VALUES (?, ?, ?, ?, 'whatsapp', ?, ?)
-    `).run(name.trim(), phone.trim(), phoneNorm, message.trim(), attendant?.id || null, gclid.trim());
+      INSERT INTO leads (name, phone, phone_norm, message, source, attendant_id,
+        gclid, utm_source, utm_medium, utm_campaign, utm_content, utm_term, referrer_url, landing_page, conversion_id)
+      VALUES (?, ?, ?, ?, 'whatsapp', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      name.trim(), phone.trim(), phoneNorm, message.trim(), attendant?.id || null,
+      gclid.trim(), utm_source.trim(), utm_medium.trim(), utm_campaign.trim(),
+      utm_content.trim(), utm_term.trim(), referrer_url.trim(), landing_page.trim(),
+      conversion_id.trim()
+    );
 
     const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);
 
@@ -1483,13 +1588,14 @@ app.post('/api/leads/wa', rateLimit(5 * 60 * 1000, 10), (req, res) => {
       `Telefone: ${lead.phone}`,
       lead.message ? `Mensagem: ${lead.message}` : null,
       `Fonte: whatsapp`,
+      utm_campaign.trim() ? `Campanha: ${utm_campaign.trim()}` : null,
     ].filter(Boolean).join('\n');
 
     addActivity(lead.id, 'novo_contato', 'Lead recebido (WhatsApp)', bodyLines);
 
     fireNotifications(lead, cfg);
     dispatchWebhook(lead, cfg, 'whatsapp_button').catch(e => console.error('[webhook:wa]', e.message));
-    fireServerGadsConversion(cfg, gclid.trim()).catch(() => {});
+    fireServerGadsConversion(cfg, { gclid: gclid.trim(), phone: phone.trim(), conversionId: conversion_id.trim() }).catch(() => {});
 
     const waPhone = (attendant?.phone || cfg.whatsapp_number || '').replace(/\D/g, '');
     const waMsg   = encodeURIComponent(cfg.whatsapp_message || '');
@@ -2285,8 +2391,7 @@ app.get('/health', (_req, res) => {
 // ============================================================
 // DIAGNÓSTICO WHATSAPP
 // ============================================================
-app.get('/api/wa/audit-db', (req, res) => {
-  if (req.query.secret !== 'qao_audit') return res.status(401).send('Acesso Negado');
+app.get('/api/wa/audit-db', auth, adminOnly, (req, res) => {
   try {
     const indexes = db.prepare("SELECT name, sql FROM sqlite_master WHERE type='index' AND tbl_name='wa_messages'").all();
     const lastMsgs = db.prepare("SELECT id, message_id, body, created_at FROM wa_messages ORDER BY id DESC LIMIT 40").all();
@@ -2297,7 +2402,7 @@ app.get('/api/wa/audit-db', (req, res) => {
   }
 });
 
-app.get('/api/wa/debug-db', auth, (req, res) => {
+app.get('/api/wa/debug-db', auth, adminOnly, (req, res) => {
   try {
     // Lê do arquivo persistente para garantir que vemos o que o console do EasyPanel viu
     let fileLogs = [];
@@ -2347,7 +2452,7 @@ app.get('/api/wa/check-health', auth, (req, res) => {
   }
 });
 
-app.post('/api/wa/clear-history', auth, (req, res) => {
+app.post('/api/wa/clear-history', auth, adminOnly, (req, res) => {
   try {
     db.transaction(() => {
       db.prepare('DELETE FROM wa_messages').run();

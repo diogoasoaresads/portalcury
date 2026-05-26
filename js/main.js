@@ -104,6 +104,47 @@
   }
   window.getStoredGclid = getStoredGclid; // expõe para scripts inline (WA modal)
 
+  /* ---- Captura UTM + referrer + landing page ---- */
+  // Armazena por 30 dias; enviado com cada lead para rastreamento de origem no CRM
+  (function () {
+    try {
+      var p = new URLSearchParams(window.location.search);
+      var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+      var hasUtm = false;
+      utmKeys.forEach(function (k) { if (p.get(k)) hasUtm = true; });
+      if (hasUtm) {
+        var utmData = {};
+        utmKeys.forEach(function (k) { utmData[k] = p.get(k) || ''; });
+        utmData.referrer = document.referrer || '';
+        utmData.landing_page = window.location.pathname + window.location.search;
+        utmData.ts = Date.now();
+        localStorage.setItem('_pc_utm', JSON.stringify(utmData));
+      } else if (!localStorage.getItem('_pc_utm')) {
+        // Sem UTM e sem dado salvo: salvar referrer + landing page para leads orgânicos
+        var fallback = {
+          utm_source: '', utm_medium: '', utm_campaign: '', utm_content: '', utm_term: '',
+          referrer: document.referrer || '',
+          landing_page: window.location.pathname,
+          ts: Date.now(),
+        };
+        localStorage.setItem('_pc_utm', JSON.stringify(fallback));
+      }
+    } catch (e) {}
+  })();
+
+  function getStoredUtm() {
+    try {
+      var raw = localStorage.getItem('_pc_utm');
+      if (!raw) return {};
+      var d = JSON.parse(raw);
+      var TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
+      if ((Date.now() - (d.ts || 0)) > TTL) return {};
+      return d;
+    } catch (e) {}
+    return {};
+  }
+  window.getStoredUtm = getStoredUtm; // expõe para scripts inline (WA modal)
+
   /* ---- Phone Mask ---- */
   function phoneMask(input) {
     // Hint element – shown temporarily when DDI 55 is auto-stripped
@@ -222,6 +263,17 @@
       delete data.renda;
 
       data.gclid = getStoredGclid(); // inclui gclid para conversão server-side
+      var _utm = getStoredUtm();
+      data.utm_source   = _utm.utm_source   || '';
+      data.utm_medium   = _utm.utm_medium   || '';
+      data.utm_campaign = _utm.utm_campaign || '';
+      data.utm_content  = _utm.utm_content  || '';
+      data.utm_term     = _utm.utm_term     || '';
+      data.referrer_url = _utm.referrer     || '';
+      data.landing_page = _utm.landing_page || '';
+      // UUID único para deduplicar C2S (gtag) e S2S (pixel servidor)
+      data.conversion_id = typeof window.generateConversionId === 'function'
+        ? window.generateConversionId() : '';
 
       try {
         const res = await fetch('/api/leads', {
@@ -235,8 +287,12 @@
         form.reset();
         showModal();
 
-        // Google Ads Conversion — disparado automaticamente via config do admin
-        window.fireGadsConversion();
+        // Google Ads Conversion — Enhanced Conversions + deduplicação por transaction_id
+        window.fireGadsConversion({
+          email:         data.email  || '',
+          phone:         data.phone  || '',
+          transactionId: data.conversion_id || '',
+        });
 
         // Meta Ads (Facebook Pixel) — disparado automaticamente via config do admin
         if (typeof fbq !== 'undefined' && window._META_EVENT) {
@@ -425,8 +481,36 @@
 /* ============================================================
    GOOGLE ADS CONVERSION — helper global acessível por inline scripts
    Aguarda até 3s por window._GADS e window.gtag (carregamento async)
+
+   opts (opcional):
+     email         — e-mail do lead (plaintext; gtag faz o hash SHA-256)
+     phone         — telefone do lead (plaintext; formatado E.164 internamente)
+     transactionId — UUID único por submissão; usado pelo Google para deduplicar
+                     disparos client-side e server-side do mesmo lead
    ============================================================ */
-window.fireGadsConversion = function () {
+
+/* Gera UUID v4 para deduplicação de conversões */
+window.generateConversionId = function () {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  } catch (e) {}
+  // Fallback manual para browsers legados
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+};
+
+/* Normaliza telefone para E.164 (+55XXXXXXXXXXX) */
+function _toE164(phone) {
+  var digits = (phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('55') && digits.length >= 12) return '+' + digits;
+  return '+55' + digits;
+}
+
+window.fireGadsConversion = function (opts) {
+  opts = opts || {};
   var attempts = 0;
   var maxAttempts = 6; // 6 × 500ms = 3s
 
@@ -439,16 +523,30 @@ window.fireGadsConversion = function () {
         setTimeout(tryFire, 500); // aguarda _GADS ficar disponível
         return;
       }
-      // Esgotou tentativas sem _GADS → configuração ausente
       console.warn('[PortalCury] Conversão Google Ads: window._GADS não definido após 3s. Verifique a configuração em /admin → Google Ads (Tag ID + Label).');
       return;
     }
 
     if (typeof window.gtag === 'function') {
-      window.gtag('event', 'conversion', { send_to: id });
-      console.log('[PortalCury] Conversão Google Ads disparada →', id);
+      // ── Enhanced Conversions: envia dados do usuário para match server-side ──
+      // Google faz o hash SHA-256 internamente; não enviamos dado cru para servidores deles
+      if (opts.email || opts.phone) {
+        var userData = {};
+        if (opts.email) userData.email = opts.email.toLowerCase().trim();
+        if (opts.phone) userData.phone_number = _toE164(opts.phone);
+        window.gtag('set', 'user_data', userData);
+      }
+
+      // ── Evento de conversão com transaction_id para deduplicação C2S + S2S ──
+      var params = { send_to: id };
+      if (opts.transactionId) params.transaction_id = opts.transactionId;
+
+      window.gtag('event', 'conversion', params);
+      console.log('[PortalCury] Conversão Google Ads disparada →', id,
+        opts.transactionId ? '| txn=' + opts.transactionId.slice(0, 8) + '…' : '',
+        opts.email ? '| enhanced=✓' : ''
+      );
     } else if (attempts < maxAttempts) {
-      // gtag.js ainda não carregou — aguarda
       attempts++;
       setTimeout(tryFire, 500);
     } else {
