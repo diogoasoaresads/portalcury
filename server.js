@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const crypto  = require('crypto');
 const helmet  = require('helmet');
+const compression = require('compression');
 const express = require('express');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
@@ -38,9 +39,17 @@ app.use(helmet({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(compression());
 
 // Serve landing page e admin
-app.use(express.static(path.join(__dirname), { index: false }));
+app.use(express.static(path.join(__dirname), {
+  index: false,
+  setHeaders(res, filePath) {
+    if (/\.(?:css|js|svg|png|jpg|jpeg|webp|avif|woff2?)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  },
+}));
 
 // ============================================================
 // DATABASE
