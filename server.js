@@ -331,13 +331,12 @@ if (!anyUser) {
 
   if (!bootstrapUser || !bootstrapPass || bootstrapPass.length < 12) {
     console.error('[SETUP] Nenhum usuario existe. Defina BOOTSTRAP_ADMIN_USER e BOOTSTRAP_ADMIN_PASSWORD (min. 12 caracteres) para criar o primeiro admin.');
-    process.exit(1);
+  } else {
+    db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+      bootstrapUser.trim(), bcrypt.hashSync(bootstrapPass, 10), 'admin'
+    );
+    console.warn(`[SETUP] Usuario admin inicial criado via env: ${bootstrapUser.trim()}. Remova as variaveis BOOTSTRAP_ADMIN_* apos o primeiro login.`);
   }
-
-  db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
-    bootstrapUser.trim(), bcrypt.hashSync(bootstrapPass, 10), 'admin'
-  );
-  console.warn(`[SETUP] Usuario admin inicial criado via env: ${bootstrapUser.trim()}. Remova as variaveis BOOTSTRAP_ADMIN_* apos o primeiro login.`);
 }
 
 // ---- Optional PO bootstrap user ----
