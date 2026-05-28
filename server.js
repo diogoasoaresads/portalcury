@@ -13,6 +13,33 @@ const fs = require('fs');
 const ExcelJS = require('exceljs');
 const empreendimentos = require('./data/empreendimentos');
 
+const HIDDEN_EMPREENDIMENTO_SLUGS = new Set([
+  'praca-onze',
+  'praca-11',
+  'praca-xi',
+  'saudosa-praca-onze',
+  'cury-sapucai',
+  'cury-sapucai-saudosa-praca-onze',
+]);
+
+function normalizeEmpText(value = '') {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function isHiddenEmpreendimento(emp = {}) {
+  const slug = normalizeEmpText(emp.slug || '');
+  const name = normalizeEmpText(emp.name || '');
+  return Boolean(
+    emp.hidden ||
+    HIDDEN_EMPREENDIMENTO_SLUGS.has(slug) ||
+    name.includes('praca onze') ||
+    name.includes('praca xi')
+  );
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -2362,7 +2389,9 @@ app.get('/api/analytics', auth, (req, res) => {
 // ============================================================
 app.get('/empreendimentos/:slug', (req, res) => {
   const emp = empreendimentos.find(e => e.slug === req.params.slug);
-  if (!emp) return res.status(404).sendFile(path.join(__dirname, 'index.html'));
+  if (!emp || isHiddenEmpreendimento(emp)) {
+    return res.status(404).sendFile(path.join(__dirname, 'index.html'));
+  }
   const cfg = getConfig();
   const tracking = {
     gtm_id:                cfg.gtm_id                || '',
@@ -2374,7 +2403,9 @@ app.get('/empreendimentos/:slug', (req, res) => {
     custom_body_code:      cfg.custom_body_code        || '',
   };
   if (emp.emBreve) return res.render('em-breve', { emp, tracking });
-  const others = empreendimentos.filter(e => e.slug !== emp.slug).slice(0, 5);
+  const others = empreendimentos
+    .filter(e => e.slug !== emp.slug && !isHiddenEmpreendimento(e))
+    .slice(0, 5);
   res.render('empreendimento', { emp, others, tracking });
 });
 
