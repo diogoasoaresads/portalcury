@@ -5,15 +5,15 @@
 
 /* ---------- CSS VARIABLES ---------- */
 :root {
-  --color-primary:    #7b1f3a;
-  --color-primary-dk: #591529;
-  --color-secondary:  #7b1f3a;
+  --color-primary:    #00447d;
+  --color-primary-dk: #00335f;
+  --color-secondary:  #0d3b5a;
   --color-accent:     #8f4f2f;
   --color-whatsapp:   #25D366;
-  --color-bg:         #faf7f5;
-  --color-text:       #2a1520;
-  --color-text-light: #836070;
-  --color-border:     #ecdde3;
+  --color-bg:         #f5f8fb;
+  --color-text:       #162838;
+  --color-text-light: #607080;
+  --color-border:     #d8e4ee;
   --color-white:      #ffffff;
 
   --font-heading: 'Montserrat', sans-serif;
@@ -86,12 +86,12 @@ h1, h2, h3, h4 {
 .btn--primary {
   background: var(--color-primary);
   color: var(--color-white);
-  box-shadow: 0 4px 14px rgba(123,31,58,.25);
+  box-shadow: 0 4px 14px rgba(0,68,125,.25);
 }
 .btn--primary:hover {
   background: var(--color-primary-dk);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(123,31,58,.35);
+  box-shadow: 0 6px 20px rgba(0,68,125,.35);
 }
 
 .btn--outline {
@@ -475,7 +475,7 @@ h1, h2, h3, h4 {
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(123,31,58,.10);
+  box-shadow: 0 0 0 3px rgba(0,68,125,.12);
 }
 .form-group input.error,
 .form-group select.error {
@@ -666,7 +666,7 @@ h1, h2, h3, h4 {
 
 /* Real photos via inline style; fallback gradient */
 .emp-card__img {
-  background-color: #7b1f3a;
+  background-color: #0d3b5a;
   background-size: cover;
   background-position: center;
 }
@@ -824,7 +824,7 @@ h1, h2, h3, h4 {
 
 .vantagem-item__icon {
   width: 60px; height: 60px;
-  background: rgba(123,31,58,.06);
+  background: rgba(0,68,125,.08);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -915,7 +915,7 @@ h1, h2, h3, h4 {
    CTA BANNER
    ============================================ */
 .cta-banner {
-  background: linear-gradient(135deg, #7b1f3a 0%, #9e2a4d 100%);
+  background: linear-gradient(135deg, #00335f 0%, #005a9c 100%);
   padding: 64px 0;
   position: relative;
 }
@@ -999,7 +999,7 @@ h1, h2, h3, h4 {
 
 .channel-item__icon {
   width: 48px; height: 48px;
-  background: rgba(123,31,58,.06);
+  background: rgba(0,68,125,.08);
   color: var(--color-primary);
   border-radius: var(--radius-sm);
   display: flex;
