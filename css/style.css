@@ -293,16 +293,21 @@ h1, h2, h3, h4 {
    ============================================ */
 .hero {
   position: relative;
+  width: 100vw;
+  max-width: 100%;
   min-height: 80vh;
   display: flex;
   align-items: center;
   padding: 100px 0 80px;
   overflow: hidden;
+  background: #081827;
 }
 
 .hero__bg {
   position: absolute;
   inset: 0;
+  width: 100vw;
+  min-width: 100%;
   z-index: 0;
   overflow: hidden;
 }
@@ -334,9 +339,9 @@ h1, h2, h3, h4 {
   inset: 0;
   background: linear-gradient(
     to right,
-    rgba(8, 18, 35, 0.82) 0%,
-    rgba(8, 18, 35, 0.68) 55%,
-    rgba(8, 18, 35, 0.45) 100%
+    rgba(4, 18, 32, 0.88) 0%,
+    rgba(4, 18, 32, 0.74) 55%,
+    rgba(4, 18, 32, 0.58) 100%
   );
   z-index: 1;
 }
@@ -352,9 +357,9 @@ h1, h2, h3, h4 {
 
 .hero__badge {
   display: inline-block;
-  background: rgba(143,79,47,.22);
-  color: var(--color-accent);
-  border: 1px solid rgba(143,79,47,.5);
+  background: rgba(4,18,32,.46);
+  color: #f0b78f;
+  border: 1px solid rgba(240,183,143,.72);
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: .8rem;
@@ -373,13 +378,14 @@ h1, h2, h3, h4 {
 }
 
 .highlight {
-  color: var(--color-accent);
+  color: #d98652;
   position: relative;
+  text-shadow: 0 2px 16px rgba(0,0,0,.35);
 }
 
 .hero__subtitle {
   font-size: 1.05rem;
-  color: rgba(255,255,255,.85);
+  color: rgba(255,255,255,.92);
   margin-bottom: 28px;
   max-width: 520px;
 }
@@ -394,11 +400,11 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255,255,255,.9);
+  color: rgba(255,255,255,.95);
   font-size: .9rem;
-  font-weight: 500;
+  font-weight: 600;
 }
-.hero__features svg { color: var(--color-accent); flex-shrink: 0; }
+.hero__features svg { color: #d98652; flex-shrink: 0; }
 
 /* Hero Form Card */
 .hero__form-card {
@@ -414,7 +420,7 @@ h1, h2, h3, h4 {
   font-size: .75rem;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--color-accent);
+  color: #8a4d2f;
   margin-bottom: 8px;
 }
 
@@ -426,7 +432,7 @@ h1, h2, h3, h4 {
 
 .form-card__subtitle {
   font-size: .875rem;
-  color: var(--color-text-light);
+  color: #546779;
   margin-bottom: 24px;
 }
 
@@ -540,7 +546,7 @@ h1, h2, h3, h4 {
   align-items: center;
   gap: 6px;
   font-size: .75rem;
-  color: var(--color-text-light);
+  color: #496173;
   text-align: center;
   justify-content: center;
   margin-top: 4px;
@@ -1117,10 +1123,11 @@ h1, h2, h3, h4 {
   right: 0;
   bottom: calc(100% + 10px);
   background: var(--color-white);
-  color: var(--color-secondary);
+  color: #0d3b5a;
   padding: 8px 16px;
   border-radius: 12px;
   font-size: .85rem;
+  font-weight: 700;
   white-space: nowrap;
   box-shadow: var(--shadow-md);
   animation: pulse-wa-label 2s infinite;
