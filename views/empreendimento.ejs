@@ -224,11 +224,21 @@
     <div class="container">
       <div class="gallery-grid">
         <div class="gallery-main" id="galleryMain">
+          <% if (emp.video) { %>
+          <video src="<%= emp.video %>" poster="<%= emp.heroImage %>" controls preload="metadata" playsinline></video>
+          <% } else { %>
           <img src="<%= emp.gallery[0] %>" alt="<%= emp.name %> - foto principal" loading="eager" />
+          <% } %>
         </div>
         <div class="gallery-thumbs" id="galleryThumbs">
+          <% if (emp.video) { %>
+          <div class="gallery-thumb gallery-thumb--video active" data-type="video" data-src="<%= emp.video %>" data-poster="<%= emp.heroImage %>">
+            <img src="<%= emp.heroImage %>" alt="<%= emp.name %> - vídeo" loading="lazy" />
+            <span class="gallery-thumb__play" aria-hidden="true"></span>
+          </div>
+          <% } %>
           <% emp.gallery.forEach(function(img, i) { %>
-          <div class="gallery-thumb <%= i === 0 ? 'active' : '' %>" data-src="<%= img %>">
+          <div class="gallery-thumb <%= (!emp.video && i === 0) ? 'active' : '' %>" data-type="image" data-src="<%= img %>">
             <img src="<%= img %>" alt="<%= emp.name %> - foto <%= i + 1 %>" loading="lazy" />
           </div>
           <% }); %>

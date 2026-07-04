@@ -13,31 +13,8 @@ const fs = require('fs');
 const ExcelJS = require('exceljs');
 const empreendimentos = require('./data/empreendimentos');
 
-const HIDDEN_EMPREENDIMENTO_SLUGS = new Set([
-  'praca-onze',
-  'praca-11',
-  'praca-xi',
-  'saudosa-praca-onze',
-  'cury-sapucai',
-  'cury-sapucai-saudosa-praca-onze',
-]);
-
-function normalizeEmpText(value = '') {
-  return String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-}
-
 function isHiddenEmpreendimento(emp = {}) {
-  const slug = normalizeEmpText(emp.slug || '');
-  const name = normalizeEmpText(emp.name || '');
-  return Boolean(
-    emp.hidden ||
-    HIDDEN_EMPREENDIMENTO_SLUGS.has(slug) ||
-    name.includes('praca onze') ||
-    name.includes('praca xi')
-  );
+  return Boolean(emp.hidden);
 }
 
 const app = express();

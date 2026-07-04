@@ -185,6 +185,7 @@
               <label for="hero-interest">Empreendimento de interesse</label>
               <select id="hero-interest" name="interest">
                 <option value="">Selecione um empreendimento</option>
+                <option value="saudosa-praca-onze">Saudosa Praça Onze – Centro</option>
                 <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
                 <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
                 <option value="nova-norte-raizes">Res. Nova Norte Raízes – Irajá</option>
@@ -295,6 +296,7 @@
       <!-- Filter Tabs -->
       <div class="filter-tabs" role="tablist" aria-label="Filtrar por bairro">
         <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true">Todos</button>
+        <button class="filter-tab" data-filter="centro" role="tab" aria-selected="false">Centro</button>
         <button class="filter-tab" data-filter="sao-cristovao" role="tab" aria-selected="false">São Cristóvão</button>
         <button class="filter-tab" data-filter="olaria" role="tab" aria-selected="false">Olaria</button>
         <button class="filter-tab" data-filter="iraja" role="tab" aria-selected="false">Irajá</button>
@@ -442,6 +444,27 @@
         </article>
 
         <!-- Card 7: Nova Olaria -->
+        <article class="emp-card" data-bairro="centro" aria-label="Saudosa Praça Onze">
+          <div class="emp-card__img-wrap">
+            <div class="emp-card__img lazy-bg" data-bg="/images/saudosa-praca-onze/saudosa-praca-onze-01.jpeg"></div>
+            <span class="emp-card__tag">Praça Onze · RJ</span>
+            <span class="emp-card__badge">Lançamento</span>
+          </div>
+          <div class="emp-card__body">
+            <h3 class="emp-card__name">Saudosa Praça Onze</h3>
+            <p class="emp-card__desc">Studios, 1 e 2 quartos de 31 a 49 m² no berço do samba, Centro do Rio. Lazer no rooftop, áreas comuns equipadas e decoradas, a 4 min do Metrô Praça Onze.</p>
+            <ul class="emp-card__highlights">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Praça Onze, Centro do Rio</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/></svg>4 min do Metrô Praça Onze</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Lazer no rooftop</li>
+            </ul>
+            <div class="emp-card__footer">
+              <div class="emp-card__price"><span class="price-from">A partir de</span><span class="price-value">Consulte valores</span></div>
+              <a href="/empreendimentos/saudosa-praca-onze" class="btn btn--outline btn--sm">Ver Detalhes</a>
+            </div>
+          </div>
+        </article>
+
         <article class="emp-card" data-bairro="olaria" aria-label="Residencial Nova Olaria">
           <div class="emp-card__img-wrap">
             <div class="emp-card__img lazy-bg" data-bg="https://curyrj.com.br/wp-content/uploads/2024/12/nova-_olaria-_cury-1-1240x720.png"></div>
@@ -745,6 +768,7 @@
               <label for="ct-interest">Empreendimento de interesse *</label>
               <select id="ct-interest" name="interest" required>
                 <option value="">Selecione</option>
+                <option value="saudosa-praca-onze">Saudosa Praça Onze – Centro</option>
                 <option value="luzes-do-rio">Luzes do Rio – São Cristóvão</option>
                 <option value="residencial-cartola">Residencial Cartola – São Cristóvão</option>
                 <option value="nova-norte-raizes">Res. Nova Norte Raízes – Irajá</option>

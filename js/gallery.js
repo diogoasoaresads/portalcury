@@ -15,33 +15,64 @@
   if (!mainImg || !thumbsEl) return;
 
   const thumbs   = Array.from(thumbsEl.querySelectorAll('.gallery-thumb'));
-  const images   = thumbs.map(t => t.dataset.src);
+  const items    = thumbs.map(t => ({
+    type:   t.dataset.type || 'image',
+    src:    t.dataset.src,
+    poster: t.dataset.poster || '',
+  }));
+  const images   = items.filter(it => it.type === 'image').map(it => it.src);
   let currentIdx = 0;
 
-  /* ---- Thumb click → update main image ---- */
+  /* ---- Thumb click → update main item ---- */
   thumbs.forEach((thumb, idx) => {
     thumb.addEventListener('click', () => {
       currentIdx = idx;
-      updateMain(images[idx]);
+      updateMain(items[idx]);
       thumbs.forEach(t => t.classList.remove('active'));
       thumb.classList.add('active');
     });
   });
 
-  function updateMain(src) {
-    const img = mainImg.querySelector('img');
-    if (img) { img.src = src; img.alt = ''; }
+  function updateMain(item) {
+    const video = mainImg.querySelector('video');
+    if (video) video.pause();
+    if (item.type === 'video') {
+      mainImg.innerHTML = '';
+      const v = document.createElement('video');
+      v.src = item.src;
+      if (item.poster) v.poster = item.poster;
+      v.controls = true;
+      v.preload = 'metadata';
+      v.setAttribute('playsinline', '');
+      mainImg.appendChild(v);
+    } else {
+      mainImg.innerHTML = '';
+      const img = document.createElement('img');
+      img.src = item.src;
+      img.alt = '';
+      mainImg.appendChild(img);
+    }
   }
 
-  /* ---- Main image click → open lightbox ---- */
-  mainImg.addEventListener('click', () => openLightbox(currentIdx));
-  thumbs.forEach((t, i) => {
-    t.addEventListener('dblclick', () => openLightbox(i));
+  /* ---- Main image click → open lightbox (fotos apenas) ---- */
+  mainImg.addEventListener('click', () => {
+    if (items[currentIdx] && items[currentIdx].type === 'video') return;
+    openLightbox(currentIdx);
   });
+  thumbs.forEach((t, i) => {
+    t.addEventListener('dblclick', () => {
+      if (items[i].type === 'video') return;
+      openLightbox(i);
+    });
+  });
+
+  let lbIdx = 0;
 
   function openLightbox(idx) {
     currentIdx = idx;
-    lbImg.src = images[idx];
+    const imgIdx = images.indexOf(items[idx].src);
+    lbIdx = imgIdx === -1 ? 0 : imgIdx;
+    lbImg.src = images[lbIdx];
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -52,13 +83,13 @@
   }
 
   function showLightboxImage(idx) {
-    currentIdx = (idx + images.length) % images.length;
-    lbImg.src = images[currentIdx];
+    lbIdx = (idx + images.length) % images.length;
+    lbImg.src = images[lbIdx];
   }
 
   lbClose && lbClose.addEventListener('click', closeLightbox);
-  lbPrev  && lbPrev.addEventListener('click',  () => showLightboxImage(currentIdx - 1));
-  lbNext  && lbNext.addEventListener('click',  () => showLightboxImage(currentIdx + 1));
+  lbPrev  && lbPrev.addEventListener('click',  () => showLightboxImage(lbIdx - 1));
+  lbNext  && lbNext.addEventListener('click',  () => showLightboxImage(lbIdx + 1));
 
   lightbox && lightbox.addEventListener('click', (e) => {
     if (e.target === lightbox) closeLightbox();
@@ -67,8 +98,8 @@
   document.addEventListener('keydown', (e) => {
     if (!lightbox.classList.contains('open')) return;
     if (e.key === 'Escape')      closeLightbox();
-    if (e.key === 'ArrowLeft')   showLightboxImage(currentIdx - 1);
-    if (e.key === 'ArrowRight')  showLightboxImage(currentIdx + 1);
+    if (e.key === 'ArrowLeft')   showLightboxImage(lbIdx - 1);
+    if (e.key === 'ArrowRight')  showLightboxImage(lbIdx + 1);
   });
 
   /* ---- Touch swipe on lightbox ---- */
@@ -76,7 +107,7 @@
   lightbox && lightbox.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
   lightbox && lightbox.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 50) showLightboxImage(currentIdx + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) > 50) showLightboxImage(lbIdx + (dx < 0 ? 1 : -1));
   });
 
 })();
