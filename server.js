@@ -1382,6 +1382,9 @@ app.post('/api/wa/disconnect', auth, adminOnly, async (req, res) => {
 // Landing page
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
+// Política de Privacidade
+app.get('/politica-de-privacidade', (_req, res) => res.sendFile(path.join(__dirname, 'politica-de-privacidade.html')));
+
 // Config público (WhatsApp, rastreamento e códigos personalizados)
 app.get('/api/public-config', (_req, res) => {
 
