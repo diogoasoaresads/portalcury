@@ -7,3 +7,6 @@ logs/
 *.db
 *.db-shm
 *.db-wal
+.claude/
+saudosa/
+test_hook.js
