@@ -225,6 +225,7 @@ requiredColumns.forEach(c => {
   "ALTER TABLE leads ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
   "ALTER TABLE leads ADD COLUMN phone_norm TEXT",
   "ALTER TABLE leads ADD COLUMN gclid TEXT DEFAULT ''",
+  "ALTER TABLE leads ADD COLUMN renda_familiar TEXT DEFAULT ''",
   "ALTER TABLE leads ADD COLUMN utm_source    TEXT DEFAULT ''",
   "ALTER TABLE leads ADD COLUMN utm_medium    TEXT DEFAULT ''",
   "ALTER TABLE leads ADD COLUMN utm_campaign  TEXT DEFAULT ''",
@@ -1385,6 +1386,9 @@ app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 // Política de Privacidade
 app.get('/politica-de-privacidade', (_req, res) => res.sendFile(path.join(__dirname, 'politica-de-privacidade.html')));
 
+// Termos de Uso
+app.get('/termos-de-uso', (_req, res) => res.sendFile(path.join(__dirname, 'termos-de-uso.html')));
+
 // Config público (WhatsApp, rastreamento e códigos personalizados)
 app.get('/api/public-config', (_req, res) => {
 
@@ -1409,7 +1413,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
       name, phone, email = '', interest = '', message = '', gclid = '',
       utm_source = '', utm_medium = '', utm_campaign = '',
       utm_content = '', utm_term = '', referrer_url = '', landing_page = '',
-      conversion_id = '',
+      conversion_id = '', renda_familiar = '',
     } = req.body;
     if (!name?.trim() || !phone?.trim()) {
       return res.status(400).json({ error: 'Nome e telefone são obrigatórios.' });
@@ -1436,6 +1440,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
           referrer_url= CASE WHEN ? != '' THEN ? ELSE referrer_url END,
           landing_page= CASE WHEN ? != '' THEN ? ELSE landing_page END,
           conversion_id=CASE WHEN ? != '' THEN ? ELSE conversion_id END,
+          renda_familiar=CASE WHEN ? != '' THEN ? ELSE renda_familiar END,
           updated_at  = CURRENT_TIMESTAMP
         WHERE id = ?
       `).run(
@@ -1452,6 +1457,7 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
         referrer_url.trim(), referrer_url.trim(),
         landing_page.trim(), landing_page.trim(),
         conversion_id.trim(), conversion_id.trim(),
+        renda_familiar.trim(), renda_familiar.trim(),
         existing.id
       );
 
@@ -1477,14 +1483,14 @@ app.post('/api/leads', rateLimit(5 * 60 * 1000, 10), (req, res) => {
     const attendant = nextAttendant('form_queue_idx');
     const r = db.prepare(`
       INSERT INTO leads (name, phone, phone_norm, email, interest, message, source, attendant_id,
-        gclid, utm_source, utm_medium, utm_campaign, utm_content, utm_term, referrer_url, landing_page, conversion_id)
-      VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        gclid, utm_source, utm_medium, utm_campaign, utm_content, utm_term, referrer_url, landing_page, conversion_id, renda_familiar)
+      VALUES (?, ?, ?, ?, ?, ?, 'landing_page', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       name.trim(), phone.trim(), phoneNorm, email.trim(), interest.trim(), message.trim(),
       attendant?.id || null, gclid.trim(),
       utm_source.trim(), utm_medium.trim(), utm_campaign.trim(),
       utm_content.trim(), utm_term.trim(), referrer_url.trim(), landing_page.trim(),
-      conversion_id.trim()
+      conversion_id.trim(), renda_familiar.trim()
     );
 
     const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(r.lastInsertRowid);

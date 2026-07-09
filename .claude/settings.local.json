@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i 's/cury-niteroi/orla-central/g' index.html)",
+      "Bash(sed -i 's/cury-niteroi/orla-central/g' admin/index.html)",
+      "Bash(sed -i 's/Orla Central – Em Breve/Orla Central – Niterói/g; s/Orla Central \\(Em Breve\\)/Orla Central/g; s/Orla Central – Em Breve/Orla Central – Niterói/g' index.html)",
+      "Bash(sed -i 's/Orla Central \\(Em Breve\\)/Orla Central/g; s/Orla Central – Em Breve/Orla Central/g' admin/index.html)",
+      "WebSearch",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
+    ]
+  }
+}

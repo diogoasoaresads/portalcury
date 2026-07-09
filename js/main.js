@@ -257,6 +257,7 @@
       if (fgtsValor)          extra += `Valor: ${fgtsValor}. `;
       if (renda)              extra += `Renda familiar: ${renda}.`;
       if (extra) data.message = extra.trim() + (data.message ? ' | ' + data.message : '');
+      data.renda_familiar = renda;
       delete data.regions;
       delete data.fgts;
       delete data.fgts_valor;
