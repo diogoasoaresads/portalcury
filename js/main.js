@@ -145,6 +145,22 @@
   }
   window.getStoredUtm = getStoredUtm; // expõe para scripts inline (WA modal)
 
+  /* ---- Conversion ID compartilhado entre envios parciais do form multistep ----
+     Gera uma única vez por sessão de preenchimento e reusa em todas as etapas +
+     submit final, para o backend deduplicar corretamente no Google Ads (Enhanced
+     Conversions) em vez de contar 3 conversões para o mesmo lead. */
+  function getOrCreateConversionId() {
+    try {
+      var existing = sessionStorage.getItem('_pc_conv_id');
+      if (existing) return existing;
+      var id = typeof window.generateConversionId === 'function' ? window.generateConversionId() : '';
+      if (id) sessionStorage.setItem('_pc_conv_id', id);
+      return id;
+    } catch (e) {
+      return typeof window.generateConversionId === 'function' ? window.generateConversionId() : '';
+    }
+  }
+
   /* ---- Phone Mask ---- */
   function phoneMask(input) {
     // Hint element – shown temporarily when DDI 55 is auto-stripped
@@ -272,9 +288,9 @@
       data.utm_term     = _utm.utm_term     || '';
       data.referrer_url = _utm.referrer     || '';
       data.landing_page = _utm.landing_page || '';
-      // UUID único para deduplicar C2S (gtag) e S2S (pixel servidor)
-      data.conversion_id = typeof window.generateConversionId === 'function'
-        ? window.generateConversionId() : '';
+      // UUID único para deduplicar C2S (gtag) e S2S (pixel servidor) — mesmo ID
+      // usado nos envios parciais das etapas anteriores, se houver.
+      data.conversion_id = getOrCreateConversionId();
 
       try {
         const res = await fetch('/api/leads', {
@@ -325,6 +341,104 @@
   }
 
   document.querySelectorAll('.lead-form').forEach(handleFormSubmit);
+
+  /* ---- Formulário em etapas (multistep) ----
+     Cada "Avançar" salva/atualiza o lead parcialmente no backend (mesmo endpoint
+     /api/leads, que já faz upsert por telefone) antes de trocar de etapa — assim,
+     se a pessoa abandonar depois da etapa 1, o lead já está salvo. Reusa o mesmo
+     conversion_id em todas as etapas para não duplicar a conversão no Google Ads. */
+  function initMultistepForm(form) {
+    const steps = Array.from(form.querySelectorAll('.form-step'));
+    if (steps.length < 2) return;
+
+    const progressSteps = form.querySelectorAll('.form-progress__step');
+
+    function showStep(n) {
+      steps.forEach(s => s.classList.toggle('is-active', Number(s.dataset.step) === n));
+      progressSteps.forEach(el => {
+        const idx = Number(el.dataset.stepIndicator);
+        el.classList.toggle('is-active', idx === n);
+        el.classList.toggle('is-done', idx < n);
+      });
+      const firstInput = form.querySelector(`.form-step[data-step="${n}"] input, .form-step[data-step="${n}"] select`);
+      if (firstInput) firstInput.focus({ preventScroll: true });
+    }
+
+    function validateStep(stepEl) {
+      const invalid = stepEl.querySelector(':invalid');
+      if (invalid) {
+        invalid.classList.add('error');
+        invalid.reportValidity();
+        return false;
+      }
+      return true;
+    }
+
+    async function savePartial(btn) {
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+      try {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        const regions = formData.getAll('regions');
+
+        let message = '';
+        if (regions.length > 0) message += `Regiões: ${regions.join(', ')}. `;
+        if (data.fgts)          message += `FGTS/Entrada: ${data.fgts}. `;
+        if (data.fgts_valor)    message += `Valor: ${data.fgts_valor}. `;
+
+        const utm = getStoredUtm();
+
+        await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name || '',
+            phone: data.phone || '',
+            email: data.email || '',
+            interest: data.interest || '',
+            renda_familiar: data.renda || '',
+            message: message.trim(),
+            gclid: getStoredGclid(),
+            utm_source: utm.utm_source || '',
+            utm_medium: utm.utm_medium || '',
+            utm_campaign: utm.utm_campaign || '',
+            utm_content: utm.utm_content || '',
+            utm_term: utm.utm_term || '',
+            referrer_url: utm.referrer || '',
+            landing_page: utm.landing_page || '',
+            conversion_id: getOrCreateConversionId(),
+          }),
+        });
+        return true;
+      } catch (err) {
+        console.error('Erro ao salvar etapa:', err);
+        return false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    }
+
+    form.querySelectorAll('[data-step-next]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const currentStepEl = btn.closest('.form-step');
+        if (!validateStep(currentStepEl)) return;
+
+        await savePartial(btn);
+        // Mesmo se o salvamento parcial falhar (ex: rede instável), deixa avançar —
+        // o submit final da última etapa tenta salvar tudo de novo.
+        showStep(Number(btn.dataset.stepNext));
+      });
+    });
+
+    form.querySelectorAll('[data-step-prev]').forEach(btn => {
+      btn.addEventListener('click', () => showStep(Number(btn.dataset.stepPrev)));
+    });
+  }
+
+  document.querySelectorAll('.lead-form--multistep').forEach(initMultistepForm);
 
   /* ---- Smooth scroll for anchor links ---- */
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {

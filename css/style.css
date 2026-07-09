@@ -1288,3 +1288,59 @@ h1, h2, h3, h4 {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ============================================
+   FORMULÁRIO EM ETAPAS (multistep)
+   ============================================ */
+.form-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.form-progress__step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e6e9ee;
+  color: #7c8794;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background .25s ease, color .25s ease;
+  flex-shrink: 0;
+}
+.form-progress__step.is-active,
+.form-progress__step.is-done {
+  background: var(--color-primary);
+  color: #fff;
+}
+.form-progress__bar {
+  flex: 1;
+  height: 2px;
+  background: #e6e9ee;
+  max-width: 40px;
+}
+
+.form-step { display: none; flex-direction: column; gap: 16px; }
+.form-step.is-active { display: flex; }
+
+.form-step__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.form-step__actions .btn--outline {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1.5px solid #d5dae1;
+  color: #4a5568;
+}
+.form-step__actions .btn--outline:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.form-step__actions .btn--full { flex: 1; width: auto; min-width: 0; }
